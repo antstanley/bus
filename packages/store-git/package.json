@@ -5,5 +5,8 @@
   "type": "module",
   "module": "src/index.ts",
   "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@board/core": "workspace:*" }
+  "dependencies": {
+    "@board/core": "workspace:*",
+    "@board/store-fs": "workspace:*"
+  }
 }
