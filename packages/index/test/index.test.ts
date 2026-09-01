@@ -96,6 +96,37 @@ describe("BoardIndex", () => {
     expect(index.state("general")?.lastReconcileMs).toBe(c.now());
   });
 
+  it("reconciles when the persisted time gate elapses", async () => {
+    const store = new MemoryStore();
+    const c = clock(Date.UTC(2026, 8, 2, 12));
+    const board = new Board(store, { board: "general", author: "letta", now: c.now });
+    await board.post({ body: "first" });
+    const index = memoryIndex({ reconcileEvery: 999, lookbackDays: 2, now: c.now });
+    expect((await index.sync(board)).reconciled).toBe(true);
+
+    const late = new Board(store, {
+      board: "general",
+      author: "codex",
+      now: () => Date.UTC(2026, 8, 1, 8),
+    });
+    const old = await late.post({ body: "time gated" });
+    expect((await index.sync(board)).reconciled).toBe(false);
+    c.tick(86_400_000);
+    const sync = await index.sync(board);
+    expect(sync.reconciled).toBe(true);
+    expect(sync.ingested).toBe(1);
+    expect(index.search("gated")[0]?.id).toBe(old.id);
+  });
+
+  it("floors the time gate when lookbackDays is zero", async () => {
+    const c = clock(Date.UTC(2026, 8, 2, 12));
+    const board = new Board(new MemoryStore(), { board: "general", author: "letta", now: c.now });
+    const index = memoryIndex({ reconcileEvery: 999, lookbackDays: 0, now: c.now });
+    expect((await index.sync(board)).reconciled).toBe(true);
+    c.tick(1);
+    expect((await index.sync(board)).reconciled).toBe(false);
+  });
+
   it("uses an exact change feed to ingest late keys", async () => {
     const store = new ChangeStore();
     const c = clock(Date.UTC(2026, 8, 2, 12));
@@ -152,7 +183,7 @@ describe("BoardIndex", () => {
     const index = new BoardIndex(path);
     indexes.push(index);
     expect(index.threads()).toEqual([]);
-    expect(index.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version).toBe(1);
+    expect(index.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version).toBe(2);
   });
 
   it("rebuild replaces only the selected board", async () => {

@@ -3,7 +3,7 @@ import { listAll } from "@board/core";
 import { storeConformance } from "@board/core/test/store-conformance";
 import { S3Store } from "../src/index.ts";
 
-const bucket = Bun.env.BOARD_S3_TEST_BUCKET;
+const bucket = Bun.env.BOARD_S3_INTEGRATION === "1" ? Bun.env.BOARD_S3_TEST_BUCKET : undefined;
 
 if (bucket) {
   setDefaultTimeout(120_000);
@@ -31,7 +31,7 @@ if (bucket) {
   });
 } else {
   describe.skip("Store conformance: s3 real", () => {
-    it("set BOARD_S3_TEST_BUCKET to enable", () => {});
+    it("set BOARD_S3_INTEGRATION=1 and BOARD_S3_TEST_BUCKET to enable", () => {});
   });
 }
 

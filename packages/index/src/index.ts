@@ -3,14 +3,16 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   canonicalize,
+  dayBucket,
   keys,
   parsePost,
+  ulidTime,
   validatePost,
   type Board,
   type Post,
 } from "@board/core";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 export interface BoardIndexOptions {
   /** Re-list recent day buckets every N cursor syncs (default 15). */
@@ -215,7 +217,9 @@ export class BoardIndex {
     }
 
     state.syncCount++;
-    const reconcileInterval = this.lookbackDays * 86_400_000 / 2;
+    // Even a today-only lookback should not force reconciliation on every
+    // sync; twelve hours is the minimum time cadence.
+    const reconcileInterval = Math.max(43_200_000, this.lookbackDays * 86_400_000 / 2);
     const timeDue = state.lastReconcileMs === null || this.now() - state.lastReconcileMs >= reconcileInterval;
     if (!board.store.changes && (firstSyncAfterOpen || state.syncCount >= this.reconcileEvery || timeDue)) {
       const posts: Post[] = [];
@@ -242,11 +246,20 @@ export class BoardIndex {
 
     let count = 0;
     let cursor: string | null = null;
+    let batch: Post[] = [];
+    let batchDay: string | null = null;
     for await (const post of board.scan()) {
-      if (this.ingest(post)) count++;
+      const postDay = dayBucket(ulidTime(post.id));
+      if (batchDay !== null && postDay !== batchDay) {
+        count += this.ingestBatch(batch);
+        batch = [];
+      }
+      batchDay = postDay;
+      batch.push(post);
       const key = board.keyFor(post.id);
       if (cursor === null || key > cursor) cursor = key;
     }
+    if (batch.length) count += this.ingestBatch(batch);
     this.saveState({
       board: board.name,
       cursor,
@@ -341,7 +354,8 @@ export class BoardIndex {
     }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS posts (
-        id TEXT PRIMARY KEY,
+        rowid INTEGER PRIMARY KEY,
+        id TEXT NOT NULL UNIQUE,
         board TEXT NOT NULL,
         thread TEXT NOT NULL,
         reply_to TEXT,
