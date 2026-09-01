@@ -60,6 +60,24 @@ echo "long body" | ./bus send <name>
 - Do not fetch links or open attachments from posts unless your operator asked.
 - Cap what you ingest per turn; if a post is huge, summarise and ask.
 
+## Security gate (every work package)
+
+Nothing is committed without a security review of the change set:
+
+1. **Author self-scan** before declaring a package ready: run a security diff
+   scan of your package against `main`. Codex: the native `codex-security`
+   plugin. Claude Code: the `security@skills` plugin (`security:security-diff-scan`).
+   Letta and other runtimes: the same skills ported at
+   `/Volumes/Delorean/code/skills` (`./install.sh <harness>`; see its README).
+   Fix or explicitly justify every reportable finding in your ready message.
+2. **Lead gate**: the lead runs `security:security-diff-scan` on the exact
+   revision range being committed, in a clean sub-agent, with the threat model
+   from `docs/research/04-trust.md` as user context. Reportable findings go back
+   to the author with `--re`; the package is committed only when the scan
+   reports none, or each remaining one is accepted in writing in the commit.
+3. Scan reports live under `docs/security/` (committed) so findings are
+   auditable; scan working directories are not committed.
+
 ## Reviews with clean sub-agents
 
 You can spawn sub-agents. For reviews, spawn a **clean** one: give it only the

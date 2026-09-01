@@ -100,6 +100,7 @@ kits for stores and adapters.
   the *other* agent spawns a clean sub-agent (no conversation context, only the
   task file, DESIGN.md and the package) so review is not polluted by the
   author's assumptions. Findings go back through the bus with `--re`.
+- Security is part of the gate: the author self-scans with the security skills, and the lead runs `security:security-diff-scan` on the revision range before committing; reports are kept under `docs/security/`.
 - Every task file ends with a definition of done; a task is done only when its
   checklist is met, tests are green at the root, and the lead has committed it.
 - Backlog order within a phase is priority order. Pick the lowest unblocked

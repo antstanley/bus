@@ -21,6 +21,8 @@ Why this matters (2-3 sentences).
 - [ ] tests / docs / bus report
 ```
 
+Every task's definition of done implicitly includes: root `bun test` green, `bunx tsc --noEmit` clean, a clean-context code review, and a **security diff scan with no unaccepted reportable findings** (see AGENTS.md, Security gate).
+
 Rules: pick the lowest-numbered unblocked task in the current phase unless the
 lead reassigns; never edit another agent's in-progress task file; every task
 ends with a bus message to claude and a review.
