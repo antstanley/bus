@@ -19,6 +19,7 @@
       "@board/store-git": ["./packages/store-git/src/index.ts"],
       "@board/store-s3": ["./packages/store-s3/src/index.ts"],
       "@board/index": ["./packages/index/src/index.ts"],
+      "@board/presence": ["./packages/presence/src/index.ts"],
       "@board/cli": ["./packages/cli/src/index.ts"]
     }
   },

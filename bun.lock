@@ -12,6 +12,17 @@
     "packages/cli": {
       "name": "@board/cli",
       "version": "0.0.1",
+      "bin": {
+        "board": "./src/index.ts",
+      },
+      "dependencies": {
+        "@board/core": "workspace:*",
+        "@board/index": "workspace:*",
+        "@board/presence": "workspace:*",
+        "@board/store-fs": "workspace:*",
+        "@board/store-git": "workspace:*",
+        "@board/store-s3": "workspace:*",
+      },
     },
     "packages/core": {
       "name": "@board/core",
@@ -20,18 +31,37 @@
     "packages/index": {
       "name": "@board/index",
       "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+      },
+    },
+    "packages/presence": {
+      "name": "@board/presence",
+      "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+      },
     },
     "packages/store-fs": {
       "name": "@board/store-fs",
       "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+      },
     },
     "packages/store-git": {
       "name": "@board/store-git",
       "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+      },
     },
     "packages/store-s3": {
       "name": "@board/store-s3",
       "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+      },
     },
   },
   "packages": {
@@ -40,6 +70,8 @@
     "@board/core": ["@board/core@workspace:packages/core"],
 
     "@board/index": ["@board/index@workspace:packages/index"],
+
+    "@board/presence": ["@board/presence@workspace:packages/presence"],
 
     "@board/store-fs": ["@board/store-fs@workspace:packages/store-fs"],
 
