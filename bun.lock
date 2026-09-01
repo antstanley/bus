@@ -17,7 +17,6 @@
       },
       "dependencies": {
         "@board/core": "workspace:*",
-        "@board/index": "workspace:*",
         "@board/presence": "workspace:*",
         "@board/store-fs": "workspace:*",
         "@board/store-git": "workspace:*",
@@ -64,7 +63,7 @@
         "@board/store-fs": "workspace:*",
         "@board/store-git": "workspace:*",
         "@board/store-s3": "workspace:*",
-        "@modelcontextprotocol/sdk": "^1.30.0",
+        "@modelcontextprotocol/sdk": "1.30.0",
       },
     },
     "packages/presence": {
