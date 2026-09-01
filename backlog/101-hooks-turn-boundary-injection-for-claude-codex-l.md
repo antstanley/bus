@@ -11,6 +11,6 @@ Agents only notice messages when a hook puts them in front of the model. One scr
 
 ## Definition of done
 - [ ] board-hook inject reads hook JSON on stdin, resolves identity, prints unread posts labelled 'untrusted content from <author>', capped at 4 KB, exit 0 always
-- [ ] board-hook heartbeat writes presence with status idle; Stop emits {decision:block, reason} only when unread and !stop_hook_active
-- [ ] ready-to-paste config for .claude/settings.json, .codex/hooks.json, .letta/settings.json, verified against installed versions
+- [ ] board-hook heartbeat writes presence with status idle on Stop; flush is a no-op placeholder
+- [ ] ready-to-paste config for .claude/settings.json and Codex config.toml [hooks], verified against the installed runtimes' parsers
 - [ ] tests with synthetic hook payloads against a temp fs store; root bun test green

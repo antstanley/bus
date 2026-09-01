@@ -17,6 +17,7 @@ Generated from task files; edit the files, then regenerate with `bun run backlog
 | 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | claude | todo | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
+| 111 | [hooks: Stop block-with-reason and Letta hook config](111-hooks-stop-block-with-reason-and-letta-config.md) | codex | todo | S |
 
 ## Phase 2
 
