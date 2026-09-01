@@ -1,0 +1,78 @@
+# Backlog index
+
+Generated from task files; edit the files, then regenerate with `bun run backlog:index` (todo) or by hand.
+
+
+## Phase 1
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 101 | [hooks: turn-boundary injection for Claude, Codex, Letta](101-hooks-turn-boundary-injection-for-claude-codex-l.md) | codex | in-progress | M |
+| 102 | [mcp: board as an MCP server (stdio)](102-mcp-board-as-an-mcp-server-stdio.md) | letta | in-progress | M |
+| 103 | [cli: review fixes](103-cli-review-fixes.md) | codex | todo | S |
+| 104 | [install: `board install <runtime>` idempotent config writer](104-install-board-install-runtime-idempotent-config-.md) | codex | todo | S |
+| 105 | [presence: delivery targets](105-presence-delivery-targets.md) | letta | todo | S |
+| 106 | [wake daemon: deliver new posts to idle sessions](106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | todo | M |
+| 107 | [letta mod: board tools and turn_start injection](107-letta-mod-board-tools-and-turn-start-injection.md) | letta | todo | M |
+| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | claude | todo | S |
+| 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
+| 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
+
+## Phase 2
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 201 | [core: envelope v2 fields](201-core-envelope-v2-fields.md) | claude | todo | M |
+| 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | claude | todo | S |
+| 203 | [task lifecycle folded from status posts](203-task-lifecycle-folded-from-status-posts.md) | letta | todo | M |
+| 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
+| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
+| 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
+| 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | claude | todo | S |
+
+## Phase 3
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 301 | [identity: keys, did:key ids, keystore](301-identity-keys-did-key-ids-keystore.md) | claude | todo | M |
+| 302 | [sign and verify posts](302-sign-and-verify-posts.md) | claude | todo | M |
+| 303 | [key registry with pre-rotation and TOFU](303-key-registry-with-pre-rotation-and-tofu.md) | letta | todo | M |
+| 304 | [per-board requireSig policy](304-per-board-requiresig-policy.md) | claude | todo | S |
+| 305 | [rate limits and audit view](305-rate-limits-and-audit-view.md) | codex | todo | S |
+| 306 | [private boards via HPKE-wrapped board keys](306-private-boards-via-hpke-wrapped-board-keys.md) | letta | todo | L |
+| 307 | [red-team fixture and injection test](307-red-team-fixture-and-injection-test.md) | codex | todo | S |
+
+## Phase 4
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | claude | todo | L |
+| 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | claude | todo | S |
+| 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
+| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | codex | todo | S |
+| 405 | [day snapshots, compaction, retention](405-day-snapshots-compaction-retention.md) | letta | todo | M |
+| 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
+| 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | codex | todo | M |
+| 408 | [load and cost benchmarks](408-load-and-cost-benchmarks.md) | claude | todo | S |
+
+## Phase 5
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 501 | [A2A gateway](501-a2a-gateway.md) | unassigned | todo | L |
+| 502 | [MCP streamable-HTTP transport and subscriptions/listen](502-mcp-streamable-http-transport-and-subscriptions-.md) | letta | todo | M |
+| 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | codex | todo | M |
+| 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
+| 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
+| 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
+
+## Phase 6
+
+| id | task | owner | status | est |
+|----|------|-------|--------|-----|
+| 601 | [CI: GitHub Actions with live S3](601-ci-github-actions-with-live-s3.md) | codex | todo | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | todo | S |
+| 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
+| 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
+| 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |
+| 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |

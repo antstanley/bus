@@ -198,6 +198,9 @@ export class Board {
       const { cursor: c } = await this.since(undefined, { limit: DEFAULT_LIST_LIMIT });
       cursor = c;
       for await (const p of this.reconcile(lookback)) seen.add(p.id);
+    } else {
+      // Resume: everything at or before the cursor was already delivered; reconcile must not replay it.
+      for await (const p of this.reconcile(lookback)) if (this.keyFor(p.id) <= cursor) seen.add(p.id);
     }
     let token: string | undefined;
     if (this.store.changes) token = (await this.store.changes()).token;

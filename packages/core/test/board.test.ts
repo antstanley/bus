@@ -94,6 +94,24 @@ describe("Board", () => {
     expect(got.sort()).toEqual(["late", "new"]);
   });
 
+  it("watch resumed from a cursor does not replay history on reconcile", async () => {
+    const store = new MemoryStore();
+    const c = clock(Date.UTC(2026, 8, 2, 12, 0, 0));
+    const writer = new Board(store, { board: "g", author: "codex", now: c.now });
+    const reader = new Board(store, { board: "g", author: "claude", now: c.now });
+    const h = await writer.post({ body: "history" });
+    const got: string[] = [];
+    const ac = new AbortController();
+    const done = reader.watch((p) => { got.push(p.body); }, { cursor: reader.keyFor(h.id), intervalMs: 5, reconcileEvery: 2, signal: ac.signal });
+    await new Promise((r) => setTimeout(r, 15));
+    c.tick(1000);
+    await writer.post({ body: "new" });
+    await new Promise((r) => setTimeout(r, 60));
+    ac.abort();
+    await done;
+    expect(got).toEqual(["new"]);
+  });
+
   it("board events fold into info()", async () => {
     const b = new Board(new MemoryStore(), { board: "g", author: "claude" });
     await b.emit("create", { title: "General" });
