@@ -1,4 +1,5 @@
 import {
+  assertName,
   canonicalize,
   decoder,
   isUlid,
@@ -11,6 +12,9 @@ export const PRESENCE_VERSION = 1 as const;
 
 export class InvalidPresenceError extends Error {
   override name = "InvalidPresenceError";
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+  }
 }
 
 export interface HeartbeatOptions {
@@ -46,7 +50,13 @@ export interface WhoOptions {
 
 /** Write this session's owner-only heartbeat file. */
 export async function heartbeat(store: Store, opts: HeartbeatOptions): Promise<PresenceRecord> {
-  if (!isUlid(opts.instance)) throw new InvalidPresenceError("instance is not a ulid");
+  try {
+    assertName(opts.name, "agent");
+    if (!isUlid(opts.instance)) throw new Error("instance is not a ulid");
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : "invalid presence identity";
+    throw new InvalidPresenceError(message, { cause });
+  }
   for (const [field, value] of [["status", opts.status], ["tool", opts.tool], ["host", opts.host]] as const) {
     if (value !== undefined && typeof value !== "string") throw new InvalidPresenceError(`${field} is not a string`);
   }
@@ -74,18 +84,36 @@ export async function who(store: Store, opts: WhoOptions): Promise<Presence[]> {
   }
   const now = (opts.now ?? Date.now)();
   const result: Presence[] = [];
+  let batch: string[] = [];
 
   for await (const key of listAll(store, keys.presencePrefix())) {
-    const path = presencePath(key);
-    if (!path) continue;
-    const bytes = await store.get(key);
-    if (!bytes) continue;
-    const record = parsePresence(bytes, path.name, path.instance);
-    if (!record) continue;
-    result.push({ ...record, online: now - Date.parse(record.ts) <= opts.maxAgeMs });
+    batch.push(key);
+    if (batch.length === 8) {
+      result.push(...await readBatch(store, batch, now, opts.maxAgeMs));
+      batch = [];
+    }
   }
+  if (batch.length) result.push(...await readBatch(store, batch, now, opts.maxAgeMs));
 
-  return result.sort((a, b) => a.name.localeCompare(b.name) || a.instance.localeCompare(b.instance));
+  return result.sort((a, b) => compare(a.name, b.name) || compare(a.instance, b.instance));
+}
+
+async function readBatch(store: Store, batch: string[], now: number, maxAgeMs: number): Promise<Presence[]> {
+  const records = await Promise.all(batch.map(async (key): Promise<Presence | null> => {
+    const path = presencePath(key);
+    if (!path) return null;
+    try {
+      const bytes = await store.get(key);
+      if (!bytes) return null;
+      const record = parsePresence(bytes, path.name, path.instance);
+      return record ? { ...record, online: now - Date.parse(record.ts) <= maxAgeMs } : null;
+    } catch {
+      // Presence is advisory and best-effort. A deleted object or one failed
+      // remote read must not hide every other agent.
+      return null;
+    }
+  }));
+  return records.filter((record): record is Presence => record !== null);
 }
 
 function presencePath(key: string): { name: string; instance: string } | null {
@@ -126,4 +154,8 @@ function parsePresence(bytes: Uint8Array, pathName: string, pathInstance: string
   if (typeof p.tool === "string") record.tool = p.tool;
   if (typeof p.host === "string") record.host = p.host;
   return record;
+}
+
+function compare(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
 }
