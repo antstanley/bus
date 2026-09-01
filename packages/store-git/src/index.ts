@@ -216,7 +216,7 @@ export class GitStore implements Store {
       const current = await this.git(["remote", "get-url", "origin"], [0, 2]);
       if (current.exitCode !== 0) await this.git(["remote", "add", "origin", this.remote]);
       else if (current.stdout.trim() !== this.remote) {
-        throw new Error(`refusing to replace existing origin ${JSON.stringify(current.stdout.trim())} with ${JSON.stringify(this.remote)}`);
+        throw new Error(`refusing to replace existing origin ${JSON.stringify(redactUrlUserinfo(current.stdout.trim()))} with ${JSON.stringify(redactUrlUserinfo(this.remote))}`);
       }
     }
   }
@@ -359,6 +359,10 @@ export class GitStore implements Store {
     if (!allowedExitCodes.includes(exitCode)) throw new GitCommandError(args, exitCode, stderr);
     return { stdout, stderr, exitCode };
   }
+}
+
+function redactUrlUserinfo(value: string): string {
+  return value.replace(/([a-z][a-z0-9+.-]*:\/\/)([^\s/@]+)@/gi, "$1");
 }
 
 interface GitResult {

@@ -128,10 +128,15 @@ describe("GitStore", () => {
     const managedDir = await tempPath("managed");
     const managed = new GitStore({ dir: managedDir, branch: "main" });
     await managed.sync();
-    await git(managedDir, ["remote", "add", "origin", "file:///first.git"]);
-    const mismatch = new GitStore({ dir: managedDir, branch: "main", remote: "file:///second.git" });
-    await expect(mismatch.get("object")).rejects.toThrow("refusing to replace existing origin");
-    expect((await git(managedDir, ["remote", "get-url", "origin"])).trim()).toBe("file:///first.git");
+    const existingRemote = "https://alice:old-secret@example.test/first.git";
+    await git(managedDir, ["remote", "add", "origin", existingRemote]);
+    const mismatch = new GitStore({ dir: managedDir, branch: "main", remote: "https://bob:new-secret@example.test/second.git" });
+    const error = await mismatch.get("object").catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("refusing to replace existing origin");
+    expect((error as Error).message).not.toContain("old-secret");
+    expect((error as Error).message).not.toContain("new-secret");
+    expect((await git(managedDir, ["remote", "get-url", "origin"])).trim()).toBe(existingRemote);
   });
 
   it("ignores ambient repository-routing environment variables", async () => {
