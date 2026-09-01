@@ -21,6 +21,9 @@ Generated from task files; edit the files, then regenerate with `bun run backlog
 | 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | todo | M |
 | 113 | [OpenCode adapter: plugin, install, wake via prompt_async](113-opencode-adapter-plugin-install-and-wake.md) | codex | todo | M |
 | 114 | [Pi adapter: extension, install, poll-driven wake](114-pi-adapter-extension-install-and-poll-wake.md) | codex | todo | M |
+| 115 | [security: core post validation hardening](115-security-core-post-validation-hardening.md) | claude | in-progress | S |
+| 116 | [security: mcp/index/s3 follow-ups](116-security-mcp-index-s3-follow-ups.md) | letta | todo | S |
+| 117 | [security: hooks/install/store-fs follow-ups](117-security-hooks-install-store-fs-follow-ups.md) | codex | todo | S |
 
 ## Phase 2
 

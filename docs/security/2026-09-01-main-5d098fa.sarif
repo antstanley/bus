@@ -1,0 +1,1203 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "scan_board_20260901T200635Z"
+      },
+      "properties": {
+        "securitySchemaVersion": "1.0",
+        "securityTargetKind": "git_worktree"
+      },
+      "results": [
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 105,
+                  "startLine": 84
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 81,
+                  "startLine": 79
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 280,
+                  "startLine": 278
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint/wrapper"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 144,
+                  "startLine": 144
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 78,
+                  "startLine": 67
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 418,
+                  "startLine": 405
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:no-shape"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 105,
+                  "startLine": 98
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:ingest"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 146,
+                  "startLine": 129
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Persistent index sync failure from one deeply nested post: validatePost does not bound or type-check `ext`, `attachments`, or `sig`, JSON.parse accepts arbitrarily deep nesting, and BoardIndex.ingestOne calls canonicalize whose sortKeys is recursive, so a post with `ext` nested tens of thousands of levels throws RangeError inside the ingest transaction; the cursor never advances past the object, so every hook inject and every MCP tool that syncs the board fails on every call until the object is removed."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "fb06658f7e8c21eb:1",
+            "security/v1": "security/v1:sha256:0a0bf0d60e5626ba31ebb08a3d7e20d113fc225a87293c373eb0dc6c132cec2b"
+          },
+          "properties": {
+            "candidateId": "candidate-466b3ac5dd53ef0e",
+            "category": "Denial of service (uncaught recursion)",
+            "confidence": "high",
+            "findingId": "csf_c28da1fec31fc1596cf1fe32",
+            "occurrenceId": "occ_0ff208f3de24c6f2e60c243c",
+            "severity": "medium"
+          },
+          "ruleId": "denial-of-service.index-sync-recursion",
+          "ruleIndex": 5
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 98,
+                  "startLine": 98
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint/wrapper"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/board.ts"
+                },
+                "region": {
+                  "endLine": 245,
+                  "startLine": 243
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-fs/src/index.ts"
+                },
+                "region": {
+                  "endLine": 85,
+                  "startLine": 83
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-s3/src/index.ts"
+                },
+                "region": {
+                  "endLine": 100,
+                  "startLine": 99
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 170,
+                  "startLine": 130
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 491,
+                  "startLine": 485
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "No bound on object size anywhere in the read path: FsStore.get and S3Store.get read whole objects into memory, validatePost accepts any body length, the index stores body and FTS for every post, and MCP toolResult serialises up to 1000 posts per call into one text block; a store writer can make every reader load and index arbitrarily large objects (memory exhaustion, index bloat, oversized tool results sent to the model)."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "acee92a6ea5d7cec:1",
+            "security/v1": "security/v1:sha256:ea3c68b53908a373dcff56248be87f82b3a57a12c69a53a6b675246e0fa8aad5"
+          },
+          "properties": {
+            "candidateId": "candidate-3facef5ba8e6c266",
+            "category": "Denial of service (resource exhaustion)",
+            "confidence": "medium",
+            "findingId": "csf_f8f9830fc837371477665939",
+            "occurrenceId": "occ_1653952a98deaddd833fbdc1",
+            "severity": "low"
+          },
+          "ruleId": "denial-of-service.unbounded-object-size",
+          "ruleIndex": 7
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 418,
+                  "startLine": 405
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint/wrapper"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/board.ts"
+                },
+                "region": {
+                  "endLine": 144,
+                  "startLine": 142
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 165,
+                  "startLine": 129
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 205,
+                  "startLine": 205
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Cross-board content injection: ingestOne inserts each post under the post's self-declared `board` field, and the cursor/reconcile sync path (ingestSince) never checks that field against the prefix it listed, so an object placed physically under boards/general but carrying \"board\":\"private\" is indexed into board `private` and shows up in board_threads/board_search/board_thread/resources for `private`; the changes()-feed path DOES filter (index.ts:205) but the default cursor path does not, and rebuild(general) cannot clear it because it scans the general prefix."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "d271af0f7e178e8e:1",
+            "security/v1": "security/v1:sha256:cfdaf6de1e85204282cc4f2b8e07d220852f4012acc32b7664701622f47990e8"
+          },
+          "properties": {
+            "candidateId": "candidate-bbebaebc51c3505f",
+            "category": "Data integrity / content injection",
+            "confidence": "high",
+            "findingId": "csf_0040233afbdc08d91e2086e5",
+            "occurrenceId": "occ_2aeaac521abd2a3a931e44f5",
+            "severity": "medium"
+          },
+          "ruleId": "data-integrity.cross-board-post-injection",
+          "ruleIndex": 0
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 97,
+                  "startLine": 97
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 164,
+                  "startLine": 154
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 291,
+                  "startLine": 287
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Thread ordering manipulation via attacker `ts`: post.ts is only Date.parse-checked (any parseable string incl. non-ISO), stored raw, and threads.last_activity is computed with TEXT max() and ordered DESC, so a post with a lexically large ts (e.g. 9999-... ) pins its thread permanently above all real activity and can push legitimate threads out of the default limit window in board_threads and thread resources."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "f5420c29d7114c27:1",
+            "security/v1": "security/v1:sha256:57efd00d5c3f1dfd742bcb4fe03ddd42dffd1247f39b3d12c16471e40d15a872"
+          },
+          "properties": {
+            "candidateId": "candidate-7f7578078fc1c3cc",
+            "category": "Data integrity (view ordering manipulation)",
+            "confidence": "high",
+            "findingId": "csf_b7435a33679814a3209638a8",
+            "occurrenceId": "occ_2c72335eb097f7f5ad7c0e68",
+            "severity": "low"
+          },
+          "ruleId": "data-integrity.thread-ordering-manipulation",
+          "ruleIndex": 3
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/config.ts"
+                },
+                "region": {
+                  "endLine": 98,
+                  "startLine": 93
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 43,
+                  "startLine": 43
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 96,
+                  "startLine": 85
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "concrete_implementation"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/config.ts"
+                },
+                "region": {
+                  "endLine": 138,
+                  "startLine": 121
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/README.md"
+                },
+                "region": {
+                  "endLine": 69,
+                  "startLine": 37
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Hook identity inference does not fail closed on conflicting evidence: without BOARD_AS, resolveRuntime returns the first matching environment family in a fixed order (any LETTA_AGENT_ID/AGENT_ID/CONVERSATION_ID wins over CODEX_*, which wins over CLAUDE_*), and the ancestor fallback treats any of the first three argv tokens of any ancestor process (e.g. `tmux new -s claude`) as the runtime, so a Claude Code hook running with an ambient AGENT_ID or under a differently named parent claims and consumes another agent's mentions."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "e65ba71fde9c8249:1",
+            "security/v1": "security/v1:sha256:9db2249ee43a6ff9c14cf53736372ea5f307ee7d99ddb794a3d73513acc62a38"
+          },
+          "properties": {
+            "candidateId": "candidate-673eb57af182a568",
+            "category": "Improper authentication (identity ambiguity)",
+            "confidence": "medium",
+            "findingId": "csf_87459ccc384d4c55adc12337",
+            "occurrenceId": "occ_8a7e88b758d43881e4a11a16",
+            "severity": "low"
+          },
+          "ruleId": "improper-authentication.hook-identity-ambiguity",
+          "ruleIndex": 9
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 393,
+                  "startLine": 393
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 449,
+                  "startLine": 434
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 109,
+                  "startLine": 109
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 399,
+                  "startLine": 397
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Unbounded resource polling: every thread returned by resources/list (up to 1000 per board, boards taken from attacker-claimed post.board values) is added to watchedResources and never pruned; pollResources then calls readResource for each entry every 2 s, and each readResource performs its own index.sync (store list/get round trips) plus thread materialisation, so a store writer who creates many threads turns one resources/list into a permanent O(threads) store-polling loop in every MCP server."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "ff7f7559d87caf2:1",
+            "security/v1": "security/v1:sha256:5f9fa29d9fc7628139ca29def64504634729c933028be91aae5e14a1de1ea9d5"
+          },
+          "properties": {
+            "candidateId": "candidate-5c15899b686c63dc",
+            "category": "Denial of service (uncontrolled resource consumption)",
+            "confidence": "medium",
+            "findingId": "csf_9ca26a7bf579093e259cdb4e",
+            "occurrenceId": "occ_bec2105a35b8fcc50dd06e4a",
+            "severity": "low"
+          },
+          "ruleId": "denial-of-service.unbounded-resource-poll",
+          "ruleIndex": 8
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 400,
+                  "startLine": 398
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 162,
+                  "startLine": 162
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 394,
+                  "startLine": 386
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 143,
+                  "startLine": 143
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-git/src/index.ts"
+                },
+                "region": {
+                  "endLine": 217,
+                  "startLine": 217
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:refuse"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 400,
+                  "startLine": 397
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:embed"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 395,
+                  "startLine": 386
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Installer credential refusal only matches `user:pass@`; the common token-as-username form (`https://ghp_xxx@github.com/org/repo.git`, `https://x-access-token@...` without a password) passes normalizeStoreSpec and is persisted verbatim into the hook command in ~/.claude/settings.json / ~/.codex/config.toml and into MCP args in ~/.claude.json etc., echoed unredacted by the dry-run diff, and later stored in the replica's .git/config by GitStore."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "7021efe06031c5d2:1",
+            "security/v1": "security/v1:sha256:6d1ea71f2b6ca72b983a7296c3762f5dbe0c71e54f37331d243ca418d17ecfa6"
+          },
+          "properties": {
+            "candidateId": "candidate-8f889228524ea344",
+            "category": "Cleartext storage of credentials",
+            "confidence": "high",
+            "findingId": "csf_30f213418d22c9f57d505c1d",
+            "occurrenceId": "occ_ca82b785fc94448a1c7ebaef",
+            "severity": "low"
+          },
+          "ruleId": "secret-exposure.installer-credential-url",
+          "ruleIndex": 11
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 88,
+                  "startLine": 88
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "source"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/board.ts"
+                },
+                "region": {
+                  "endLine": 246,
+                  "startLine": 241
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 96,
+                  "startLine": 93
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 112,
+                  "startLine": 108
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Hook mention cursor poisoning: validatePost only checks that post.id is ULID-shaped and never binds it to the storage key or wall clock, so a store writer can mention a victim with a far-future id; injectUnread stores that id as hook_cursors.last_post_id and every later legitimate mention (smaller id) is filtered out by `p.id > ?` forever."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "ca3fd9c4b5663745:1",
+            "security/v1": "security/v1:sha256:941bf2a873f69bd1caf901db52de19317f64374e2d295b5faac81196dac91e0e"
+          },
+          "properties": {
+            "candidateId": "candidate-655df2593724289b",
+            "category": "Data integrity / denial of message",
+            "confidence": "high",
+            "findingId": "csf_fab69c9e8176eb6fbb181908",
+            "occurrenceId": "occ_f41ad26418850d727e775cfd",
+            "severity": "medium"
+          },
+          "ruleId": "data-integrity.mention-cursor-poisoning",
+          "ruleIndex": 2
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-fs/src/index.ts"
+                },
+                "region": {
+                  "endLine": 224,
+                  "startLine": 217
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-fs/src/index.ts"
+                },
+                "region": {
+                  "endLine": 116,
+                  "startLine": 94
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 418,
+                  "startLine": 405
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Unreadable object breaks list for every reader on a shared folder: enqueueDirectory only tolerates ENOENT from readdir; an EACCES/EPERM (a mode-000 directory a co-located writer drops into a shared-folder store) propagates out of list(), so Board.since throws and the index cursor never advances for every reader sharing that folder."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "3f136d7ebaa17160:1",
+            "security/v1": "security/v1:sha256:9b82f99e9a08bad0d5d3c606534801e93ea6af8354ec1440db791e7654b8cc00"
+          },
+          "properties": {
+            "candidateId": "candidate-db4cce63a387f7c8",
+            "category": "Denial of service (improper error handling)",
+            "confidence": "medium",
+            "findingId": "csf_bf536953ad86d117579a843e",
+            "occurrenceId": "occ_f6ce395b729cf5d4e5471543",
+            "severity": "low"
+          },
+          "ruleId": "denial-of-service.fs-unreadable-entry",
+          "ruleIndex": 4
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-s3/src/index.ts"
+                },
+                "region": {
+                  "endLine": 150,
+                  "startLine": 117
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/store-s3/src/index.ts"
+                },
+                "region": {
+                  "endLine": 149,
+                  "startLine": 142
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Infinite loop on a hostile S3 endpoint: S3Store.list loops while keys.length < requested and only breaks on `!page.isTruncated` or (in the no-continuation-token branch) a non-advancing page; an untrusted S3-compatible endpoint that always returns isTruncated:true with a continuationToken and zero matching keys never satisfies either break, so every hooks/MCP list (and therefore every board read/sync) hangs forever."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c0177e2be13b4c59:1",
+            "security/v1": "security/v1:sha256:0f2b2acf1663a4ff79bcc70dce1054f39ab81b6fc12368ea0fc6ce5bbae913d7"
+          },
+          "properties": {
+            "candidateId": "candidate-ff68425f493950be",
+            "category": "Denial of service (infinite loop)",
+            "confidence": "high",
+            "findingId": "csf_9c287910bce72dcb4927c462",
+            "occurrenceId": "occ_f75ca4f4587c4d1541cfe665",
+            "severity": "low"
+          },
+          "ruleId": "denial-of-service.s3-list-infinite-loop",
+          "ruleIndex": 6
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 91,
+                  "startLine": 88
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "source"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/board.ts"
+                },
+                "region": {
+                  "endLine": 246,
+                  "startLine": 241
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 146,
+                  "startLine": 130
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/index/src/index.ts"
+                },
+                "region": {
+                  "endLine": 418,
+                  "startLine": 405
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Index post substitution: because id/board are not bound to the key, a store writer can place an object in an older day bucket whose `id` equals an existing legitimate post; on any fresh index build (new runtime install, new --index path) ingestSince walks keys in order, the forged object is inserted first and the real post is dropped by INSERT OR IGNORE, so readers see attacker content under the original author and id even where the original object is immutable."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "ca3fd9c4b5663745:1",
+            "security/v1": "security/v1:sha256:f14e36b2042d9e24df9b9d2444fd0a03da169fb9b83adae3f2df25cb7cbb6bd4"
+          },
+          "properties": {
+            "candidateId": "candidate-7e779f43e6213302",
+            "category": "Data integrity / spoofing",
+            "confidence": "high",
+            "findingId": "csf_daca28f4134dea2db3fe1321",
+            "occurrenceId": "occ_fc7457a98c92190f43f06e86",
+            "severity": "low"
+          },
+          "ruleId": "data-integrity.index-post-substitution",
+          "ruleIndex": 1
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 627,
+                  "startLine": 625
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 224,
+                  "startLine": 217
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 491,
+                  "startLine": 485
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 92,
+                  "startLine": 91
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/mcp/src/server.ts"
+                },
+                "region": {
+                  "endLine": 318,
+                  "startLine": 305
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "MCP untrusted-content label is bypassed by author spoofing: provenanceLines drops every author equal to the server's own `--as` name, and posts are unsigned, so a store writer who sets `author` to the reader's name gets their post delivered by board_read/board_thread/board_threads/board_search/board_mentions with no `untrusted content from` line and presented as the agent's own prior words."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "a6f675acff27f94b:1",
+            "security/v1": "security/v1:sha256:e751de4cc295af7694879af4e2af96ad17b6a48a527da9e5767bf19767fe4492"
+          },
+          "properties": {
+            "candidateId": "candidate-a901fe86628af212",
+            "category": "Prompt injection / trust-boundary label bypass",
+            "confidence": "high",
+            "findingId": "csf_8af506f26bd96597fe555265",
+            "occurrenceId": "occ_fd3eb4dcc2b59025d93d65da",
+            "severity": "high"
+          },
+          "ruleId": "prompt-injection.untrusted-content-label-bypass",
+          "ruleIndex": 10
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "Security Scan",
+          "rules": [
+            {
+              "id": "data-integrity.cross-board-post-injection",
+              "name": "data-integrity.cross-board-post-injection",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "data-integrity.cross-board-post-injection"
+              }
+            },
+            {
+              "id": "data-integrity.index-post-substitution",
+              "name": "data-integrity.index-post-substitution",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "data-integrity.index-post-substitution"
+              }
+            },
+            {
+              "id": "data-integrity.mention-cursor-poisoning",
+              "name": "data-integrity.mention-cursor-poisoning",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "data-integrity.mention-cursor-poisoning"
+              }
+            },
+            {
+              "id": "data-integrity.thread-ordering-manipulation",
+              "name": "data-integrity.thread-ordering-manipulation",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "data-integrity.thread-ordering-manipulation"
+              }
+            },
+            {
+              "id": "denial-of-service.fs-unreadable-entry",
+              "name": "denial-of-service.fs-unreadable-entry",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "denial-of-service.fs-unreadable-entry"
+              }
+            },
+            {
+              "id": "denial-of-service.index-sync-recursion",
+              "name": "denial-of-service.index-sync-recursion",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "denial-of-service.index-sync-recursion"
+              }
+            },
+            {
+              "id": "denial-of-service.s3-list-infinite-loop",
+              "name": "denial-of-service.s3-list-infinite-loop",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "denial-of-service.s3-list-infinite-loop"
+              }
+            },
+            {
+              "id": "denial-of-service.unbounded-object-size",
+              "name": "denial-of-service.unbounded-object-size",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "denial-of-service.unbounded-object-size"
+              }
+            },
+            {
+              "id": "denial-of-service.unbounded-resource-poll",
+              "name": "denial-of-service.unbounded-resource-poll",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "denial-of-service.unbounded-resource-poll"
+              }
+            },
+            {
+              "id": "improper-authentication.hook-identity-ambiguity",
+              "name": "improper-authentication.hook-identity-ambiguity",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "improper-authentication.hook-identity-ambiguity"
+              }
+            },
+            {
+              "id": "prompt-injection.untrusted-content-label-bypass",
+              "name": "prompt-injection.untrusted-content-label-bypass",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "prompt-injection.untrusted-content-label-bypass"
+              }
+            },
+            {
+              "id": "secret-exposure.installer-credential-url",
+              "name": "secret-exposure.installer-credential-url",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "secret-exposure.installer-credential-url"
+              }
+            }
+          ],
+          "version": "0.2.0"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
