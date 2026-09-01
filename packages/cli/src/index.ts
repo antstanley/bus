@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { Board, type NewPost, type Post, type Store, type WatchOptions } from "@board/core";
+import { Board, keys, type NewPost, type Post, type Store, type WatchOptions } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, who as listPresence } from "@board/presence";
@@ -21,6 +21,10 @@ export interface CliDependencies {
 
 export class CliError extends Error {
   override name = "CliError";
+}
+
+export class DegradedReplicationError extends Error {
+  override name = "DegradedReplicationError";
 }
 
 /** Run one board CLI command. Throws CliError for usage errors. */
@@ -84,11 +88,12 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
     }
     case "watch": {
       const intervalMs = numberFlag(parsed.flags, "interval", 2_000, 1);
-      const cursor = parsed.flags.get("after");
+      const requestedCursor = parsed.flags.get("after");
+      const cursor = requestedCursor ?? await latestCursor(board);
       const watchOptions: WatchOptions = { intervalMs };
-      if (cursor !== undefined) watchOptions.cursor = cursor;
+      watchOptions.cursor = cursor;
       if (deps.signal !== undefined) watchOptions.signal = deps.signal;
-      let finalCursor: string | null = cursor ?? null;
+      let finalCursor = cursor;
       const beat = () => heartbeat(store, {
         name: board.author,
         instance: board.instance,
@@ -112,7 +117,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
   }
 
   if (store instanceof GitStore && store.lastSyncError !== null) {
-    throw new Error(`warning: local command succeeded but Git replication failed: ${sanitizeSecrets(store.lastSyncError.message)}`);
+    throw new DegradedReplicationError(`warning: local command succeeded but Git replication failed: ${sanitizeSecrets(store.lastSyncError.message)}`);
   }
 }
 
@@ -197,6 +202,10 @@ function parseArgs(argv: string[]): ParsedArgs {
       options = false;
       continue;
     }
+    if (options && arg === "-h") {
+      flags.set("help", "true");
+      continue;
+    }
     if (!options || !arg.startsWith("--")) {
       positionals.push(arg);
       continue;
@@ -219,7 +228,12 @@ function parseArgs(argv: string[]): ParsedArgs {
 
 async function newPost(parsed: ParsedArgs, reply: boolean, readStdin?: () => Promise<string>): Promise<NewPost> {
   let body = parsed.flags.get("body") ?? parsed.positionals.join(" ");
-  if (body === "-" || (!body && readStdin !== undefined)) body = await readStdin!();
+  if (body === "-") {
+    if (readStdin === undefined) throw new CliError("--body - requires piped stdin");
+    body = await readStdin();
+  } else if (!body && readStdin !== undefined) {
+    body = await readStdin();
+  }
   if (!body) throw new CliError(`${reply ? "reply" : "post"} requires --body or positional text`);
   const post: NewPost = { body };
   const title = parsed.flags.get("title");
@@ -229,6 +243,15 @@ async function newPost(parsed: ParsedArgs, reply: boolean, readStdin?: () => Pro
   const mentions = csvFlag(parsed.flags, "mentions");
   if (mentions) post.mentions = mentions;
   return post;
+}
+
+async function latestCursor(board: Board): Promise<string> {
+  let cursor = keys.postsPrefix(board.name);
+  for (;;) {
+    const page = await board.since(cursor);
+    cursor = page.cursor ?? cursor;
+    if (!page.truncated) return cursor;
+  }
 }
 
 function stdinReader(deps: CliDependencies): (() => Promise<string>) | undefined {
@@ -297,7 +320,7 @@ async function main(): Promise<void> {
 if (import.meta.main) {
   main().catch((error: unknown) => {
     console.error(sanitizeSecrets(error instanceof Error ? error.message : String(error)));
-    process.exitCode = error instanceof CliError ? 2 : 1;
+    process.exitCode = error instanceof CliError ? 2 : error instanceof DegradedReplicationError ? 3 : 1;
   });
 }
 

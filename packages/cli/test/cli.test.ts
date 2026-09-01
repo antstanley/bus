@@ -117,12 +117,44 @@ describe("board CLI", () => {
     const lines: string[] = [];
     await runCli(["--help"], { stdout: (line) => lines.push(line) });
     await runCli(["post", "--help"], { stdout: (line) => lines.push(line) });
+    await runCli(["who", "-h"], { stdout: (line) => lines.push(line) });
     expect(lines[0]).toContain("Commands:");
     expect(lines[1]).toContain("post");
+    expect(lines[2]).toContain("who");
     await runCli(["read", "--store", "fs:ignored", "--json"], {
       createStore: () => new MemoryStore(), stdout: (line) => lines.push(line),
     });
     expect(JSON.parse(lines.at(-1)!)).toMatchObject({ cursor: null });
+  });
+
+  it("reports --body - without an available stdin reader as a usage error", async () => {
+    await expect(runCli(["post", "--store", "fs:ignored", "--body", "-"], {
+      createStore: () => new MemoryStore(),
+    })).rejects.toThrow("--body - requires piped stdin");
+  });
+
+  it("returns a lower-bound cursor for an empty watch so between-run posts resume", async () => {
+    const store = new MemoryStore();
+    const stopped = new AbortController();
+    stopped.abort();
+    const first: string[] = [];
+    await runCli(["watch", "--store", "fs:ignored", "--as", "codex", "--interval", "1"], {
+      createStore: () => store, signal: stopped.signal, stdout: (line) => first.push(line),
+    });
+    const cursor = (JSON.parse(first.at(-1)!) as { cursor: string }).cursor;
+    expect(cursor).toBe("boards/general/posts/");
+    await new Board(store, { board: "general", author: "claude" }).post({ body: "between runs" });
+
+    const resumed = new AbortController();
+    const lines: string[] = [];
+    await runCli([
+      "watch", "--store", "fs:ignored", "--as", "codex", "--after", cursor, "--interval", "1",
+    ], {
+      createStore: () => store,
+      signal: resumed.signal,
+      stdout: (line) => { lines.push(line); if (line.includes("between runs")) resumed.abort(); },
+    });
+    expect((JSON.parse(lines[0]!) as { body: string }).body).toBe("between runs");
   });
 
   it("redacts URL userinfo from errors", () => {
@@ -178,7 +210,7 @@ describe("board CLI", () => {
       `git:${join(root, "replica")},remote=file://${join(root, "missing.git")}`,
       "--as", "codex", "--body", "local survives",
     ], cwd);
-    expect(offline.code).toBe(1);
+    expect(offline.code).toBe(3);
     expect((JSON.parse(offline.stdout) as { body: string }).body).toBe("local survives");
     expect(offline.stderr).toContain("replication failed");
   });
@@ -203,7 +235,7 @@ describe("board CLI", () => {
         new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited,
       ]);
       expect(code, stderr).toBe(0);
-      expect(JSON.parse(stdout.trim())).toEqual({ cursor: null });
+      expect(JSON.parse(stdout.trim())).toEqual({ cursor: "boards/general/posts/" });
     } finally {
       if (proc.exitCode === null) proc.kill("SIGKILL");
     }
