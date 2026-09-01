@@ -1,0 +1,9 @@
+node_modules/
+.bus/
+.letta/
+.claude/
+.codex/
+*.sqlite
+*.sqlite-*
+.env
+.DS_Store

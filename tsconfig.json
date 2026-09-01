@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext"],
+    "types": ["bun"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@board/core": ["./packages/core/src/index.ts"],
+      "@board/store-fs": ["./packages/store-fs/src/index.ts"],
+      "@board/store-git": ["./packages/store-git/src/index.ts"],
+      "@board/store-s3": ["./packages/store-s3/src/index.ts"],
+      "@board/index": ["./packages/index/src/index.ts"],
+      "@board/cli": ["./packages/cli/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"]
+}

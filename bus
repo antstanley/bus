@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+# bus — a file-based message bus for AI agents sharing this folder.
+#
+# Every agent (Claude Code, Codex, Letta, a human in a terminal...) can run
+# shell commands here, so the filesystem is the common channel. Messages are
+# files; delivery is an atomic rename; nothing needs a daemon.
+#
+#   ./bus help          full usage
+#   ./bus who           who is on the bus
+#   ./bus send <to> ..  send a message ("all" = broadcast)
+#   ./bus read          print + mark read everything in your inbox
+#   ./bus wait          block until something arrives
+#
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUS="$ROOT/.bus"
+AGENTS="$BUS/agents"
+INBOX="$BUS/inbox"
+LOG="$BUS/log.md"
+TMP="$BUS/tmp"
+
+die()  { printf 'bus: %s\n' "$*" >&2; exit 1; }
+now()  { date -u +%Y-%m-%dT%H:%M:%SZ; }
+init() { mkdir -p "$AGENTS" "$INBOX" "$TMP"; [ -e "$LOG" ] || printf '# bus log\n\n' > "$LOG"; }
+
+# ---------------------------------------------------------------- identity ---
+# Who is running this command? Resolution order:
+#   1. $BUS_ME (explicit name; PID from $BUS_PID or the agent environment)
+#   2. an ancestor process whose pid was recorded by `bus register`
+#   3. an ancestor process that is a known agent binary (claude/codex/letta/...)
+ME=""; ME_PID=""; ME_TOOL=""
+explicit_pid() {  # explicit_pid <agent-name>
+  local name="$1" upper var pid
+  # cmux exports the long-lived process for its active agent session. Use
+  # indirect expansion so the same logic works for Codex, Claude, Letta, etc.
+  upper=$(printf '%s' "$name" | tr '[:lower:]-' '[:upper:]_')
+  var="CMUX_${upper}_PID"
+  pid="${!var:-}"
+  if [[ "$pid" =~ ^[0-9]+$ ]] && [ "$pid" -gt 0 ]; then
+    printf '%s\n' "$pid"
+    return 0
+  fi
+  return 1
+}
+detect_me() {
+  if [ -n "${BUS_ME:-}" ]; then
+    ME="$BUS_ME"; ME_TOOL="env"
+    if [ -n "${BUS_PID:-}" ]; then
+      [[ "$BUS_PID" =~ ^[0-9]+$ ]] || die "BUS_PID must be a positive integer"
+      [ "$BUS_PID" -gt 0 ] || die "BUS_PID must be a positive integer"
+      ME_PID="$BUS_PID"
+    else
+      ME_PID=$(explicit_pid "$ME") || ME_PID="${PPID:-$$}"
+    fi
+    return 0
+  fi
+  local p=$$ cmd exe second f
+  while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+    for f in "$AGENTS"/*.json; do
+      [ -e "$f" ] || break
+      if grep -q "\"pid\": $p," "$f"; then
+        ME=$(sed -n 's/^  "name": "\([^"]*\)".*/\1/p' "$f"); ME_PID=$p
+        ME_TOOL=$(sed -n 's/^  "tool": "\([^"]*\)".*/\1/p' "$f"); return 0
+      fi
+    done
+    cmd=$(ps -o command= -p "$p" 2>/dev/null || true)
+    exe=$(basename "${cmd%% *}")
+    case "$exe" in
+      node|bun|deno|python|python3) second="${cmd#* }"; exe=$(basename "${second%% *}");;
+    esac
+    case "$exe" in
+      claude|codex|letta|gemini|aider|opencode|amp|cursor-agent|goose)
+        ME="$exe"; ME_PID="$p"; ME_TOOL="$exe"; return 0;;
+    esac
+    p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+  done
+  return 1
+}
+need_me() {
+  detect_me || die "cannot tell who you are. Run: BUS_ME=<name> ./bus ...  or  ./bus register -n <name>"
+}
+valid_name() { [[ "$1" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || die "bad name '$1' (use a-z 0-9 _ -)"; }
+
+alive() {
+  local err
+  err=$(kill -0 "$1" 2>&1) && return 0
+  # Sandboxes commonly deny signalling unrelated processes with EPERM. For
+  # signal 0 that still proves the PID exists; ESRCH/no-such-process does not.
+  case "$err" in
+    *"operation not permitted"*|*"Operation not permitted"*) return 0;;
+    *) return 1;;
+  esac
+}
+unread_count() { find "$INBOX/$1/new" -name '*.md' 2>/dev/null | wc -l | tr -d ' '; }
+field() { sed -n "s/^$2: //p" "$1" | head -1; }   # field <file> <key>
+
+# ---------------------------------------------------------------- commands ---
+cmd_register() {
+  local name="" desc=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -n|--name) name="$2"; shift 2;;
+      *) desc="${desc:+$desc }$1"; shift;;
+    esac
+  done
+  detect_me || true
+  name="${name:-$ME}"; [ -n "$name" ] || die "could not detect a name; use: ./bus register -n <name>"
+  valid_name "$name"
+  local pid="${ME_PID:-$$}" tool="${ME_TOOL:-unknown}"
+  mkdir -p "$INBOX/$name/new" "$INBOX/$name/read"
+  cat > "$AGENTS/$name.json" <<JSON
+{
+  "name": "$name",
+  "tool": "$tool",
+  "pid": $pid,
+  "cwd": "$ROOT",
+  "registered_at": "$(now)",
+  "description": "$(printf '%s' "$desc" | sed 's/"/\\"/g')"
+}
+JSON
+  printf 'registered %s (tool=%s pid=%s)\n' "$name" "$tool" "$pid"
+}
+
+cmd_whoami() { need_me; printf '%s\n' "$ME"; }
+
+cmd_who() {
+  detect_me || true
+  local f name tool pid desc state mark n
+  [ -n "$(ls -A "$AGENTS" 2>/dev/null)" ] || { echo "nobody registered yet (run: ./bus register)"; return; }
+  printf '%-10s %-8s %-7s %-7s %-6s %s\n' NAME TOOL PID STATE UNREAD DESCRIPTION
+  for f in "$AGENTS"/*.json; do
+    name=$(sed -n 's/^  "name": "\([^"]*\)".*/\1/p' "$f")
+    tool=$(sed -n 's/^  "tool": "\([^"]*\)".*/\1/p' "$f")
+    pid=$(sed -n 's/^  "pid": \([0-9]*\),.*/\1/p' "$f")
+    desc=$(sed -n 's/^  "description": "\(.*\)"$/\1/p' "$f")
+    state=dead; alive "$pid" && state=alive
+    n=$(unread_count "$name")
+    mark=""; [ "$name" = "$ME" ] && mark=" (you)"
+    printf '%-10s %-8s %-7s %-7s %-6s %s%s\n' "$name" "$tool" "$pid" "$state" "$n" "$desc" "$mark"
+  done
+}
+
+deliver() {  # deliver <to> <file>
+  mkdir -p "$INBOX/$1/new" "$INBOX/$1/read"
+  cp "$2" "$TMP/$(basename "$2").$1" && mv "$TMP/$(basename "$2").$1" "$INBOX/$1/new/$(basename "$2")"
+}
+
+cmd_send() {
+  need_me
+  local re="" to="" body=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --re) re="$2"; shift 2;;
+      -*) die "unknown flag $1";;
+      *) if [ -z "$to" ]; then to="$1"; shift; else break; fi;;
+    esac
+  done
+  [ -n "$to" ] || die "usage: bus send <to|all> [--re <id>] <message...>   (or pipe the body on stdin)"
+  if [ $# -gt 0 ]; then body="$*"; else body=$(cat); fi
+  [ -n "$body" ] || die "empty message"
+  local ts id file
+  ts=$(now); id="$(date -u +%Y%m%dT%H%M%SZ)-$ME-$(printf '%04x' "$RANDOM")"
+  file="$TMP/$id.md"
+  {
+    printf -- '---\nid: %s\nfrom: %s\nto: %s\nts: %s\nre: %s\n---\n' "$id" "$ME" "$to" "$ts" "$re"
+    printf '%s\n' "$body"
+  } > "$file"
+
+  local recipients=() f n
+  if [ "$to" = "all" ]; then
+    for f in "$AGENTS"/*.json; do
+      [ -e "$f" ] || break
+      n=$(sed -n 's/^  "name": "\([^"]*\)".*/\1/p' "$f")
+      [ "$n" != "$ME" ] && recipients+=("$n")
+    done
+    [ ${#recipients[@]} -gt 0 ] || die "broadcast: no other agents registered (see ./bus who)"
+  else
+    valid_name "$to"; recipients=("$to")
+  fi
+  for n in "${recipients[@]}"; do deliver "$n" "$file"; done
+  {
+    printf '### %s  %s -> %s  [%s]%s\n' "$ts" "$ME" "$to" "$id" "${re:+  (re: $re)}"
+    printf '%s\n\n' "$body"
+  } >> "$LOG"
+  rm -f "$file"
+  printf 'sent %s -> %s\n' "$id" "${recipients[*]}"
+}
+
+cmd_inbox() {
+  need_me
+  local f n=0
+  for f in "$INBOX/$ME/new"/*.md; do
+    [ -e "$f" ] || break
+    n=$((n+1))
+    printf '%s  from %-8s  %s\n' "$(field "$f" id)" "$(field "$f" from)" "$(sed -n '8p' "$f" | cut -c1-80)"
+  done
+  [ $n -gt 0 ] || echo "inbox empty ($ME)"
+}
+
+print_msg() {
+  printf '=== from %s  at %s  [%s]%s\n' "$(field "$1" from)" "$(field "$1" ts)" "$(field "$1" id)" \
+    "$( r=$(field "$1" re); [ -n "$r" ] && printf '  (re: %s)' "$r" )"
+  sed '1,7d' "$1"; echo
+}
+
+cmd_read() {   # read [id ...]    prints and marks read; default = all unread
+  need_me
+  local f n=0 ids=("$@")
+  if [ ${#ids[@]} -eq 0 ]; then
+    for f in "$INBOX/$ME/new"/*.md; do [ -e "$f" ] || break; ids+=("$(basename "$f" .md)"); done
+  fi
+  for id in "${ids[@]:-}"; do
+    [ -n "$id" ] || continue
+    f="$INBOX/$ME/new/$id.md"
+    [ -e "$f" ] || f="$INBOX/$ME/read/$id.md"
+    [ -e "$f" ] || { echo "no message $id" >&2; continue; }
+    print_msg "$f"; n=$((n+1))
+    [ "${f#*/new/}" != "$f" ] && mv "$f" "$INBOX/$ME/read/"
+  done
+  [ $n -gt 0 ] || echo "inbox empty ($ME)"
+}
+
+cmd_peek() { need_me; local f; for f in "$INBOX/$ME/new"/*.md; do [ -e "$f" ] || { echo "inbox empty ($ME)"; return; }; print_msg "$f"; done; }
+
+cmd_wait() {   # wait [-t seconds]   block until a message arrives, then read it
+  need_me
+  local t=300; [ "${1:-}" = "-t" ] && t="$2"
+  local end=$(( $(date +%s) + t ))
+  while [ "$(unread_count "$ME")" = "0" ]; do
+    [ "$(date +%s)" -lt "$end" ] || { echo "timeout after ${t}s, nothing arrived ($ME)"; return 2; }
+    sleep 1
+  done
+  cmd_read
+}
+
+cmd_log() {
+  case "${1:-}" in
+    -f) tail -n 40 -f "$LOG";;
+    -n) tail -n "$2" "$LOG";;
+    *)  cat "$LOG";;
+  esac
+}
+
+cmd_help() {
+cat <<'H'
+bus — file-based message bus for agents sharing this folder (data in ./.bus)
+
+  ./bus register [-n NAME] [description...]   join the bus (name auto-detected: claude/codex/letta)
+  ./bus who                                   list agents, liveness, unread counts
+  ./bus whoami                                print your detected name
+  ./bus send <to|all> [--re ID] <text...>     send (or pipe body on stdin); "all" broadcasts
+  ./bus inbox                                 list unread messages
+  ./bus read [ID...]                          print unread (or given) messages and mark them read
+  ./bus peek                                  print unread without marking
+  ./bus wait [-t SECONDS]                     block until a message arrives (default 300s), then read
+  ./bus log [-f | -n N]                       full transcript of everything sent
+
+Identity is detected from your parent process. Override with BUS_ME=name ./bus ...
+If needed outside a supported agent environment, also set BUS_PID to the
+long-lived agent or terminal PID used for liveness checks.
+H
+}
+
+init
+case "${1:-help}" in
+  register) shift; cmd_register "$@";;
+  who)      cmd_who;;
+  whoami)   cmd_whoami;;
+  send)     shift; cmd_send "$@";;
+  inbox)    cmd_inbox;;
+  read)     shift; cmd_read "$@";;
+  peek)     cmd_peek;;
+  wait)     shift; cmd_wait "$@";;
+  log)      shift; cmd_log "$@";;
+  help|-h|--help) cmd_help;;
+  *) die "unknown command '$1' (try ./bus help)";;
+esac
