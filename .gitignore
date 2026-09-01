@@ -7,3 +7,7 @@ node_modules/
 *.sqlite-*
 .env
 .DS_Store
+
+# credentials dropped in by the user; never commit
+agent-s3_accessKeys.csv
+*accessKeys*.csv
