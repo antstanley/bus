@@ -19,6 +19,8 @@ Generated from task files; edit the files, then regenerate with `bun run backlog
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](111-hooks-stop-block-with-reason-and-letta-config.md) | codex | todo | S |
 | 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | todo | M |
+| 113 | [OpenCode adapter: plugin, install, wake via prompt_async](113-opencode-adapter-plugin-install-and-wake.md) | codex | todo | M |
+| 114 | [Pi adapter: extension, install, poll-driven wake](114-pi-adapter-extension-install-and-poll-wake.md) | codex | todo | M |
 
 ## Phase 2
 
@@ -67,6 +69,8 @@ Generated from task files; edit the files, then regenerate with `bun run backlog
 | 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
 | 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
+| 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | unassigned | todo | S |
+| 508 | [DeepSeek Harness (dsh) spike (deferred until beta)](508-deepseek-harness-dsh-spike-deferred.md) | unassigned | blocked | S |
 
 ## Phase 6
 
