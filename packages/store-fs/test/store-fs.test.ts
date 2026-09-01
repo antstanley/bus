@@ -63,8 +63,9 @@ describe("FsStore", () => {
     await symlink(outside, join(root, "linked"));
     await symlink(join(outside, "secret"), join(root, "final"));
     const store = new FsStore(root);
-    await expect(store.get("linked/secret")).rejects.toBeInstanceOf(TypeError);
+    expect(await store.get("linked/secret")).toBeNull();
     await expect(store.put("linked/newfile", "escape")).rejects.toBeInstanceOf(TypeError);
+    await store.delete("linked/secret");
     expect(await store.get("final")).toBeNull();
     expect(await Bun.file(join(outside, "newfile")).exists()).toBe(false);
   });

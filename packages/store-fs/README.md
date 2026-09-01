@@ -18,3 +18,8 @@ special files are not exposed as Store objects.
 Keys map to filesystem names, so filesystem constraints still apply: a file
 and directory cannot share the same path (`k` and `k/x`), and case-insensitive
 volumes cannot distinguish keys such as `c/A` and `c/a`.
+
+On filesystems that do not support hard links (some exFAT, SMB, or FUSE
+mounts), conditional creation falls back to an exclusive open. That fallback
+still guarantees one winner but cannot hide a partially written target from a
+concurrent reader.

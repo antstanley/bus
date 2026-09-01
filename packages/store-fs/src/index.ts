@@ -72,7 +72,12 @@ export class FsStore implements Store {
 
   async get(key: string): Promise<Uint8Array | null> {
     const target = this.pathFor(key);
-    if ((await this.safeParent(key, false)) === null) return null;
+    try {
+      if ((await this.safeParent(key, false)) === null) return null;
+    } catch (error) {
+      if (error instanceof TypeError) return null;
+      throw error;
+    }
     let file;
     try {
       file = await open(target, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
@@ -112,7 +117,12 @@ export class FsStore implements Store {
 
   async delete(key: string): Promise<void> {
     const target = this.pathFor(key);
-    if ((await this.safeParent(key, false)) === null) return;
+    try {
+      if ((await this.safeParent(key, false)) === null) return;
+    } catch (error) {
+      if (error instanceof TypeError) return;
+      throw error;
+    }
     try {
       await unlink(target);
     } catch (error) {
