@@ -110,6 +110,23 @@ ULID last-writer-wins assumes tolerable clock skew; HLC is future work.
 ACLs against an untrusted shared store are advisory only unless encryption or
 a trust boundary is added later.
 
+### Read-side limits (task 115, 2026-09-01)
+
+Readers validate every object before trusting it, because the store is untrusted:
+
+| check | limit | on failure |
+|-------|-------|------------|
+| object size | 64 KiB | skipped |
+| JSON depth | 8 | skipped |
+| `ts` vs ULID timestamp | 5 min | skipped |
+| id in the future | 5 min past reader clock | skipped |
+| store key vs `keyFor(id, board)` | must match | skipped |
+
+"Skipped" means the reader ignores the object and its cursor still advances, so a
+forged object can never pin a cursor or stall ingest. `Board.get` returns null for
+such objects. Writers with clock skew beyond 5 minutes are not accepted; fix the
+clock (an HLC witness is planned in phase 4).
+
 ## Read side
 
 - `core` exposes `Board.post()`, `Board.reply()`, `Board.since(cursor)`,

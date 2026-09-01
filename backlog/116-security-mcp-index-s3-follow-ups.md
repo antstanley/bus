@@ -14,4 +14,6 @@ From docs/security/2026-09-01-main-5d098fa-scan.md.
 - [ ] MEDIUM #2 index.ts:405: cursor-sync ingestOne rejects posts whose board != the synced prefix (the changes path already does)
 - [ ] LOW #5 store-s3 index.ts:117: bound list pagination iterations against a hostile endpoint returning perpetual isTruncated
 - [ ] LOW #11 mcp server.ts:393: cap/prune the 2s poll set of watched resources
+- [ ] MEDIUM (self-scan) presence index.ts:89-109,132-155: who() skips objects > 64 KiB, caps status/tool/host fields, bounds records per call
+- [ ] MEDIUM (self-scan) index index.ts:148,296-305,372: cross-board thread collision; reply UPDATE includes board and thread() filters to the summary's board; regression tests for ordering and collision
 - [ ] tests for each
