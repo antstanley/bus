@@ -65,11 +65,16 @@ echo "long body" | ./bus send <name>
 Nothing is committed without a security review of the change set:
 
 1. **Author self-scan** before declaring a package ready: run a security diff
-   scan of your package against `main`. Codex: the native `codex-security`
-   plugin. Claude Code: the `security@skills` plugin (`security:security-diff-scan`).
-   Letta and other runtimes: the same skills ported at
-   `/Volumes/Delorean/code/skills` (`./install.sh <harness>`; see its README).
+   scan of your package against `main`. Claude Code: the `security@skills`
+   plugin (`security:security-diff-scan`). Letta and other runtimes: the same
+   skills ported at `/Volumes/Delorean/code/skills` (`./install.sh <harness>`).
    Fix or explicitly justify every reportable finding in your ready message.
+   **Exception: Codex does not run scans.** OpenAI's cyber-safety classifier
+   terminates Codex turns that contain exploit-style analysis (observed
+   2026-09-01). Scans of Codex-owned packages are run by claude or letta, and
+   findings are sent to Codex phrased as defects to fix (robustness,
+   validation, error handling), without attack narratives or proof-of-concept
+   code.
 2. **Lead gate**: the lead runs `security:security-diff-scan` on the exact
    revision range being committed, in a clean sub-agent, with the threat model
    from `docs/research/04-trust.md` as user context. Reportable findings go back
