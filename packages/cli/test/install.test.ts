@@ -473,8 +473,16 @@ export const Type = {
     await put(sensitivePath, `{"keep":true,"private_access_key":"${marker}"}`);
     const sensitive = await installRuntime({ ...options(sensitiveHome, "gemini"), dryRun: true });
     const sensitiveDiff = renderInstallDiff(sensitive.changes);
-    expect(sensitiveDiff).toContain("<redacted changed setting>");
+    expect(sensitiveDiff).toContain("/mcpServers");
     expect(sensitiveDiff).not.toContain(marker);
+
+    const unknownSecretHome = await fixture();
+    const unknownSecretPath = join(unknownSecretHome, ".gemini", "settings.json");
+    await put(unknownSecretPath, `{"keep":true,"widget_id":"${marker}"}`);
+    const unknownSecret = await installRuntime({ ...options(unknownSecretHome, "gemini"), dryRun: true });
+    const unknownSecretDiff = renderInstallDiff(unknownSecret.changes);
+    expect(unknownSecretDiff).toContain("/mcpServers");
+    expect(unknownSecretDiff).not.toContain(marker);
 
     const prettyHome = await fixture();
     const prettyPath = join(prettyHome, ".gemini", "settings.json");
@@ -495,8 +503,7 @@ export const Type = {
       await put(endpointPath, before);
       const endpoint = await installRuntime({ ...options(endpointHome, "gemini"), dryRun: true });
       const endpointDiff = renderInstallDiff(endpoint.changes);
-      expect(endpointDiff, style).toContain("https:");
-      expect(endpointDiff, style).toContain("<redacted>@example.test");
+      expect(endpointDiff, style).toContain("/mcpServers");
       expect(endpointDiff, style).not.toContain(marker);
     }
   });

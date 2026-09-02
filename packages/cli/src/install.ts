@@ -444,8 +444,65 @@ export function renderInstallDiff(changes: InstallChange[]): string {
     `--- ${displayText(path)}`,
     `+++ ${displayText(path)}`,
     "@@ changed lines (unrelated sensitive values redacted) @@",
-    ...changedLines(before, after),
+    ...safeChangedLines(before, after),
   ].join("\n")).join("\n");
+}
+
+function safeChangedLines(before: string, after: string): string[] {
+  const left = parseJsonDocument(before);
+  const right = parseJsonDocument(after);
+  if (left !== undefined && right !== undefined) {
+    const output: string[] = [];
+    appendJsonChanges(output, "", left, right);
+    return output.length ? output : ["  no changes"];
+  }
+  return changedLines(before, after);
+}
+
+function parseJsonDocument(text: string): unknown | undefined {
+  if (text.trim() === "") return {};
+  try { return JSON.parse(text); }
+  catch { return undefined; }
+}
+
+/**
+ * Render structural JSON changes without ever echoing an old value. Values are
+ * shown only for newly-added nodes, which are created by the board installer.
+ */
+function appendJsonChanges(output: string[], path: string, before: unknown, after: unknown): void {
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  if (isPlainObject(before) && isPlainObject(after)) {
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort();
+    for (const key of keys) {
+      const child = `${path}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`;
+      if (!(key in after)) output.push(`- ${displayText(child)} (board-owned setting removed; old value redacted)`);
+      else if (!(key in before)) output.push(`+ ${displayText(child)} = ${safeAddedJsonValue(after[key])}`);
+      else appendJsonChanges(output, child, before[key], after[key]);
+    }
+    return;
+  }
+  if (Array.isArray(before) && Array.isArray(after)) {
+    const remaining = before.map((value) => JSON.stringify(value));
+    for (const value of after) {
+      const encoded = JSON.stringify(value);
+      const match = remaining.indexOf(encoded);
+      if (match >= 0) remaining.splice(match, 1);
+      else output.push(`+ ${displayText(path || "/")}[] = ${safeAddedJsonValue(value)}`);
+    }
+    for (let index = 0; index < remaining.length; index++) {
+      output.push(`- ${displayText(path || "/")}[] (board-owned entry removed; old value redacted)`);
+    }
+    return;
+  }
+  output.push(`~ ${displayText(path || "/")} (board-owned setting changed; values redacted)`);
+}
+
+function isPlainObject(value: unknown): value is JsonObject {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function safeAddedJsonValue(value: unknown): string {
+  return safeDiffLine(JSON.stringify(value) ?? "null");
 }
 
 function changedLines(before: string, after: string): string[] {

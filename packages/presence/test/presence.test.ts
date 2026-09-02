@@ -15,6 +15,7 @@ import {
   PRESENCE_MAX_FIELD_BYTES,
   PRESENCE_MAX_FUTURE_SKEW_MS,
   who,
+  whoPage,
 } from "../src/index.ts";
 
 describe("presence", () => {
@@ -197,6 +198,10 @@ describe("presence", () => {
     store.getCalls = 0;
     expect(await who(store, { maxAgeMs: 1_000, now: () => 10_000, limit: 3 })).toHaveLength(3);
     expect(store.getCalls).toBe(3);
+    expect(await whoPage(store, { maxAgeMs: 1_000, now: () => 10_000, limit: 3 })).toMatchObject({
+      records: { length: 3 },
+      truncated: true,
+    });
     await expect(who(store, { maxAgeMs: 1_000, limit: 0 })).rejects.toBeInstanceOf(InvalidPresenceError);
   });
 

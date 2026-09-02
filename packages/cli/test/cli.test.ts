@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { Board, MemoryStore, ulid, type Store } from "@board/core";
-import { heartbeat, who } from "@board/presence";
+import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   CliError,
   createStore,
+  deliverOpenCodeMentions,
   openCodeSessionRegistryPath,
   parseStoreSpec,
   runCli,
@@ -118,6 +119,9 @@ describe("board CLI", () => {
     await writeLocalOpenCodeSession(registryDir, "session/123", "http://127.0.0.1:4096/");
     await writeLocalOpenCodeSession(registryDir, "external", "https://example.test/");
     await writeLocalOpenCodeSession(registryDir, "future", "http://127.0.0.1:4099/");
+    for (let index = 0; index < 205; index++) {
+      await heartbeat(store, { name: "aaa", instance: ulid(), status: "idle", now: () => now });
+    }
     await heartbeat(store, {
       name: "opencode",
       instance: ulid(),
@@ -196,6 +200,26 @@ describe("board CLI", () => {
     expect(JSON.parse(String(requests[0]!.init.body))).toEqual({
       parts: [{ type: "text", text: `A new board post mentions opencode (post ${post.id}). Run board read.` }],
     });
+  });
+
+  it("warns when the bounded wake presence scan is truncated", async () => {
+    const store = new MemoryStore();
+    const now = Date.now();
+    for (let index = 0; index <= MAX_WHO_LIMIT; index++) {
+      await heartbeat(store, { name: "aaa", instance: ulid(), status: "idle", now: () => now });
+    }
+    const post = await new Board(store, { board: "general", author: "claude" }).post({
+      body: "wake target outside the bounded scan",
+      mentions: ["opencode"],
+    });
+    const warnings: string[] = [];
+    await deliverOpenCodeMentions(post, store, {
+      now: () => now,
+      stderr: (line) => warnings.push(line),
+    });
+    expect(warnings).toEqual([
+      `warning: presence scan stopped after ${MAX_WHO_LIMIT} records; some mentioned sessions may not be woken`,
+    ]);
   });
 
   it("reads stdin bodies and honours option termination and attached values", async () => {

@@ -72,6 +72,12 @@ export interface WhoOptions {
   now?: () => number;
 }
 
+export interface PresencePage {
+  records: Presence[];
+  /** More presence keys exist than this bounded read examined. */
+  truncated: boolean;
+}
+
 /** Write this session's owner-only heartbeat file. */
 export async function heartbeat(store: Store, opts: HeartbeatOptions): Promise<PresenceRecord> {
   try {
@@ -125,6 +131,11 @@ export async function heartbeat(store: Store, opts: HeartbeatOptions): Promise<P
 
 /** List valid heartbeats and derive online state from their age. */
 export async function who(store: Store, opts: WhoOptions): Promise<Presence[]> {
+  return (await whoPage(store, opts)).records;
+}
+
+/** List a bounded page of presence while reporting whether more keys exist. */
+export async function whoPage(store: Store, opts: WhoOptions): Promise<PresencePage> {
   if (!Number.isFinite(opts.maxAgeMs) || opts.maxAgeMs < 0) {
     throw new InvalidPresenceError("maxAgeMs must be a non-negative finite number");
   }
@@ -136,19 +147,26 @@ export async function who(store: Store, opts: WhoOptions): Promise<Presence[]> {
   const result: Presence[] = [];
   let batch: string[] = [];
   let examined = 0;
+  let truncated = false;
 
   for await (const key of listAll(store, keys.presencePrefix(), undefined, Math.min(limit, DEFAULT_WHO_LIMIT))) {
+    if (examined >= limit) {
+      truncated = true;
+      break;
+    }
     examined++;
     batch.push(key);
     if (batch.length === 8) {
       result.push(...await readBatch(store, batch, now, opts.maxAgeMs));
       batch = [];
     }
-    if (examined >= limit) break;
   }
   if (batch.length) result.push(...await readBatch(store, batch, now, opts.maxAgeMs));
 
-  return result.sort((a, b) => compare(a.name, b.name) || compare(a.instance, b.instance));
+  return {
+    records: result.sort((a, b) => compare(a.name, b.name) || compare(a.instance, b.instance)),
+    truncated,
+  };
 }
 
 async function readBatch(store: Store, batch: string[], now: number, maxAgeMs: number): Promise<Presence[]> {

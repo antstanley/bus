@@ -3,7 +3,7 @@
 import { Board, keys, type NewPost, type Post, type Store, type WatchOptions } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
-import { heartbeat, who as listPresence } from "@board/presence";
+import { heartbeat, MAX_WHO_LIMIT, who as listPresence, whoPage } from "@board/presence";
 import { CliError, installRuntime, renderInstallDiff, type InstallRuntime } from "./install.ts";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
@@ -354,7 +354,13 @@ export async function deliverOpenCodeMentions(post: Post, store: Store, deps: Cl
   const mentioned = new Set(post.mentions ?? []);
   if (mentioned.size === 0) return;
   const now = (deps.now ?? Date.now)();
-  const presence = await listPresence(store, { maxAgeMs: 120_000, now: () => now });
+  const page = await whoPage(store, { maxAgeMs: 120_000, limit: MAX_WHO_LIMIT, now: () => now });
+  const presence = page.records;
+  if (page.truncated) {
+    (deps.stderr ?? console.error)(
+      `warning: presence scan stopped after ${MAX_WHO_LIMIT} records; some mentioned sessions may not be woken`,
+    );
+  }
   const request = deps.fetch ?? globalThis.fetch;
   const env = deps.env ?? process.env;
   const registryDir = deps.sessionRegistryDir ?? join(homedir(), ".board", "sessions", "opencode");

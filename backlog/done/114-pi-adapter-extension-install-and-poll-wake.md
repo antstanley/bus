@@ -3,7 +3,7 @@ id: 114
 title: Pi adapter: extension, install, poll-driven wake
 phase: 1
 owner: codex
-status: todo
+status: done
 depends: [104, 105]
 estimate: M
 ---
