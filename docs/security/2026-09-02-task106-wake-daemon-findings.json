@@ -1,0 +1,337 @@
+{
+  "documentType": "security.findings",
+  "findings": [
+    {
+      "attackPath": {
+        "dataflow": "Untrusted store object (mentions: arbitrary strings) -> Board.watch/loadOne read path (accepts string[]) -> deliverMentionedSessions mentioned set -> unmatched-name report loop -> watcher stderr log line.",
+        "evidenceRefs": [
+          "evidence_mentions_read_validation",
+          "evidence_report_echo"
+        ],
+        "reachability": "Any store writer can plant the forged post; the watcher triggers deterministically when it observes the post while running with --deliver and the mention has no matching presence record."
+      },
+      "codeEvidence": [
+        {
+          "code": "for (const f of [\"tags\", \"mentions\"] as const) {\n  const v = p[f];\n  if (v !== undefined && (!Array.isArray(v) || !v.every((s) => typeof s === \"string\"))) throw new InvalidPostError(`${f} is not a string[]`);\n}",
+          "endLine": 136,
+          "explanation": "Read-side validation establishes only the string[] shape; unlike board/author (assertName at lines 116-120), individual mention items are never name-validated, so a directly-written store object carries arbitrary strings past this point.",
+          "id": "evidence_mentions_read_validation",
+          "label": "evidence_mentions_read_validation",
+          "language": "typescript",
+          "path": "packages/core/src/post.ts",
+          "role": "control_gap",
+          "startLine": 133
+        },
+        {
+          "code": "for (const name of mentioned) {\n  if (!matched.has(name)) report(`delivery: skipped ${name}: no presence record`);\n}",
+          "endLine": 469,
+          "explanation": "The raw, unvalidated mention value is interpolated into the timestamped log line; newlines or control bytes in the value split or disguise the line in the operator's log. Every other report() call site echoes presence-path-validated names or hashes.",
+          "id": "evidence_report_echo",
+          "label": "evidence_report_echo",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 467
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Dynamically reproduced in a disposable pinned copy: a forged post was accepted by the read-side parser and the raw multi-line string appeared verbatim inside the timestamped log line."
+      },
+      "extensions": {
+        "candidateId": "cand-1-log-line-forgery"
+      },
+      "findingId": "csf_e90974d9e700ff093008a0e7",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:afc8787c9af178244fc372d2057ef0d20da56ceb3d781a18cdd359a6957b7364"
+      },
+      "identity": {
+        "anchor": "delivery-log-unvalidated-mention-echo"
+      },
+      "locations": [
+        {
+          "endLine": 469,
+          "path": "packages/cli/src/index.ts",
+          "role": "root_control",
+          "startLine": 467
+        },
+        {
+          "endLine": 136,
+          "path": "packages/core/src/post.ts",
+          "role": "control_gap",
+          "startLine": 133
+        }
+      ],
+      "occurrenceId": "occ_86da55bcfc456233e6426a00",
+      "preventiveControls": [
+        "Re-establish write-side invariants at every read boundary that feeds output formatting; keep a single shared validator for name-shaped identifiers."
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Validate mention items on read the way they are validated on write: in validatePost, require each mention to pass assertName (or drop invalid items), and as defense in depth, encode or skip raw values in the report loop (for example report only names passing assertName, or JSON-encode the echoed value).",
+      "remediationTests": [
+        "A test that writes a post object directly to the store with a multi-line mention, runs deliverMentionedSessions, and asserts every emitted log line matches the single-line timestamped format."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "evidence_mentions_read_validation",
+          "evidence_report_echo"
+        ],
+        "invariant": "Only validated name-shaped identifiers may be echoed into timestamped delivery log lines.",
+        "summary": "The log report trusts mention values that the read path never validated. The write side enforces name-shape on every mention (assertName per item), but the read-side validator only checks the array's element type, so the write invariant is not re-established before the values are interpolated into log text."
+      },
+      "ruleId": "log-injection.unvalidated-identifier-echo",
+      "severity": {
+        "level": "low",
+        "rationale": "Deterministic and trivially triggerable by any store writer, but the consequence is confined to the integrity of the local operator log: no secret exposure, no command execution, and no effect on what is delivered or to whom."
+      },
+      "summary": "A post object written directly to the untrusted store can carry mention strings of arbitrary shape and length: the read-side validator checks only that mentions is a string array. When a watch --deliver process observes such a post, the final no-presence-record report interpolates the raw string into a timestamped delivery log line, so attacker-chosen newlines and control bytes break the one-event-per-line invariant of the operator's delivery log and can fabricate apparent delivery outcomes. Delivery decisions and wake-message content are unaffected: the wake message uses only presence-path-validated names and the post id.",
+      "taxonomy": {
+        "category": "log-injection",
+        "cwe": [
+          "CWE-117"
+        ]
+      },
+      "title": "Forged mention strings are interpolated into timestamped delivery log lines",
+      "validation": {
+        "conclusion": "Confirmed; robustness defect with log-integrity impact.",
+        "counterevidence": "The write side (Board.post) rejects non-name-shaped mentions, so only objects written to the store behind the Board API reach this path; delivery targeting never parses the echoed value.",
+        "evidence": "A post object written directly to the store with a multi-line mention string passed the read-side parser and produced the log line '... delivery: skipped legit\\n2026-09-02T00:00:00.000Z delivery: delivered to codex/... via codex-queue: no presence record', fabricating a second apparent delivery event inside the log.",
+        "evidenceRefs": [
+          "evidence_report_echo",
+          "evidence_mentions_read_validation"
+        ],
+        "method": "dynamic reproduction in a disposable pinned copy plus static trace"
+      },
+      "writeup": {
+        "reportPath": "findings/log-line-forgery-forged-mention-echo/log-line-forgery-forged-mention-echo.md"
+      }
+    },
+    {
+      "attackPath": {
+        "dataflow": "Local directory state (wrong owner/mode/symlink) -> writeClaudeSessionRecord throws -> outer catch swallows -> injectUnread never executes -> presence nonetheless advertises idle+socket.",
+        "evidenceRefs": [
+          "evidence_registry_write_sequence",
+          "evidence_swallow_catch"
+        ],
+        "reachability": "Every ambient-mode Claude heartbeat/poll invocation once the directory is wrong; no log or notification marks the condition; recovery requires manual directory repair."
+      },
+      "codeEvidence": [
+        {
+          "code": "if (runtime === \"claude\" && deliveryTargets.sessionId && deliveryTargets.socket\n  && env.CLAUDE_CODE_MESSAGING_TOKEN) {\n  await writeClaudeSessionRecord(\n    join(deps.home ?? env.HOME ?? homedir(), \".board\", \"sessions\", \"claude\"),\n    deliveryTargets.sessionId,\n    deliveryTargets.socket,\n  );\n}",
+          "endLine": 84,
+          "explanation": "The awaited registry write runs before the heartbeat early-return and before injectUnread; writeClaudeSessionRecord throws on a directory that is not a private, user-owned real directory.",
+          "id": "evidence_registry_write_sequence",
+          "label": "evidence_registry_write_sequence",
+          "language": "typescript",
+          "path": "packages/hooks/src/board-hook.ts",
+          "role": "root_control",
+          "startLine": 77
+        },
+        {
+          "code": "} catch {\n  // Hooks must never block or break the host agent. ...\n}",
+          "endLine": 93,
+          "explanation": "The single outer catch converts the registry-write failure into complete silence for the whole invocation, so the poll's injection step is skipped without any diagnostic.",
+          "id": "evidence_swallow_catch",
+          "label": "evidence_swallow_catch",
+          "language": "typescript",
+          "path": "packages/hooks/src/board-hook.ts",
+          "role": "swallow",
+          "startLine": 90
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Dynamically reproduced: with a group-accessible registry directory the poll produced zero output while the identical control with a private directory produced the injection."
+      },
+      "extensions": {
+        "candidateId": "cand-2-poll-wedge-registry"
+      },
+      "findingId": "csf_3dd1b65ce786e8cf815647e2",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:f50a3e1d7d104df757d22a7929520d7bb022c41c22ab27dd0898c4c7dbeaabab"
+      },
+      "identity": {
+        "anchor": "claude-registry-write-blocks-poll-injection"
+      },
+      "locations": [
+        {
+          "endLine": 84,
+          "path": "packages/hooks/src/board-hook.ts",
+          "role": "root_control",
+          "startLine": 77
+        },
+        {
+          "endLine": 93,
+          "path": "packages/hooks/src/board-hook.ts",
+          "role": "swallow",
+          "startLine": 90
+        }
+      ],
+      "occurrenceId": "occ_fa87fbcd263f7ec24b408dd6",
+      "preventiveControls": [
+        "Sequence optional bookkeeping after primary duties, or isolate optional steps from the primary error path; add a health self-check that surfaces persistent registry-write failures."
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Give the registry write its own try/catch so the poll continues to injectUnread when the write fails, and emit a diagnostic on stderr; alternatively move the registry write after the injection step.",
+      "remediationTests": [
+        "A test that pre-creates a group-accessible ~/.board/sessions/claude, runs poll with a pending mention, and asserts the mention is still injected and a diagnostic is reported."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "evidence_registry_write_sequence",
+          "evidence_swallow_catch"
+        ],
+        "invariant": "A failure in an optional local registry optimization must not suppress unread injection, and must be observable.",
+        "summary": "An optional local bookkeeping step (writing the session/socket binding) is given the power to abort the poll's primary duty (injecting unread mentions) because both share one try block whose catch intentionally hides all errors. The registry write is an optimization for wake delivery, not a prerequisite for injection, and the watcher re-validates the registry independently at delivery time."
+      },
+      "ruleId": "availability.silent-wedge-on-bookkeeping-failure",
+      "severity": {
+        "level": "low",
+        "rationale": "Trigger requires pre-existing local directory state (mis-permissioned or symlinked), which is operator/same-user territory under the threat model, not a store writer; impact is self-denial of delivery. It is reported because the failure is permanent, silent, and contradicts the advertised presence state."
+      },
+      "summary": "During heartbeat and poll, the Claude session-registry write is sequenced before the poll's unread-injection step inside the hook's single error-swallowing try block. When the ~/.board/sessions/claude directory exists with an unexpected owner, mode, or as a symlink, the registry write throws on every invocation and the unread-injection step never runs, while the idle heartbeat still publishes presence including the socket. The session therefore advertises an idle, wakeable-looking presence but silently never receives injected mentions, with nothing reported and no recovery path until the directory is repaired manually.",
+      "taxonomy": {
+        "category": "availability",
+        "cwe": [
+          "CWE-755"
+        ]
+      },
+      "title": "A Claude session-registry write failure silently swallows the poll's unread injection",
+      "validation": {
+        "conclusion": "Confirmed; silent-wedge robustness defect.",
+        "counterevidence": "The direction is fail-safe: no injection occurs without successful bookkeeping, and the trigger is local state rather than attacker-reachable from the store.",
+        "evidence": "With a 0o750 ~/.board/sessions/claude, the poll produced 0 output entries and presence still advertised idle with the socket; the control with a private directory produced the unread injection (1 output).",
+        "evidenceRefs": [
+          "evidence_registry_write_sequence",
+          "evidence_swallow_catch"
+        ],
+        "method": "dynamic reproduction in a disposable pinned copy (ambient-mode hook, group-accessible registry directory) plus control run"
+      },
+      "writeup": {
+        "reportPath": "findings/poll-wedge-claude-registry-write/poll-wedge-claude-registry-write.md"
+      }
+    },
+    {
+      "attackPath": {
+        "dataflow": "Runtime environment value -> publication (any string <=1 KiB into presence) and consumption (UUID-variant requirement) -> startup CliError or silent 'no supported local route' classification.",
+        "evidenceRefs": [
+          "evidence_uuid_gate",
+          "evidence_publication_any_string"
+        ],
+        "reachability": "Any host whose codex/letta native identifiers are not UUID-variant strings; deterministic per runtime install."
+      },
+      "codeEvidence": [
+        {
+          "code": "if (!isUuid(sessionId)) throw new CliError(\"--session must be a UUID\");",
+          "endLine": 343,
+          "explanation": "The watcher enforces a UUID-variant pattern on the session id at startup; the same predicate inside targetDeliveryKey (lines 484-493) silently returns null for non-UUID ids at delivery time.",
+          "id": "evidence_uuid_gate",
+          "label": "evidence_uuid_gate",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "root_control",
+          "startLine": 343
+        },
+        {
+          "code": "function runtimeSessionId(runtime: string | undefined, env: Record<string, string | undefined>): string | undefined {\n  if (runtime === \"claude\") return nonEmpty(env.CLAUDE_SESSION_ID);\n  if (runtime === \"codex\") return nonEmpty(env.CODEX_THREAD_ID) ?? nonEmpty(env.CODEX_SESSION_ID);\n  if (runtime === \"letta\") return nonEmpty(env.CONVERSATION_ID) ?? nonEmpty(env.LETTA_CONVERSATION_ID);\n  if (runtime === \"pi\") return nonEmpty(env.PI_SESSION_ID);\n  return undefined;\n}",
+          "endLine": 154,
+          "explanation": "Publication accepts any non-empty environment value (presence caps only the byte length), so a runtime id that fails the watcher's UUID predicate is nonetheless advertised as a wake target in shared presence.",
+          "id": "evidence_publication_any_string",
+          "label": "evidence_publication_any_string",
+          "language": "typescript",
+          "path": "packages/hooks/src/config.ts",
+          "role": "control_gap",
+          "startLine": 148
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Dynamically reproduced: watch --deliver with a non-UUID CODEX_THREAD_ID refused to start with '--session must be a UUID'; the skip path is a direct static consequence of the same predicate."
+      },
+      "extensions": {
+        "candidateId": "cand-3-runtime-id-uuid-gate"
+      },
+      "findingId": "csf_42a6b1c32db4bb02c30216a5",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:6f890ce1e63a092752905ee9ef1272605a3d6ba124299a33b085798eb78300a3"
+      },
+      "identity": {
+        "anchor": "runtime-id-uuid-gate-mismatch"
+      },
+      "locations": [
+        {
+          "endLine": 343,
+          "path": "packages/cli/src/index.ts",
+          "role": "root_control",
+          "startLine": 334
+        },
+        {
+          "endLine": 154,
+          "path": "packages/hooks/src/config.ts",
+          "role": "control_gap",
+          "startLine": 148
+        },
+        {
+          "endLine": 493,
+          "path": "packages/cli/src/index.ts",
+          "role": "control_gap",
+          "startLine": 484
+        }
+      ],
+      "occurrenceId": "occ_f69fcf61f66a798f256c9fb3",
+      "preventiveControls": [
+        "Define the accepted identifier grammar once in a shared helper used by both the presence publisher and the delivery consumer; note the accepted formats in the README until task 110 confirms production formats."
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Pick one identifier contract for codex/letta session ids and enforce it at both boundaries: either validate the runtime's native id format where the id is published (rejecting or normalizing early with a clear error), or relax the watcher's isUuid requirement to the same publication-side rule while keeping the wake command's argv encoding.",
+      "remediationTests": [
+        "A test that runs watch --deliver and deliverMentionedSessions with a non-UUID codex-style thread id and asserts the documented behavior (either consistent rejection at publication or a wake attempt with the native id), plus a task-110 live check that records the real Codex CLI id format."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "evidence_uuid_gate",
+          "evidence_publication_any_string"
+        ],
+        "invariant": "An identifier accepted for publication must be usable for its documented downstream purpose, or be rejected consistently at both boundaries.",
+        "summary": "Two components validate the same identifier against different rules: presence publication accepts any non-empty string within the size cap, while wake consumption requires a UUID-variant pattern. No shared validation exists at the boundary where the id format is actually fixed (the runtime)."
+      },
+      "ruleId": "validation.inconsistent-identifier-format",
+      "severity": {
+        "level": "low",
+        "rationale": "Fail-closed availability/functional gap with no confidentiality or integrity effect; it becomes significant only if production Codex/Letta ids are not UUID-variant, which backlog/106 defers to task 110 acceptance."
+      },
+      "summary": "The hook publishes whatever thread/conversation identifier its runtime environment contains (any string up to 1 KiB), but the watcher requires a UUID-variant shape: an ambient codex/letta runtime whose native id is not a UUID makes watch --deliver exit with a usage error, and at delivery time targetDeliveryKey silently classifies such ids as 'no supported local route'. The publication and consumption sides enforce different identifier formats, so the same value is accepted into presence and then either blocks the watcher from starting or never wakes, leaving a session that presence says is wakeable but that no watcher will ever deliver to.",
+      "taxonomy": {
+        "category": "input-validation",
+        "cwe": [
+          "CWE-20"
+        ]
+      },
+      "title": "Watcher refuses to start or silently never wakes for non-UUID runtime ids",
+      "validation": {
+        "conclusion": "Confirmed; consistency defect between publication and consumption validation.",
+        "counterevidence": "Both failure modes are fail-closed: no incorrect delivery is possible, and the truncation/skip path logs its decision.",
+        "evidence": "watch --deliver with CODEX_THREAD_ID set to a non-UUID string exits with 'watch session identity requires --session <uuid>' family error '--session must be a UUID'; the delivery-side skip follows from targetDeliveryKey's identical predicate.",
+        "evidenceRefs": [
+          "evidence_uuid_gate",
+          "evidence_publication_any_string"
+        ],
+        "method": "dynamic reproduction in a disposable pinned copy plus static trace"
+      },
+      "writeup": {
+        "reportPath": "findings/runtime-id-uuid-gate-mismatch/runtime-id-uuid-gate-mismatch.md"
+      }
+    }
+  ],
+  "scanId": "20260902T-106-wake-gate",
+  "schemaVersion": "1.0"
+}
