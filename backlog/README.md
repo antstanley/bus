@@ -21,7 +21,7 @@ Why this matters (2-3 sentences).
 - [ ] tests / docs / bus report
 ```
 
-Every task's definition of done implicitly includes: root `bun test` green, `bunx tsc --noEmit` clean, a clean-context code review, and a **security diff scan with no unaccepted reportable findings** (see AGENTS.md, Security gate).
+Every task's definition of done implicitly includes: root `bun test` green, `bunx tsc --noEmit` clean, a clean-context code review, and a **security diff scan with no unaccepted reportable findings** (see AGENTS.md, Security gate), and **clean-up of worktrees, scratch files, temp dirs and processes** after the commit is pushed (AGENTS.md, Clean up after every task).
 
 Rules: pick the lowest-numbered unblocked task in the current phase unless the
 lead reassigns; never edit another agent's in-progress task file; every task

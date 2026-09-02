@@ -98,6 +98,19 @@ package path, and the exact instruction. This keeps each piece of work free of
 the orchestrator's accumulated assumptions and keeps the orchestrator's
 context small enough to keep coordinating.
 
+## Clean up after every task
+
+Rule from Ant (2026-09-02): once a task is committed and pushed, the owning
+agent removes everything the task left behind, then confirms in its report:
+
+- git worktrees or branches it created (`git worktree list` / `git worktree remove`);
+- untracked scratch files in the repo (`*.tmp.*`, profiling scripts, fixtures
+  that were not meant to ship): `git status --short` must show nothing of yours;
+- temp directories and test stores under `/tmp`, `~/.board/sessions/*` test
+  records, disposable agent sessions or conversations, background processes;
+- scan bundles are kept (they are the audit trail), but nothing else outside
+  `docs/security/` is referenced from committed docs.
+
 ## Reviews with clean sub-agents
 
 You can spawn sub-agents. For reviews, spawn a **clean** one: give it only the
