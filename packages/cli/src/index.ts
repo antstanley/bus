@@ -4,6 +4,13 @@ import { Board, keys, type NewPost, type Post, type Store, type WatchOptions } f
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, who as listPresence } from "@board/presence";
+import { CliError, installRuntime, renderInstallDiff, type InstallRuntime } from "./install.ts";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
+import { Buffer } from "node:buffer";
+import { createHash } from "node:crypto";
+import { constants } from "node:fs";
+import { open } from "node:fs/promises";
 
 export type StoreSpec =
   | { kind: "fs"; dir: string }
@@ -17,10 +24,12 @@ export interface CliDependencies {
   signal?: AbortSignal;
   stdin?: () => Promise<string>;
   heartbeatIntervalMs?: number;
-}
-
-export class CliError extends Error {
-  override name = "CliError";
+  installHome?: string;
+  projectRoot?: string;
+  fetch?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+  env?: Record<string, string | undefined>;
+  sessionRegistryDir?: string;
+  now?: () => number;
 }
 
 export class DegradedReplicationError extends Error {
@@ -38,6 +47,32 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
   if (!COMMANDS.has(parsed.command)) throw new CliError(`unknown command: ${parsed.command}`);
   if (parsed.flags.has("help")) {
     output(commandUsage(parsed.command));
+    return;
+  }
+
+  if (parsed.command === "install") {
+    const runtime = parsed.positionals.shift();
+    if (!isInstallRuntime(runtime)) throw new CliError("install requires one of: claude, codex, letta, gemini, cursor, opencode, pi");
+    if (parsed.positionals.length) throw new CliError(`unexpected install argument: ${parsed.positionals[0]}`);
+    if (parsed.flags.has("project") && runtime !== "pi") throw new CliError("--project is only supported for Pi install");
+    const uninstall = parsed.flags.has("uninstall");
+    const store = parsed.flags.get("store");
+    if (!uninstall && runtime !== "letta" && !store) throw new CliError("install requires --store");
+    const result = await installRuntime({
+      runtime,
+      home: deps.installHome ?? homedir(),
+      projectRoot: deps.projectRoot ?? resolve(import.meta.dir, "../../.."),
+      ...(store === undefined ? {} : { store }),
+      ...(parsed.flags.get("as") === undefined ? {} : { author: parsed.flags.get("as")! }),
+      ...(parsed.flags.get("board") === undefined ? {} : { board: parsed.flags.get("board")! }),
+      ...(parsed.flags.get("index") === undefined ? {} : { indexPath: parsed.flags.get("index")! }),
+      dryRun: parsed.flags.has("dry-run"),
+      uninstall,
+      projectLocal: parsed.flags.has("project"),
+    });
+    if (parsed.flags.has("dry-run")) output(result.changes.length ? renderInstallDiff(result.changes) : "no changes");
+    else for (const change of result.changes) output(`${uninstall ? "removed" : "installed"} board integration: ${change.path}`);
+    for (const notice of result.notices) output(notice);
     return;
   }
 
@@ -107,6 +142,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
         await board.watch((post) => {
           finalCursor = board.keyFor(post.id);
           output(JSON.stringify(post));
+          if (parsed.flags.has("deliver")) return deliverOpenCodeMentions(post, store, deps);
         }, watchOptions);
       } finally {
         clearInterval(timer);
@@ -184,10 +220,10 @@ interface ParsedArgs {
 
 const VALUE_FLAGS = new Set([
   "store", "board", "as", "title", "body", "tags", "mentions",
-  "after", "limit", "interval", "max-age",
+  "after", "limit", "interval", "max-age", "index",
 ]);
-const BOOLEAN_FLAGS = new Set(["help", "json"]);
-const COMMANDS = new Set(["init", "post", "reply", "read", "watch", "who"]);
+const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
+const COMMANDS = new Set(["init", "post", "reply", "read", "watch", "who", "install"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) return { command: "help", flags: new Map(), positionals: [] };
@@ -287,6 +323,7 @@ Commands:
   read    [--after CURSOR] [--limit N]           read a page as JSON
   watch   [--after CURSOR] [--interval MS]       stream posts as JSON lines
   who     [--max-age MS]                         list agent presence
+  install <runtime> --store <spec>               merge runtime hooks/MCP config
 
 Common options:
   --store fs:<dir>
@@ -295,7 +332,13 @@ Common options:
   --board <name>       default: general
   --as <agent>         default: anonymous
   --tags a,b --mentions agent1,agent2
+  --deliver             wake reachable mentioned sessions while watching
+  --project             install the Pi extension in the current project
   --json                accepted for wrapper compatibility`;
+
+function isInstallRuntime(value: string | undefined): value is InstallRuntime {
+  return value === "claude" || value === "codex" || value === "letta" || value === "gemini" || value === "cursor" || value === "opencode" || value === "pi";
+}
 
 function commandUsage(command: string): string {
   const line = USAGE.split("\n").find((candidate) => candidate.trimStart().startsWith(`${command} `));
@@ -304,6 +347,91 @@ function commandUsage(command: string): string {
 
 export function sanitizeSecrets(message: string): string {
   return message.replace(/([a-z][a-z0-9+.-]*:\/\/)([^\s/@]+)@/gi, "$1");
+}
+
+/** Wake online OpenCode sessions mentioned by a post. Invalid targets are skipped. */
+export async function deliverOpenCodeMentions(post: Post, store: Store, deps: CliDependencies = {}): Promise<void> {
+  const mentioned = new Set(post.mentions ?? []);
+  if (mentioned.size === 0) return;
+  const now = (deps.now ?? Date.now)();
+  const presence = await listPresence(store, { maxAgeMs: 120_000, now: () => now });
+  const request = deps.fetch ?? globalThis.fetch;
+  const env = deps.env ?? process.env;
+  const registryDir = deps.sessionRegistryDir ?? join(homedir(), ".board", "sessions", "opencode");
+  const seen = new Set<string>();
+  await Promise.allSettled(presence.map(async (target) => {
+    if (!target.online || Date.parse(target.ts) > now + 300_000
+      || !mentioned.has(target.name) || target.runtime !== "opencode" || !target.sessionId) return;
+    const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
+    if (!local) return;
+    const endpoint = openCodePromptEndpoint(local.serverUrl, target.sessionId);
+    if (!endpoint) return;
+    const deliveryKey = `${endpoint.origin}\0${target.sessionId}`;
+    if (seen.has(deliveryKey)) return;
+    seen.add(deliveryKey);
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    const password = env.OPENCODE_SERVER_PASSWORD;
+    if (password) {
+      const username = env.OPENCODE_SERVER_USERNAME || "opencode";
+      headers.authorization = `Basic ${Buffer.from(`${username}:${password}`, "utf8").toString("base64")}`;
+    }
+    const response = await request(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        parts: [{
+          type: "text",
+          text: `A new board post mentions ${target.name} (post ${post.id}). Run board read.`,
+        }],
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) throw new Error(`OpenCode wake returned HTTP ${response.status}`);
+  }));
+}
+
+interface LocalOpenCodeSession {
+  v: 1;
+  sessionId: string;
+  serverUrl: string;
+  ts: string;
+}
+
+/** Resolve the non-secret local registry path without using a session id as a path segment. */
+export function openCodeSessionRegistryPath(registryDir: string, sessionId: string): string {
+  const digest = createHash("sha256").update(sessionId, "utf8").digest("hex");
+  return join(registryDir, `${digest}.json`);
+}
+
+async function readLocalOpenCodeSession(registryDir: string, sessionId: string): Promise<LocalOpenCodeSession | null> {
+  let handle;
+  try {
+    handle = await open(
+      openCodeSessionRegistryPath(registryDir, sessionId),
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+    );
+    const info = await handle.stat();
+    if (!info.isFile() || info.size > 4_096 || (info.mode & 0o077) !== 0) return null;
+    const parsed: unknown = JSON.parse(await handle.readFile("utf8"));
+    if (!parsed || typeof parsed !== "object") return null;
+    const record = parsed as Record<string, unknown>;
+    if (record.v !== 1 || record.sessionId !== sessionId || typeof record.serverUrl !== "string"
+      || typeof record.ts !== "string" || !Number.isFinite(Date.parse(record.ts))) return null;
+    return record as unknown as LocalOpenCodeSession;
+  } catch {
+    return null;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+}
+
+function openCodePromptEndpoint(serverUrl: string, sessionId: string): URL | null {
+  let base: URL;
+  try { base = new URL(serverUrl); } catch { return null; }
+  const hostname = base.hostname.toLowerCase();
+  if (base.protocol !== "http:" || base.username || base.password || base.search || base.hash) return null;
+  if (hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "[::1]" && hostname !== "::1") return null;
+  return new URL(`/session/${encodeURIComponent(sessionId)}/prompt_async`, base.origin);
 }
 
 async function main(): Promise<void> {
@@ -325,3 +453,4 @@ if (import.meta.main) {
 }
 
 export type { Post };
+export { CliError } from "./install.ts";

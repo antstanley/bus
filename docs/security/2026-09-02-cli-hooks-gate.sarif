@@ -1,0 +1,233 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "20260902T-cli-hooks-wake-target-fix"
+      },
+      "properties": {
+        "securitySchemaVersion": "1.0",
+        "securityTargetKind": "git_diff"
+      },
+      "results": [
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root-control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 499,
+                  "startLine": 489
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "flow"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 636,
+                  "startLine": 629
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "flow"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 487,
+                  "startLine": 451
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 73,
+                  "startLine": 73
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:denylist"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/install.ts"
+                },
+                "region": {
+                  "endLine": 499,
+                  "startLine": 497
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`board install <runtime> --dry-run` prints a unified diff of proposed config changes, and `planJson` re-serializes the whole config so pre-existing lines commonly count as changed (compact single-line configs reflow entirely; pretty-printed files rewrite the former last key's line with a trailing comma). The only redaction on those lines is `safeDiffLine`: a key-name denylist (token|secret|password|credential|private_key|access_key|api_key|authorization) plus URL-userinfo scrubbing. A secret stored under any other key name (for example `openai_key`) is emitted verbatim to stdout inside the diff, violating the backlog 117 #8 claim that the installer never echoes credentials into diffs. Reproduced end-to-end through the real CLI stdout with an invented marker secret; the denylisted-key negative control is correctly redacted."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "b67ea6a75e8e5f59:1",
+            "security/v1": "security/v1:sha256:38925fe3650e7b6455a6bdb228fa17c3b884038260bcdf90223b094aac4d68f9"
+          },
+          "properties": {
+            "candidateId": "dryrun-diff-denylist-redaction-gap",
+            "category": "sensitive-data-exposure",
+            "confidence": "high",
+            "findingId": "csf_aa40b8811bc7e9026d39e8cd",
+            "occurrenceId": "occ_055e28b178de5ab1b6b278a7",
+            "severity": "low"
+          },
+          "ruleId": "sensitive-data.insecure-output-redaction",
+          "ruleIndex": 1
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root-control-dependence"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 357,
+                  "startLine": 357
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 364,
+                  "startLine": 362
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "shared-control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/presence/src/index.ts"
+                },
+                "region": {
+                  "endLine": 141,
+                  "startLine": 124
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:window"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/presence/src/index.ts"
+                },
+                "region": {
+                  "endLine": 141,
+                  "startLine": 133
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:silent"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 390,
+                  "startLine": 362
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "deliverOpenCodeMentions (new in this change set) resolves wake targets by calling listPresence without a limit, so it examines at most the first 200 presence keys of the untrusted shared store in lexicographic order (DEFAULT_WHO_LIMIT in committed packages/presence, out of diff scope) and stops. Any store writer can cheaply create 200 structurally valid heartbeat records under a low-sorting name; the victim's record is then never examined and the wake silently never fires (errors are discarded by Promise.allSettled and nothing logs). Validated end-to-end through the real sink: 1 wake POST without flood, 0 POSTs with exactly 200 flood records. Availability-only: wake endpoints still derive solely from the local owner-only session registry, so integrity and confidentiality are unaffected."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "e724a9b5b8347723:1",
+            "security/v1": "security/v1:sha256:19696a290f68816da992b2579af6adc10d57002189598f82b0d526f7dc4eb80e"
+          },
+          "properties": {
+            "candidateId": "presence-flood-starves-wake-scan",
+            "category": "denial-of-service",
+            "confidence": "high",
+            "findingId": "csf_603c2b1d2520bf70163ed2ba",
+            "occurrenceId": "occ_5ad66d683bea87698e6025f9",
+            "severity": "low"
+          },
+          "ruleId": "availability.unbounded-untrusted-read-starvation",
+          "ruleIndex": 0
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "Security Scan",
+          "rules": [
+            {
+              "id": "availability.unbounded-untrusted-read-starvation",
+              "name": "availability.unbounded-untrusted-read-starvation",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "availability.unbounded-untrusted-read-starvation"
+              }
+            },
+            {
+              "id": "sensitive-data.insecure-output-redaction",
+              "name": "sensitive-data.insecure-output-redaction",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "sensitive-data.insecure-output-redaction"
+              }
+            }
+          ],
+          "version": "0.2.0-adapted"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

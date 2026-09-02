@@ -3,7 +3,7 @@ id: 101
 title: hooks: turn-boundary injection for Claude, Codex, Letta
 phase: 1
 owner: codex
-status: gated
+status: done
 depends: []
 estimate: M
 ---

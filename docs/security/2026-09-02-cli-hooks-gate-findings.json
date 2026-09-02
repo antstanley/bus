@@ -1,0 +1,353 @@
+{
+  "documentType": "security.findings",
+  "findings": [
+    {
+      "attackPath": {
+        "dataflow": {
+          "outcome": "Verbatim credential disclosure into stdout captures: CI logs, terminal scrollback, AI-agent transcripts, pastes into board posts (threat-model risk 5)",
+          "sink": "renderInstallDiff output printed to stdout by the install command dry-run branch (packages/cli/src/index.ts:73)",
+          "source": "Developer's own runtime config file (user-controlled key names/values), read by planJson (install.ts:618)",
+          "summary": "planJson reflow makes pre-existing secret lines changed; the denylist+URL-only redaction misses non-matching key names; the diff prints verbatim.",
+          "transformations": [
+            "planJson re-serializes with indent undefined for compact files (whole-file line changed) or rewrites the former-last key line for pretty files",
+            "changedLines emits only changed +/- lines through safeDiffLine",
+            "safeDiffLine denylist matches none of the secret's key fragments; URL scrubbers return the line unchanged (value is not a URL)"
+          ]
+        },
+        "evidenceRefs": [
+          "denylist",
+          "reflow",
+          "sink"
+        ],
+        "reachability": {
+          "attacker": "None required for the defect; operator self-exposure. Speculative in-scope attacker role: prompt-infected/co-located agent steering dry-run execution (unproven)",
+          "entrypoint": "board install <runtime> --store <spec> --dry-run",
+          "outcome": "Credential disclosure into captured stdout",
+          "preconditions": [
+            "Targeted config contains a secret under a key not matching hasSensitiveAssignment",
+            "The secret's line is changed (automatic for compact configs; automatic for the former-last key of pretty configs)",
+            "Stdout capture reaches a party or store that would not otherwise hold the secret"
+          ],
+          "summary": "Requires the operator to hold a secret under a non-denylisted key on a changed line and run a captured dry-run."
+        },
+        "severityMatrix": {
+          "impact": "medium",
+          "likelihood": "low",
+          "result": "low"
+        },
+        "summary": "Operator-self-exposure path: developer config -> planJson reflow (install.ts:629-636) -> changedLines emission (install.ts:481-483) -> safeDiffLine miss (install.ts:489-499, 501-522) -> stdout print (index.ts:73) -> capture surfaces (logs, transcripts, pastes). No attacker input required; under the threat model the only attacker role is indirect (a prompt-infected agent steering a dry-run, speculative and unproven)."
+      },
+      "codeEvidence": [
+        {
+          "code": "/(?:^\\s*|[,{]\\s*)[\"']?[A-Za-z0-9_.-]*(?:token|secret|password|credential|private[_-]?key|access[_-]?key|api[_-]?key|authorization)[A-Za-z0-9_.-]*[\"']?\\s*[:=]/i",
+          "endLine": 499,
+          "explanation": "The regex only redacts lines whose key contains one of the listed fragments. `openai_key`, `svc_pat`, `bearer`, and similar names match none, so the line falls through to URL-userinfo-only scrubbing and is printed verbatim.",
+          "id": "denylist",
+          "label": "Key-name denylist misses non-matching secret keys",
+          "language": "typescript",
+          "path": "packages/cli/src/install.ts",
+          "role": "root-cause",
+          "startLine": 497
+        },
+        {
+          "code": "const indent = before === \"\" ? \"  \" : before.includes(\"\\n\") ? before.match(/\\r?\\n([ \\t]+)\"/)?.[1] ?? \"  \" : undefined;\nconst serialized = JSON.stringify(root, null, indent).replaceAll(\"\\n\", newline);\nconst after = Object.keys(root).length ? serialized + (trailingNewline ? newline : \"\") : \"\";\nif (after !== before) changes.push({ path, before, after });",
+          "endLine": 636,
+          "explanation": "A compact single-line config re-serializes as one line, so every pre-existing key/value pair lands in the +/- diff. For pretty files the formerly-last key's line gains a trailing comma and is also re-emitted.",
+          "id": "reflow",
+          "label": "planJson re-serialization makes unrelated lines changed",
+          "language": "typescript",
+          "path": "packages/cli/src/install.ts",
+          "role": "flow",
+          "startLine": 629
+        },
+        {
+          "code": "if (parsed.flags.has(\"dry-run\")) output(result.changes.length ? renderInstallDiff(result.changes) : \"no changes\");",
+          "endLine": 73,
+          "explanation": "sanitizeSecrets is applied only to error paths (index.ts:348-350, applied at :156/:173/:192/:194/:198/:450), never to diff output; non-dry-run installs print only file paths.",
+          "id": "sink",
+          "label": "Dry-run diff printed verbatim to stdout",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 73
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Full static chain line-verified against the SHA256-pinned snapshot (planJson re-serialization install.ts:629-636; changed-lines-only LCS emission install.ts:479-484; denylist+URL-only redaction install.ts:489-522; stdout sink index.ts:73 with sanitizeSecrets error-only) plus end-to-end dynamic reproduction through both renderInstallDiff and the real CLI --dry-run stdout, with a passing denylisted-key negative control."
+      },
+      "extensions": {
+        "candidateId": "dryrun-diff-denylist-redaction-gap",
+        "ledgerRowId": "artifacts/05_findings/dryrun-diff-denylist-redaction-gap/candidate_ledger.jsonl",
+        "reportId": "findings/dryrun-diff-denylist-redaction-gap/dryrun-diff-denylist-redaction-gap.md"
+      },
+      "findingId": "csf_aa40b8811bc7e9026d39e8cd",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:38925fe3650e7b6455a6bdb228fa17c3b884038260bcdf90223b094aac4d68f9"
+      },
+      "identity": {
+        "anchor": "dryrun-diff-denylist-redaction-gap"
+      },
+      "locations": [
+        {
+          "endLine": 499,
+          "path": "packages/cli/src/install.ts",
+          "role": "root-control",
+          "startLine": 489,
+          "summary": "safeDiffLine + hasSensitiveAssignment: denylist key names and URL-userinfo only"
+        },
+        {
+          "endLine": 636,
+          "path": "packages/cli/src/install.ts",
+          "role": "flow",
+          "startLine": 629,
+          "summary": "planJson re-serialization makes pre-existing secret lines changed"
+        },
+        {
+          "endLine": 487,
+          "path": "packages/cli/src/install.ts",
+          "role": "flow",
+          "startLine": 451,
+          "summary": "changedLines emits only changed lines through safeDiffLine"
+        },
+        {
+          "endLine": 73,
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 73,
+          "summary": "dry-run branch prints renderInstallDiff to stdout"
+        }
+      ],
+      "occurrenceId": "occ_055e28b178de5ab1b6b278a7",
+      "preventiveControls": [
+        "Treat every redaction control as coverage-claimed: the diff header asserts 'unrelated sensitive values redacted' \u2014 add a test that any changed line containing a high-entropy value is redacted, so the claim cannot silently regress",
+        "Share one redaction helper between sanitizeSecrets (error paths) and safeDiffLine (diff paths) so new secret shapes are fixed in one place"
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Make the dry-run diff safe by construction rather than by key-name recognition. Preferred: redact any changed-line string value that looks credential-shaped (high entropy, long tokens, scheme-less bearer/PAT patterns) with a bounded <redacted> marker, in addition to the existing key-name and URL rules. Alternative or additionally: render the diff from a semantic key-path comparison (only board-owned keys and their immediate parents are shown as +/- lines) or serialize format-preserving so unrelated lines never enter the changed set. Fix the misleading diff header (install.ts:446) to describe actual coverage. Tests: compact single-line config holding {\"keep\":true,\"openai_key\":\"sk-test-...\"} must not print the marker; pretty-printed config with the secret as the final key must not print it; denylisted keys and the six URL-userinfo encodings keep redacting; dry-run still writes nothing.",
+      "remediationTests": [
+        "install.test.ts: dry-run against a compact JSON fixture with a non-denylisted key (openai_key) holding an invented marker secret asserts the marker never appears in renderInstallDiff output or runCli stdout",
+        "install.test.ts: pretty-printed fixture with the marker as the formerly-last key asserts it is redacted after the trailing-comma rewrite",
+        "install.test.ts: existing denylisted-key and URL-userinfo cases still assert <redacted changed setting> and <redacted>@"
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "denylist",
+          "reflow",
+          "sink"
+        ],
+        "summary": "Redaction is keyed to value location (key names, URL userinfo) rather than to the fact that arbitrary pre-existing config lines enter the changed-lines set. Because planJson re-serializes the whole document, changed lines routinely include unrelated keys, and any secret under a key outside the denylist passes through unredacted to stdout. The invariant claimed by backlog 117 #8 (never echo credentials into diffs) needs value-shape-based or format-preserving protection, not a key-name fragment list."
+      },
+      "ruleId": "sensitive-data.insecure-output-redaction",
+      "severity": {
+        "changeConditions": "Raise to medium if secrets are shown to routinely sit under non-denylisted keys in affected configs and dry-run output is routinely captured into widely-shared or attacker-readable surfaces, or with a demonstrated in-scope chain steering dry-run execution and observing the transcript. Raise toward high only if untrusted-store content can flow into echoed diff lines (no evidence today). Lower to informational if affected configs provably hold no credentials or a policy explicitly accepts the echo (backlog 117 #8 says the opposite).",
+        "level": "low",
+        "rationale": "Impact medium: real developer credentials can reach durable capture surfaces (CI logs, agent transcripts, pastes into shared boards), the exact threat-model risk 5. Likelihood low: the secret must sit under a non-denylisted key on a changed line and the operator must run a captured dry-run; no attacker input is required or involved. Matrix medium x low -> low; robust under high x low.",
+        "score": 3.1,
+        "scoringSystem": "CVSS:3.1",
+        "vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N"
+      },
+      "summary": "`board install <runtime> --dry-run` prints a unified diff of proposed config changes, and `planJson` re-serializes the whole config so pre-existing lines commonly count as changed (compact single-line configs reflow entirely; pretty-printed files rewrite the former last key's line with a trailing comma). The only redaction on those lines is `safeDiffLine`: a key-name denylist (token|secret|password|credential|private_key|access_key|api_key|authorization) plus URL-userinfo scrubbing. A secret stored under any other key name (for example `openai_key`) is emitted verbatim to stdout inside the diff, violating the backlog 117 #8 claim that the installer never echoes credentials into diffs. Reproduced end-to-end through the real CLI stdout with an invented marker secret; the denylisted-key negative control is correctly redacted.",
+      "taxonomy": {
+        "category": "sensitive-data-exposure",
+        "cwe": [
+          "CWE-532"
+        ]
+      },
+      "title": "Dry-run config diff redacts only key-name-denylist and URL-userinfo patterns, echoing secrets under other key names to stdout",
+      "validation": {
+        "counterEvidence": [
+          "Unchanged lines are never emitted by the LCS diff, bounding exposure per file to reflowed lines",
+          "Denylist and six URL-userinfo encodings are correctly redacted where they match; the failure is coverage of unknown key names, not a broken mechanism",
+          "Source data is the operator's own config, not untrusted store content; no attacker input is required"
+        ],
+        "evidence": [
+          "validation_artifacts/poc_output.txt \u2014 cases A/B/C with verdicts",
+          "validation_artifacts/poc.ts \u2014 reproduction driver against the live tree",
+          "Probe of hasSensitiveAssignment against 15 realistic key names: openai_key/anthropic_key/svc_pat pass through; apiKey/hf_token caught"
+        ],
+        "method": "Static source trace against the SHA256-pinned snapshot plus end-to-end dynamic reproduction through the exported API and the real CLI; negative control executed.",
+        "summary": "Reproduced end-to-end: a fixture {\"keep\":true,\"openai_key\":\"sk-test-DO-NOT-LEAK-1234567890\"} gemini config leaks the marker through both renderInstallDiff and the real `board install gemini --dry-run` stdout (case A and via CLI); a denylisted-key control shows <redacted changed setting> (case B); a pretty-printed boundary case leaks via the trailing-comma rewrite (case C). Dry-run wrote nothing to disk. Shipped tests (install.test.ts:470-501) pin only denylisted keys and URL-userinfo encodings, so the gap is uncovered."
+      },
+      "writeup": {
+        "reportPath": "findings/dryrun-diff-denylist-redaction-gap/dryrun-diff-denylist-redaction-gap.md"
+      }
+    },
+    {
+      "attackPath": {
+        "dataflow": {
+          "outcome": "Silent, persistent suppression of wake delivery for every starved victim on the store: 0 POSTs, no error, no log",
+          "sink": "The presence-to-registry target-selection loop in deliverOpenCodeMentions (packages/cli/src/index.ts:362-364) deciding which local session receives the OpenCode prompt_async wake",
+          "source": "Attacker-written presence objects in the untrusted shared store (agents/<name>/presence/<ulid>.json, unsigned by design)",
+          "summary": "Flood records fill the capped lexicographic read window before the victim's key; the wake target loop never sees the victim.",
+          "transformations": [
+            "heartbeat writes attacker records under an attacker-chosen name whose key sorts before the victim's (digits-first names beat essentially all victims because '/' sorts below [0-9a-z])",
+            "listPresence examines at most the first 200 keys and hard-stops, consuming slots regardless of record validity or freshness",
+            "the victim filter never runs for the victim; Promise.allSettled discards any errors and nothing logs"
+          ]
+        },
+        "evidenceRefs": [
+          "nolimit",
+          "window",
+          "silent"
+        ],
+        "reachability": {
+          "attacker": "Any store writer \u2014 the baseline in-scope adversary (co-located untrusted/prompt-infected agents included); no privilege beyond store write",
+          "entrypoint": "200 presence-record writes (one-time, persistent), then any post mentioning an opencode agent (attacker may author it)",
+          "outcome": "Wake delivery silently suppressed for as long as the flood persists",
+          "preconditions": [
+            "Write access to the shared store (in scope by definition)",
+            "200 records \u2014 exactly the cap value, verified sufficient",
+            "Flood name sorting before the victim's name",
+            "Victim runs board watch --deliver (opt-in)"
+          ],
+          "summary": "Trivial cost, attacker-favored ordering, silent effect; requires deliberate targeting of an opt-in deployment."
+        },
+        "severityMatrix": {
+          "impact": "medium",
+          "likelihood": "medium",
+          "result": "low"
+        },
+        "summary": "Any store writer writes >=200 presence records under a low-sorting name (persistent; no GC); deliverOpenCodeMentions's capped lexicographic scan (200-key window) never examines the victim's record; the target loop never fires; the wake POST is silently skipped. Availability-only."
+      },
+      "codeEvidence": [
+        {
+          "code": "const presence = await listPresence(store, { maxAgeMs: 120_000, now: () => now });",
+          "endLine": 357,
+          "explanation": "No limit passed, so the committed presence reader's DEFAULT_WHO_LIMIT (200) applies; the walk hard-stops after examining 200 lexicographic keys.",
+          "id": "nolimit",
+          "label": "Wake path reads presence without a limit",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "root-cause",
+          "startLine": 357
+        },
+        {
+          "code": "for (const key of keys) {\n  ...\n  if (examined >= limit) break;",
+          "endLine": 141,
+          "explanation": "Out-of-diff committed control (context): attacker-written keys consume window slots regardless of validity or freshness; there is no GC, so a one-time flood persists. The wake path's dependence on this window is new in this change set.",
+          "id": "window",
+          "label": "Reader window hard-stops and never signals truncation",
+          "language": "typescript",
+          "path": "packages/presence/src/index.ts",
+          "role": "shared-control",
+          "startLine": 133
+        },
+        {
+          "code": "await Promise.allSettled(presence.map(async (target) => { ... if (!response.ok) throw new Error(...) }));",
+          "endLine": 390,
+          "explanation": "A crowded-out victim means the loop body never runs; delivery errors that do occur are discarded by Promise.allSettled; nothing logs. Suppression is silent.",
+          "id": "silent",
+          "label": "Misses are swallowed without any signal",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 362
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Full static chain line-verified (listPresence without limit at index.ts:357; DEFAULT_WHO_LIMIT=200 and hard break at presence/src/index.ts:124,133-141; lexicographic ordering via store-fs MinHeap; silent swallowing at index.ts:362,389-390) plus end-to-end dynamic proof through the real deliverOpenCodeMentions with a stubbed fetch and fixture registry (scenarios A/B in validation_artifacts/flood_e2e_output.txt)."
+      },
+      "extensions": {
+        "candidateId": "presence-flood-starves-wake-scan",
+        "ledgerRowId": "artifacts/05_findings/presence-flood-starves-wake-scan/candidate_ledger.jsonl",
+        "reportId": "findings/presence-flood-starves-wake-scan/presence-flood-starves-wake-scan.md"
+      },
+      "findingId": "csf_603c2b1d2520bf70163ed2ba",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:19696a290f68816da992b2579af6adc10d57002189598f82b0d526f7dc4eb80e"
+      },
+      "identity": {
+        "anchor": "presence-flood-starves-wake-scan"
+      },
+      "locations": [
+        {
+          "endLine": 357,
+          "path": "packages/cli/src/index.ts",
+          "role": "root-control-dependence",
+          "startLine": 357,
+          "summary": "listPresence called without a limit; default 200 applies"
+        },
+        {
+          "endLine": 364,
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 362,
+          "summary": "target-selection loop never sees the crowded-out victim"
+        },
+        {
+          "endLine": 141,
+          "path": "packages/presence/src/index.ts",
+          "role": "shared-control",
+          "startLine": 124,
+          "summary": "committed, out of diff scope: lexicographic walk with hard break at the 200-key window"
+        }
+      ],
+      "occurrenceId": "occ_5ad66d683bea87698e6025f9",
+      "preventiveControls": [
+        "Adopt a scan policy for untrusted-store readers: paginate to completion, or bound with an operator-visible truncation signal \u2014 never silently stop (applies to board who as well, same cap, pre-existing sibling)",
+        "Backlog 305 rate limits / audit view and a presence GC prevent cheap persistent floods; presence signing (301+) complements but does not replace window-bounding"
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Bound the read at the in-scope call site and make degradation visible. Preferred: pass an explicit limit (up to MAX_WHO_LIMIT 1000) sized to the deployment, and/or paginate (presence supports an after cursor) until every mentioned agent name has been examined or the store is exhausted. Additionally emit an operator-visible truncation/crowding warning when the window saturates before all mentioned names were seen (deliverOpenCodeMentions or watch shutdown). Longer term (backlog-adjacent): per-author presence rate limits and GC (305), and presence signing (301+) which also fixes the spoofing class but not this window starvation. Tests: flood of 200 records under a low-sorting name then assert the victim is still woken (or a warning is printed); junk keys filling the window; same-name zero-time-ULID crowding variant.",
+      "remediationTests": [
+        "cli.test.ts: with 200 attacker heartbeat records sorting before the victim, watch --deliver still POSTs the victim's registry endpoint (or prints a truncation warning)",
+        "cli.test.ts: content-free junk keys filling the window produce the same outcome (window slots consumed regardless of validity)",
+        "cli.test.ts: existing wake tests still deliver with no flood and no warning"
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "nolimit",
+          "window",
+          "silent"
+        ],
+        "summary": "The new wake path consumes an untrusted shared store through a bounded reader window (first 200 lexicographic keys) without either bounding to completion or signaling truncation. Presence is unsigned and attacker-writable by design, and nothing rates-limits or garbage-collects presence keys, so window crowding is cheap, persistent, and silent. The general defect class is any reader over the untrusted store that neither paginates to completion nor surfaces an operator-visible truncation."
+      },
+      "ruleId": "availability.unbounded-untrusted-read-starvation",
+      "severity": {
+        "changeConditions": "Raise to medium if wake delivery is shown to carry security-critical function (incident/revocation notices via mentions), if the capped scan ever feeds an integrity or confidentiality decision, or with fleet-scale/default-on evidence. Lower to informational if --deliver stays off by default everywhere and a truncation warning ships (silent starvation becomes detectable degradation). Post-fix: re-run validation_artifacts/flood_poc_e2e.ts expecting delivery or a visible warning.",
+        "level": "low",
+        "rationale": "Impact medium (availability-only): an in-scope baseline attacker (any store writer) silently and persistently suppresses the new delivery feature for all watchers of a store, with a genuinely silent failure mode. No integrity or confidentiality impact \u2014 the endpoint still derives only from the local owner-only registry. Likelihood medium: trivial cost (200 cheap persistent writes, attacker-chosen sort prefix, attacker-writable trigger post) but requires deliberate targeting of an opt-in deployment for disruption-only payoff. Matrix medium x medium -> low.",
+        "score": 3.5,
+        "scoringSystem": "CVSS:3.1",
+        "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+      },
+      "summary": "deliverOpenCodeMentions (new in this change set) resolves wake targets by calling listPresence without a limit, so it examines at most the first 200 presence keys of the untrusted shared store in lexicographic order (DEFAULT_WHO_LIMIT in committed packages/presence, out of diff scope) and stops. Any store writer can cheaply create 200 structurally valid heartbeat records under a low-sorting name; the victim's record is then never examined and the wake silently never fires (errors are discarded by Promise.allSettled and nothing logs). Validated end-to-end through the real sink: 1 wake POST without flood, 0 POSTs with exactly 200 flood records. Availability-only: wake endpoints still derive solely from the local owner-only session registry, so integrity and confidentiality are unaffected.",
+      "taxonomy": {
+        "category": "denial-of-service",
+        "cwe": [
+          "CWE-770",
+          "CWE-400"
+        ]
+      },
+      "title": "Wake delivery scans only the first 200 lexicographic presence records, so store-flooded records silently suppress wake targets",
+      "validation": {
+        "counterEvidence": [
+          "Wake endpoints still derive exclusively from the local owner-only session registry (index.ts:365-368), so flooding cannot redirect or forge delivery \u2014 integrity/confidentiality unaffected",
+          "--deliver is opt-in, limiting the affected population",
+          "Store-owner tampering/withholding is an accepted threat-model risk (risk 4), but this attack requires no tampering \u2014 it exploits a reader-side window and would also starve an honest store with >200 legitimately active agents",
+          "The hook-injection path is index/Board-based and not presence-capped; impact is confined to wake delivery"
+        ],
+        "evidence": [
+          "validation_artifacts/flood_poc.ts / flood_output.txt \u2014 window exhaustion",
+          "validation_artifacts/flood_poc_e2e.ts / flood_e2e_output.txt \u2014 end-to-end suppression proof",
+          "git show ff12f7f3:packages/cli/src/index.ts \u2014 deliverOpenCodeMentions absent at HEAD (diff-introduced dependence)"
+        ],
+        "method": "Static source trace against the SHA256-pinned snapshot plus end-to-end dynamic proof through the real deliverOpenCodeMentions sink with a stubbed fetch and fixture local registry.",
+        "summary": "End-to-end: without flood the victim receives 1 wake POST; adding exactly 200 attacker records under a name sorting before the victim yields 0 POSTs with no error and no log (validation_artifacts/flood_e2e_output.txt, scenarios A/B). The dependence is new in this change set: deliverOpenCodeMentions is absent at HEAD (git show ff12f7f:packages/cli/src/index.ts). The 200-key window, lexicographic ordering (fs MinHeap), validity-agnostic slot consumption, and absence of GC were verified in the committed presence/core/store-fs sources. Write-up also verified two extra variants: 200 content-free junk keys fill the window identically, and 200 same-name zero-time-ULID records crowd out a victim under an identical name."
+      },
+      "writeup": {
+        "reportPath": "findings/presence-flood-starves-wake-scan/presence-flood-starves-wake-scan.md"
+      }
+    }
+  ],
+  "scanId": "20260902T-cli-hooks-wake-target-fix",
+  "schemaVersion": "1.0"
+}

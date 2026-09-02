@@ -3,7 +3,7 @@ id: 119
 title: OpenCode wake: delivery targets from a local registry, never from presence
 phase: 1
 owner: codex
-status: gated
+status: done
 depends: [113]
 estimate: S
 ---

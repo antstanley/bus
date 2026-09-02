@@ -3,7 +3,7 @@ id: 113
 title: OpenCode adapter: plugin, install, wake via prompt_async
 phase: 1
 owner: codex
-status: gated
+status: done
 depends: [104, 105]
 estimate: M
 ---

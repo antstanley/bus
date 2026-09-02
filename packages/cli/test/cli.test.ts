@@ -1,16 +1,33 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { Board, MemoryStore, ulid, type Store } from "@board/core";
 import { heartbeat, who } from "@board/presence";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CliError, createStore, parseStoreSpec, runCli, sanitizeSecrets } from "../src/index.ts";
+import {
+  CliError,
+  createStore,
+  openCodeSessionRegistryPath,
+  parseStoreSpec,
+  runCli,
+  sanitizeSecrets,
+} from "../src/index.ts";
 
 const roots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
+
+async function writeLocalOpenCodeSession(registryDir: string, sessionId: string, serverUrl: string): Promise<void> {
+  await mkdir(registryDir, { recursive: true, mode: 0o700 });
+  await writeFile(openCodeSessionRegistryPath(registryDir, sessionId), JSON.stringify({
+    v: 1,
+    sessionId,
+    serverUrl,
+    ts: new Date().toISOString(),
+  }) + "\n", { mode: 0o600 });
+}
 
 describe("board CLI", () => {
   it("parses all documented store forms", () => {
@@ -46,14 +63,29 @@ describe("board CLI", () => {
 
   it("prints derived presence for who", async () => {
     const store = new MemoryStore();
-    await heartbeat(store, { name: "claude", instance: ulid(), status: "working" });
+    await heartbeat(store, {
+      name: "claude",
+      instance: ulid(),
+      status: "working",
+      runtime: "claude",
+      sessionId: "session-123",
+      socket: "/tmp/cc-socks/claude.sock",
+      cmuxSurface: "surface-2",
+    });
     const lines: string[] = [];
-    await runCli(["who", "--store", "fs:ignored"], {
+    await runCli(["who", "--json", "--store", "fs:ignored"], {
       createStore: () => store,
       stdout: (line) => lines.push(line),
     });
     const presence = JSON.parse(lines[0]!) as Array<{ name: string; online: boolean }>;
-    expect(presence).toEqual([expect.objectContaining({ name: "claude", online: true })]);
+    expect(presence).toEqual([expect.objectContaining({
+      name: "claude",
+      online: true,
+      runtime: "claude",
+      sessionId: "session-123",
+      socket: "/tmp/cc-socks/claude.sock",
+      cmuxSurface: "surface-2",
+    })]);
   });
 
   it("streams new posts through watch until aborted", async () => {
@@ -75,6 +107,95 @@ describe("board CLI", () => {
     expect(await who(store, { maxAgeMs: 60_000 })).toEqual([
       expect.objectContaining({ name: "codex", status: "watching", tool: "cli" }),
     ]);
+  });
+
+  it("watch --deliver wakes only loopback OpenCode sessions with optional basic auth", async () => {
+    const store = new MemoryStore();
+    const root = await mkdtemp(join(tmpdir(), "board-cli-sessions-"));
+    roots.push(root);
+    const registryDir = join(root, "opencode");
+    const now = Date.now();
+    await writeLocalOpenCodeSession(registryDir, "session/123", "http://127.0.0.1:4096/");
+    await writeLocalOpenCodeSession(registryDir, "external", "https://example.test/");
+    await writeLocalOpenCodeSession(registryDir, "future", "http://127.0.0.1:4099/");
+    await heartbeat(store, {
+      name: "opencode",
+      instance: ulid(),
+      status: "idle",
+      runtime: "opencode",
+      sessionId: "session/123",
+      serverUrl: "http://127.0.0.1:6553/",
+      now: () => now,
+    });
+    await heartbeat(store, {
+      name: "opencode",
+      instance: ulid(),
+      status: "idle",
+      runtime: "opencode",
+      sessionId: "external",
+      serverUrl: "https://example.test/",
+      now: () => now,
+    });
+    await heartbeat(store, {
+      name: "opencode",
+      instance: ulid(),
+      status: "idle",
+      runtime: "opencode",
+      sessionId: "foreign-loopback",
+      serverUrl: "http://127.0.0.1:4098/",
+      now: () => now,
+    });
+    await heartbeat(store, {
+      name: "opencode",
+      instance: ulid(),
+      status: "idle",
+      runtime: "opencode",
+      sessionId: "stale",
+      serverUrl: "http://127.0.0.1:4097/",
+      now: () => 0,
+    });
+    await heartbeat(store, {
+      name: "opencode",
+      instance: ulid(),
+      status: "idle",
+      runtime: "opencode",
+      sessionId: "future",
+      serverUrl: "http://127.0.0.1:4099/",
+      now: () => now + 300_001,
+    });
+    const controller = new AbortController();
+    const requests: Array<{ url: string; init: RequestInit }> = [];
+    const watching = runCli([
+      "watch", "--store", "fs:ignored", "--board", "general", "--as", "codex",
+      "--interval", "1", "--deliver",
+    ], {
+      createStore: () => store,
+      signal: controller.signal,
+      stdout: () => {},
+      env: { OPENCODE_SERVER_USERNAME: "board-user", OPENCODE_SERVER_PASSWORD: "board-pass" },
+      sessionRegistryDir: registryDir,
+      now: () => now,
+      fetch: async (input, init = {}) => {
+        requests.push({ url: String(input), init });
+        controller.abort();
+        return new Response(null, { status: 204 });
+      },
+    });
+    await Bun.sleep(5);
+    const post = await new Board(store, { board: "general", author: "claude" }).post({
+      body: "wake target",
+      mentions: ["opencode"],
+    });
+    await watching;
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]!.url).toBe("http://127.0.0.1:4096/session/session%2F123/prompt_async");
+    expect((requests[0]!.init.headers as Record<string, string>).authorization).toBe(
+      `Basic ${Buffer.from("board-user:board-pass").toString("base64")}`,
+    );
+    expect(JSON.parse(String(requests[0]!.init.body))).toEqual({
+      parts: [{ type: "text", text: `A new board post mentions opencode (post ${post.id}). Run board read.` }],
+    });
   });
 
   it("reads stdin bodies and honours option termination and attached values", async () => {
