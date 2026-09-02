@@ -1,0 +1,198 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "ea8abb8_20260902T064606Z"
+      },
+      "properties": {
+        "securitySchemaVersion": "1.0",
+        "securityTargetKind": "git_diff"
+      },
+      "results": [
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 375,
+                  "startLine": 348
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "destination_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 386,
+                  "startLine": 380
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "sink"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 375,
+                  "startLine": 365
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/presence/src/index.ts"
+                },
+                "region": {
+                  "endLine": 208,
+                  "startLine": 178
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "freshness_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/presence/src/index.ts"
+                },
+                "region": {
+                  "endLine": 155,
+                  "startLine": 155
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/config.ts"
+                },
+                "region": {
+                  "endLine": 135,
+                  "startLine": 128
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "entrypoint"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 68,
+                  "startLine": 60
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:presence-parse"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/presence/src/index.ts"
+                },
+                "region": {
+                  "endLine": 193,
+                  "startLine": 178
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:wake-target-selection"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 358,
+                  "startLine": 345
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:credential-attach"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 364,
+                  "startLine": 359
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`board watch --deliver` wakes mentioned OpenCode sessions by reading `serverUrl` and `sessionId` from presence records in the shared store and sending an authenticated `POST /session/<sessionId>/prompt_async`. Presence records are unauthenticated store objects, so any store writer can forge one with `runtime: \"opencode\"`, a far-future `ts` (treated as `online` indefinitely), and `serverUrl` pointing at any loopback port. `openCodePromptEndpoint()` only restricts the scheme and host to plain-HTTP loopback and never binds the origin to the operator's configured server, so the daemon attaches `OPENCODE_SERVER_PASSWORD` as Basic auth and delivers it to the attacker-chosen local port. Reproduced with the exported API and the repository's own store and presence code."
+          },
+          "partialFingerprints": {
+            "security/v1": "security/v1:sha256:377c7e418f24cf8844f21d1a1329c69fbdaf2722786de9721dee7afd664f4634"
+          },
+          "properties": {
+            "candidateId": "task113-untrusted-loopback-wake-target",
+            "category": "Server-side request forgery / confused deputy (operator credential forwarded to an attacker-selected loopback origin)",
+            "confidence": "high",
+            "findingId": "csf_6fd1353fc4ee4be30a658c93",
+            "occurrenceId": "occ_7c360dd5398bdb09d61e70c7",
+            "severity": "medium"
+          },
+          "ruleId": "ssrf.presence-wake-endpoint",
+          "ruleIndex": 0
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "Security Scan",
+          "rules": [
+            {
+              "id": "ssrf.presence-wake-endpoint",
+              "name": "ssrf.presence-wake-endpoint",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "ssrf.presence-wake-endpoint"
+              }
+            }
+          ],
+          "version": "0.2.0"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

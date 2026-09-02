@@ -1,0 +1,272 @@
+{
+  "documentType": "security.findings",
+  "findings": [
+    {
+      "attackPath": {
+        "dataflow": {
+          "evidenceRefs": [
+            "presence-parse",
+            "presence-online",
+            "wake-target-selection",
+            "endpoint-allowlist",
+            "wake-request"
+          ],
+          "outcome": "the operator's OpenCode Basic credential and an authenticated `prompt_async` request are delivered to whatever listens on the attacker-selected loopback port; the forged target persists across mentions",
+          "sink": "the `request(endpoint, { method: \"POST\", headers, body, signal })` call in `deliverOpenCodeMentions()`",
+          "source": "attacker-written presence object in the untrusted store (`serverUrl`, `sessionId`, `runtime`, `ts`)",
+          "summary": "store object `agents/<name>/presence/<ulid>.json` -> `who()`/`readBatch()` -> `parsePresence()` (`serverUrl`, `sessionId`, `ts`) -> `online` from `ts` -> `deliverOpenCodeMentions()` filter -> `openCodePromptEndpoint(serverUrl, sessionId)` (loopback/http check only) -> `headers.authorization = Basic ...` from `process.env` -> `fetch(POST http://127.0.0.1:<port>/session/<sessionId>/prompt_async)`",
+          "transformations": [
+            "`parsePresence()` validates shape, ULID/path binding, and byte caps only, then returns the fields verbatim",
+            "`readBatch()` marks the record `online` because `now - Date.parse(ts)` is negative for a future `ts`",
+            "`openCodePromptEndpoint()` keeps `base.origin` (including the attacker-chosen port) and replaces the path with `/session/<encodeURIComponent(sessionId)>/prompt_async`",
+            "`OPENCODE_SERVER_PASSWORD` from the daemon environment is base64-encoded into the `authorization` header"
+          ]
+        },
+        "evidenceRefs": [
+          "wake-target-selection",
+          "endpoint-allowlist",
+          "credential-attach"
+        ],
+        "impact": {
+          "level": "high",
+          "why": "The credential is the operator's only gate on their OpenCode server, whose sessions run with the developer's shell; the request is also authenticated request forgery into any loopback service."
+        },
+        "likelihood": {
+          "level": "medium",
+          "why": "Forging is trivial and the store-write trigger is remote and in scope, but credential capture needs a loopback listener on the victim host, `--deliver` is opt-in, and the password is optional."
+        },
+        "limitations": [
+          "OpenCode server API behaviour for a credential holder is not repository evidence.",
+          "The loopback-only allowlist bounds the destination to the victim host; off-host exfiltration by this path alone is not possible."
+        ],
+        "reachability": {
+          "attacker": "any store writer (peer developer, peer agent, compromised or prompt-infected agent, or the store owner); credential capture also needs a loopback listener on the victim host",
+          "entrypoint": "`agents/<name>/presence/<ulid>.json` in the shared store, consumed by `board watch --deliver` when a post mentions `<name>`",
+          "outcome": "disclosure of the operator's OpenCode server credential to a local process of the attacker's choosing and authenticated `prompt_async` delivery into attacker-chosen local sessions",
+          "preconditions": [
+            "victim runs `board watch --deliver` with the OpenCode adapter (documented, opt-in)",
+            "a post mentions the forged presence name (attacker can author it)",
+            "`OPENCODE_SERVER_PASSWORD` is set in the daemon environment for the credential to be disclosed",
+            "an attacker-controlled listener on the victim's loopback for credential capture (not needed for authenticated wake misrouting)"
+          ],
+          "summary": "The trigger is remote: any principal with write access to the shared store (S3 bucket, git remote, or shared local folder), which the threat model names as the untrusted actor, can forge the presence object and post the mention. The victim is any developer running `board watch --deliver` with the OpenCode adapter and `OPENCODE_SERVER_PASSWORD` in the daemon environment. Receiving the credential additionally requires a process the attacker controls to listen on the victim's loopback, which is realistic for co-located untrusted agents sharing a local-folder store, other users on a shared workstation or runner, or sandboxed processes, and unlikely on a single-user laptop without a local foothold. Without a listener the attacker can still direct authenticated fixed-body wakes at any loopback port and session id."
+        },
+        "summary": "A store writer forges `agents/opencode/presence/<ulid>.json` with a far-future `ts`, `runtime: \"opencode\"`, an attacker-chosen `sessionId`, and `serverUrl: \"http://127.0.0.1:<port>\"`, then posts a mention of `opencode`. Every developer running `board watch --deliver` sends `Basic base64(OPENCODE_SERVER_USERNAME:OPENCODE_SERVER_PASSWORD)` and a fixed `prompt_async` body to that loopback port; any listener there receives the operator's credential, and any OpenCode server there receives an authenticated prompt into the chosen session."
+      },
+      "codeEvidence": [
+        {
+          "code": "  const serverUrl = runtime === \"opencode\"\n    ? firstString(payload, \"server_url\", \"serverUrl\")\n    : undefined;\n  return {\n    ...(sessionId === undefined ? {} : { sessionId }),\n    ...(socket === undefined ? {} : { socket }),\n    ...(cmuxSurface === undefined ? {} : { cmuxSurface }),\n    ...(serverUrl === undefined ? {} : { serverUrl }),",
+          "endLine": 135,
+          "explanation": "The genuine OpenCode heartbeat takes `server_url` from the plugin payload and forwards it into the presence record. The record is a plain store object, so any store writer can produce an identical object without going through this hook, and the consumer cannot tell the two apart.",
+          "id": "hook-server-url",
+          "label": "Legitimate producer publishes serverUrl/sessionId from the OpenCode plugin payload",
+          "language": "typescript",
+          "path": "packages/hooks/src/config.ts",
+          "role": "entrypoint",
+          "startLine": 128
+        },
+        {
+          "code": "function parsePresence(bytes: Uint8Array, pathName: string, pathInstance: string): PresenceRecord | null {\n  if (bytes.byteLength > PRESENCE_MAX_BYTES) return null;\n  let value: unknown;\n  try {\n    value = JSON.parse(decoder.decode(bytes));\n  } catch {\n    return null;\n  }\n  if (!value || typeof value !== \"object\") return null;\n  const p = value as Record<string, unknown>;\n  if (p.v !== PRESENCE_VERSION || p.name !== pathName || p.instance !== pathInstance || !isUlid(p.instance)) return null;\n  if (typeof p.ts !== \"string\" || !Number.isFinite(Date.parse(p.ts))) return null;\n  for (const field of [\"status\", \"tool\", \"host\", \"runtime\", \"sessionId\", \"socket\", \"cmuxSurface\", \"serverUrl\"] as const) {\n    if (p[field] !== undefined && typeof p[field] !== \"string\") return null;\n    if (typeof p[field] === \"string\" && encoder.encode(p[field]).byteLength > PRESENCE_MAX_FIELD_BYTES) return null;\n  }",
+          "endLine": 193,
+          "explanation": "`parsePresence()` reads `agents/<name>/presence/<instance>.json` straight from the untrusted store. It checks the version, path binding, ULID shape, parseable `ts`, and per-field byte caps, then returns `runtime`, `sessionId`, and `serverUrl` verbatim; nothing verifies who wrote the object.",
+          "id": "presence-parse",
+          "label": "Presence records are accepted from the store with shape and size checks only",
+          "language": "typescript",
+          "path": "packages/presence/src/index.ts",
+          "role": "user_input",
+          "startLine": 178
+        },
+        {
+          "code": "      return record ? { ...record, online: now - Date.parse(record.ts) <= maxAgeMs } : null;",
+          "endLine": 155,
+          "explanation": "`online` is `now - Date.parse(record.ts) <= maxAgeMs`. A `ts` in the future gives a negative age, so a forged record is `online` for as long as the timestamp is ahead of the clock and never ages out of the 120 s delivery window.",
+          "id": "presence-online",
+          "label": "Online state derived from the attacker-chosen timestamp",
+          "language": "typescript",
+          "path": "packages/presence/src/index.ts",
+          "role": "propagation",
+          "startLine": 155
+        },
+        {
+          "code": "export async function deliverOpenCodeMentions(post: Post, store: Store, deps: CliDependencies = {}): Promise<void> {\n  const mentioned = new Set(post.mentions ?? []);\n  if (mentioned.size === 0) return;\n  const presence = await listPresence(store, { maxAgeMs: 120_000 });\n  const request = deps.fetch ?? globalThis.fetch;\n  const env = deps.env ?? process.env;\n  const seen = new Set<string>();\n  await Promise.allSettled(presence.map(async (target) => {\n    if (!target.online || !mentioned.has(target.name) || target.runtime !== \"opencode\" || !target.sessionId || !target.serverUrl) return;\n    const endpoint = openCodePromptEndpoint(target.serverUrl, target.sessionId);\n    if (!endpoint) return;\n    const deliveryKey = `${endpoint.origin}\\0${target.sessionId}`;\n    if (seen.has(deliveryKey)) return;\n    seen.add(deliveryKey);",
+          "endLine": 358,
+          "explanation": "`deliverOpenCodeMentions()` lists all presence records and keeps those that are `online`, mentioned, `runtime === \"opencode\"`, and carry a `sessionId` and `serverUrl`. The presence-supplied `serverUrl` and `sessionId` are handed to `openCodePromptEndpoint()` and become the dedupe key; no provenance or operator configuration is consulted.",
+          "id": "wake-target-selection",
+          "label": "Delivery selects targets from every parseable presence record",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "propagation",
+          "startLine": 345
+        },
+        {
+          "code": "function openCodePromptEndpoint(serverUrl: string, sessionId: string): URL | null {\n  let base: URL;\n  try { base = new URL(serverUrl); } catch { return null; }\n  const hostname = base.hostname.toLowerCase();\n  if (base.protocol !== \"http:\" || base.username || base.password || base.search || base.hash) return null;\n  if (hostname !== \"localhost\" && hostname !== \"127.0.0.1\" && hostname !== \"[::1]\" && hostname !== \"::1\") return null;\n  return new URL(`/session/${encodeURIComponent(sessionId)}/prompt_async`, base.origin);",
+          "endLine": 386,
+          "explanation": "`openCodePromptEndpoint()` rejects non-`http:` schemes, userinfo, query, and fragment, and requires a loopback hostname, but any port is accepted and the origin is never compared with the operator's own OpenCode server. The attacker-chosen `base.origin` becomes the request target.",
+          "id": "endpoint-allowlist",
+          "label": "Destination control admits any plain-HTTP loopback origin",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "root_control",
+          "startLine": 380
+        },
+        {
+          "code": "    const headers: Record<string, string> = { \"content-type\": \"application/json\" };\n    const password = env.OPENCODE_SERVER_PASSWORD;\n    if (password) {\n      const username = env.OPENCODE_SERVER_USERNAME || \"opencode\";\n      headers.authorization = `Basic ${Buffer.from(`${username}:${password}`, \"utf8\").toString(\"base64\")}`;\n    }",
+          "endLine": 364,
+          "explanation": "`OPENCODE_SERVER_PASSWORD` and `OPENCODE_SERVER_USERNAME` are read from the daemon's environment and encoded into an `authorization: Basic` header for whatever endpoint the presence record selected.",
+          "id": "credential-attach",
+          "label": "Operator Basic credential attached to the presence-selected endpoint",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "propagation",
+          "startLine": 359
+        },
+        {
+          "code": "    const response = await request(endpoint, {\n      method: \"POST\",\n      headers,\n      body: JSON.stringify({\n        parts: [{\n          type: \"text\",\n          text: `A new board post mentions ${target.name} (post ${post.id}). Run board read.`,\n        }],\n      }),\n      signal: AbortSignal.timeout(5_000),\n    });",
+          "endLine": 375,
+          "explanation": "The request carries the Basic header and a fixed JSON body to `http://127.0.0.1:<attacker port>/session/<attacker sessionId>/prompt_async`. Whatever listens there receives the operator's credential; an OpenCode server there receives an authenticated prompt for the attacker-chosen session.",
+          "id": "wake-request",
+          "label": "Authenticated POST to the attacker-selected loopback origin",
+          "language": "typescript",
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 365
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "The recorded reproduction drives the real `MemoryStore`, `Board.post`, presence parser, and `deliverOpenCodeMentions()` end to end and captures one outbound request to the attacker-selected loopback origin carrying the Basic credential; only the HTTP transport was replaced by a recorder, and the repository's own CLI test exercises the same path through `runCli([\"watch\", ..., \"--deliver\"])`."
+      },
+      "extensions": {
+        "candidateId": "task113-untrusted-loopback-wake-target",
+        "ledgerRowId": "task113-untrusted-loopback-wake-target#discovery"
+      },
+      "findingId": "csf_6fd1353fc4ee4be30a658c93",
+      "fingerprints": {
+        "algorithm": "security/v1",
+        "primary": "security/v1:sha256:377c7e418f24cf8844f21d1a1329c69fbdaf2722786de9721dee7afd664f4634"
+      },
+      "identity": {
+        "anchor": "opencode-wake-origin-from-untrusted-presence"
+      },
+      "locations": [
+        {
+          "endLine": 375,
+          "path": "packages/cli/src/index.ts",
+          "role": "root_control",
+          "startLine": 348
+        },
+        {
+          "endLine": 386,
+          "path": "packages/cli/src/index.ts",
+          "role": "destination_control",
+          "startLine": 380
+        },
+        {
+          "endLine": 375,
+          "path": "packages/cli/src/index.ts",
+          "role": "sink",
+          "startLine": 365
+        },
+        {
+          "endLine": 208,
+          "path": "packages/presence/src/index.ts",
+          "role": "entrypoint",
+          "startLine": 178
+        },
+        {
+          "endLine": 155,
+          "path": "packages/presence/src/index.ts",
+          "role": "freshness_control",
+          "startLine": 155
+        },
+        {
+          "endLine": 135,
+          "path": "packages/hooks/src/config.ts",
+          "role": "entrypoint",
+          "startLine": 128
+        },
+        {
+          "endLine": 68,
+          "path": "packages/hooks/src/board-hook.ts",
+          "role": "entrypoint",
+          "startLine": 60
+        }
+      ],
+      "occurrenceId": "occ_7c360dd5398bdb09d61e70c7",
+      "preventiveControls": [
+        "Treat every field of a store object as attacker-controlled until presence and posts are signed; never let store content select a credentialed network destination.",
+        "Keep the OpenCode credential scoped to a single configured origin and log or surface skipped deliveries whose presence `serverUrl` disagrees with it.",
+        "Add a presence-freshness invariant test (`now - ts` within `[0, maxAgeMs]`) to `packages/presence` so future timestamps cannot pin a record online."
+      ],
+      "provenance": {
+        "source": "local_plugin"
+      },
+      "remediation": "Do not derive the credentialed destination from store content. Pin delivery to an operator-configured OpenCode origin (for example `OPENCODE_SERVER_URL` recorded at `board install opencode` time or read from the daemon environment) and only send `Authorization` when `endpoint.origin` equals that configured origin; treat a presence `serverUrl` that differs as untrusted and skip it. Reject presence records whose `ts` is in the future (clamp `online` to `0 <= now - Date.parse(ts) <= maxAgeMs`, mirroring the threat model's `|ts - ulidTime(id)|` skew rule). Longer term, authenticate presence records (threat-model backlog item 1) so only the named agent's key can publish its wake target.",
+      "remediationTests": [
+        "A presence record with `serverUrl` on a loopback port other than the configured origin produces no request, and no `authorization` header is ever sent to a non-configured origin.",
+        "A presence record with `ts` in the future is reported offline by `who()` and is skipped by `deliverOpenCodeMentions()`.",
+        "The existing `watch --deliver` test still wakes the configured-origin session with Basic auth."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "hook-server-url",
+          "presence-parse",
+          "presence-online",
+          "wake-target-selection",
+          "endpoint-allowlist",
+          "credential-attach",
+          "wake-request"
+        ],
+        "summary": "The violated invariant is that the daemon may attach the operator's OpenCode credential only to the operator's own OpenCode server. The wake path derives the destination from store content instead: `parsePresence()` accepts any well-formed record from the untrusted store, `readBatch()` treats a future `ts` as online, `deliverOpenCodeMentions()` takes `serverUrl` and `sessionId` from that record, `openCodePromptEndpoint()` checks only that the host is loopback over plain HTTP, and the request is then sent with `OPENCODE_SERVER_PASSWORD` in a Basic header. No step authenticates the record's author or compares the origin with a configured server, so untrusted data selects which local port receives the credential and the authenticated prompt."
+      },
+      "ruleId": "ssrf.presence-wake-endpoint",
+      "severity": {
+        "changeConditions": "Raise to high with a real-socket capture in a supported shared-host or multi-agent deployment, or with evidence that OpenCode's API lets the credential holder run prompts or tools in the developer's session without further gating. Lower to low if presence records were authenticated or delivery were pinned to an operator-configured origin, leaving only unauthenticated fixed-body wakes.",
+        "level": "medium",
+        "rationale": "A store writer (the threat model's assumed attacker) forges one presence object and one mention to make every developer running `watch --deliver` send their `OPENCODE_SERVER_PASSWORD` Basic credential, plus an authenticated `prompt_async` request, to a loopback port of the attacker's choosing; the forged record never expires because a future `ts` is treated as online. Impact is high because the credential is the only gate on the developer's OpenCode server, whose sessions run with the developer's shell, and because the request itself is authenticated request forgery into any local service. Likelihood is medium: forging is trivial and the trigger is remote and in scope, but capturing the credential requires an attacker-controlled listener on the victim's loopback (a co-located untrusted agent on a shared local-folder store, another user on a shared host, or a sandboxed process), `--deliver` is opt-in, and the password is optional. The loopback-only allowlist keeps the request on the victim host and the fixed request body limits a remote-only attacker to misrouting the intended wake, which is why this is not rated high."
+      },
+      "summary": "`board watch --deliver` wakes mentioned OpenCode sessions by reading `serverUrl` and `sessionId` from presence records in the shared store and sending an authenticated `POST /session/<sessionId>/prompt_async`. Presence records are unauthenticated store objects, so any store writer can forge one with `runtime: \"opencode\"`, a far-future `ts` (treated as `online` indefinitely), and `serverUrl` pointing at any loopback port. `openCodePromptEndpoint()` only restricts the scheme and host to plain-HTTP loopback and never binds the origin to the operator's configured server, so the daemon attaches `OPENCODE_SERVER_PASSWORD` as Basic auth and delivers it to the attacker-chosen local port. Reproduced with the exported API and the repository's own store and presence code.",
+      "taxonomy": {
+        "category": "Server-side request forgery / confused deputy (operator credential forwarded to an attacker-selected loopback origin)",
+        "cwe": [
+          "CWE-918",
+          "CWE-441"
+        ]
+      },
+      "title": "Unsigned presence can redirect authenticated OpenCode wake requests to an arbitrary loopback service",
+      "validation": {
+        "assertions": [
+          "A presence object written by any store writer, without the `heartbeat()` producer, is selected as a wake target when it is mentioned and claims `runtime: \"opencode\"`.",
+          "The daemon forwards `Basic base64(OPENCODE_SERVER_USERNAME:OPENCODE_SERVER_PASSWORD)` to the origin named in that object as long as the host is loopback and the scheme is `http:`.",
+          "A future `ts` keeps the forged record online past the 120 s window."
+        ],
+        "counterEvidence": [
+          "The loopback-only allowlist keeps the request on the victim host; a store-only remote attacker cannot receive the credential without a local listener.",
+          "The request was captured at the `fetch` boundary, not on a real socket; no repository evidence suggests `globalThis.fetch` would behave differently for a loopback URL.",
+          "Without `OPENCODE_SERVER_PASSWORD` in the daemon environment no credential is disclosed, though the unauthenticated `prompt_async` POST to the attacker-chosen port still occurs."
+        ],
+        "evidence": [
+          "`reproduction.log`: `{\"reproduced\":true,\"arbitraryLoopbackOrigin\":\"http://127.0.0.1:43119/session/forged%2Fsession/prompt_async\",\"basicCredentialForwarded\":true,\"futureTimestampAcceptedOnline\":true}`.",
+          "The forged record bypassed the 120 s freshness window because `online` is computed as `now - Date.parse(ts) <= maxAgeMs` and a future `ts` yields a negative age.",
+          "The `/attacker-controlled` path in the forged `serverUrl` was discarded; the request path is always `/session/<sessionId>/prompt_async` on the attacker-selected origin, and `sessionId` is attacker-chosen.",
+          "Negative controls from `packages/cli/test/cli.test.ts:95-153`: an `https://example.test/` record and a stale (`ts` = epoch 0) record are skipped, confirming scheme/host and age are the only gates."
+        ],
+        "evidenceRefs": [
+          "presence-parse",
+          "presence-online",
+          "wake-target-selection",
+          "credential-attach",
+          "wake-request"
+        ],
+        "limitations": [
+          "Reproduction used the in-memory `Store`; the presence read path is store-agnostic and no `fs`, `git`, or `s3` store was exercised.",
+          "What a credential holder can do against the OpenCode server API is outside the repository and was not tested."
+        ],
+        "method": "realistic interface reproduction (exported `deliverOpenCodeMentions()` with the real store, board, and presence code; HTTP transport replaced by a request recorder) corroborated by static trace and the repository CLI test at `packages/cli/test/cli.test.ts:95-153`",
+        "summary": "The recorded reproduction (`artifacts/05_findings/task113-untrusted-loopback-wake-target/validation_artifacts/reproduce.ts`, log in `reproduction.log`) writes a presence object directly with `store.put()` (no `heartbeat()` call) carrying `runtime: \"opencode\"`, `sessionId: \"forged/session\"`, `serverUrl: \"http://127.0.0.1:43119/attacker-controlled\"`, and a `ts` 24 hours in the future, posts a mention of `opencode` as author `attacker`, then invokes `deliverOpenCodeMentions()` with `OPENCODE_SERVER_USERNAME`/`OPENCODE_SERVER_PASSWORD` set. Exactly one request was observed at `http://127.0.0.1:43119/session/forged%2Fsession/prompt_async` with `authorization` equal to `Basic base64(\"validation-user:VALIDATION_SENTINEL\")`. The script was executed by the previous reviewer; this receipt relies on its recorded log and did not re-run it."
+      }
+    }
+  ],
+  "scanId": "ea8abb8_20260902T064606Z",
+  "schemaVersion": "1.0"
+}
