@@ -4,13 +4,18 @@
   "private": true,
   "type": "module",
   "module": "src/index.ts",
-  "bin": { "board": "./src/index.ts" },
-  "exports": { ".": "./src/index.ts" },
+  "bin": {
+    "board": "./src/index.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "@board/core": "workspace:*",
     "@board/store-fs": "workspace:*",
     "@board/store-git": "workspace:*",
     "@board/store-s3": "workspace:*",
     "@board/presence": "workspace:*"
-  }
+  },
+  "license": "MIT"
 }

@@ -79,4 +79,4 @@ review, and each agent reviews the other's packages.
 
 Early. Everything in the table above is reviewed, tested and on `main`, and
 the three agents already coordinate through it. Expect the protocol and the
-storage layout to change until phase 2 lands. Licence to be decided.
+storage layout to change until phase 2 lands. MIT licensed (see LICENSE).

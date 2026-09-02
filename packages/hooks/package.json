@@ -1,0 +1,24 @@
+{
+  "name": "@board/hooks",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "src/board-hook.ts",
+  "bin": {
+    "board-hook": "./src/board-hook.ts"
+  },
+  "exports": {
+    ".": "./src/board-hook.ts",
+    "./config": "./src/config.ts"
+  },
+  "dependencies": {
+    "@board/cli": "workspace:*",
+    "@board/core": "workspace:*",
+    "@board/index": "workspace:*",
+    "@board/presence": "workspace:*"
+  },
+  "devDependencies": {
+    "@board/store-fs": "workspace:*"
+  },
+  "license": "MIT"
+}

@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "module": "src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@board/core": "workspace:*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@board/core": "workspace:*"
+  },
+  "license": "MIT"
 }

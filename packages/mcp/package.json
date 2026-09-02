@@ -21,5 +21,6 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.30.0"
-  }
+  },
+  "license": "MIT"
 }
