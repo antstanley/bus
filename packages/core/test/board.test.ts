@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys, ulid, ulidTime, LIMITS } from "../src/index.ts";
+import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys, dayBucket, ulid, ulidTime, LIMITS } from "../src/index.ts";
 
 function clock(start: number) {
   let t = start;
@@ -73,6 +73,38 @@ describe("Board", () => {
     for await (const p of reader.reconcile(2)) found.push(p.body);
     expect(found).toEqual(["late", "a"]);
   });
+
+  it("scan() skips non-day-bucket keys instead of truncating the rest of today", async () => {
+    const store = new MemoryStore();
+    const c = clock(Date.UTC(2026, 8, 2, 12, 0, 0));
+    const writer = new Board(store, { board: "g", author: "codex", now: c.now });
+    const reader = new Board(store, { board: "g", author: "claude", now: c.now });
+    const yesterday = new Board(store, { board: "g", author: "letta", now: () => Date.UTC(2026, 8, 1, 8, 0, 0) });
+    await yesterday.post({ body: "old" });
+    const a = await writer.post({ body: "a" });
+    const b2 = await writer.post({ body: "b" });
+    // A planted store key whose third segment sorts after today's bucket but
+    // is not a day bucket. It sorts before every real post of today ("/" >
+    // "-"), so the old early-stop hid all of today's posts from scan().
+    await store.put(`boards/g/posts/${dayBucket(c.now())}-/x`, "not a post");
+    const scanned: string[] = [];
+    for await (const p of reader.scan()) scanned.push(p.body);
+    expect(scanned).toEqual(["old", "a", "b"]);
+    // Same for reconcile, which scans from yesterday: the planted key must
+    // not hide today's posts there either.
+    const refound: string[] = [];
+    for await (const p of reader.reconcile(2)) refound.push(p.body);
+    expect(refound).toEqual(["old", "a", "b"]);
+    // A genuine future day bucket still ends the scan early.
+    const futureId = ulid(Date.UTC(2027, 0, 1, 0, 0, 0));
+    const futureBoard = new Board(store, { board: "g", author: "mallory", now: () => Date.UTC(2027, 0, 1, 0, 0, 0) });
+    await futureBoard.post({ body: "future" });
+    expect(reader.keyFor(futureId).split("/")[3]).toBe("2027-01-01");
+    const bounded: string[] = [];
+    for await (const p of reader.scan()) bounded.push(p.body);
+    expect(bounded).toEqual(["old", "a", "b"]);
+  });
+
 
   it("watch emits each post once, including late arrivals via reconcile", async () => {
     const store = new MemoryStore();

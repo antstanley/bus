@@ -152,7 +152,11 @@ export class Board {
     const to = toDay ?? dayBucket(this.now());
     if (fromDay === undefined) {
       for await (const k of listAll(this.store, keys.postsPrefix(this.name))) {
-        if (dayOf(k) > to) return;
+        // Only a genuine day bucket after `to` ends the scan; anything else
+        // (e.g. a planted non-bucket third segment) is skipped so it cannot
+        // truncate the rebuild for the rest of today.
+        const day = dayOf(k);
+        if (isDayBucket(day) && day > to) return;
         const p = await this.loadOne(k);
         if (p) yield p;
       }

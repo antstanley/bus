@@ -24,7 +24,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 115 | [security: core post validation hardening (scan 2026-09-01 #3 #4 #6 #10 #12)](done/115-security-core-post-validation-hardening.md) | claude | done | S |
 | 116 | [security: mcp/index/s3 follow-ups (scan 2026-09-01 #1 #2 #5 #11)](done/116-security-mcp-index-s3-follow-ups.md) | letta | done | S |
 | 117 | [security: hooks/install/store-fs follow-ups (scan 2026-09-01 #7 #8 #9)](done/117-security-hooks-install-store-fs-follow-ups.md) | codex | done | S |
-| 118 | [core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)](118-core-scan-day-bucket-truncation.md) | letta | todo | S |
+| 118 | [core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)](done/118-core-scan-day-bucket-truncation.md) | letta | done | S |
 | 119 | [OpenCode wake: delivery targets from a local registry, never from presence](done/119-opencode-wake-target-local-registry.md) | codex | done | S |
 | 120 | [install dry-run redaction of reflowed lines; wake scan presence limit](120-install-dryrun-redaction-and-presence-limit.md) | codex | todo | S |
 

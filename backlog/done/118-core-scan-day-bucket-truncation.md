@@ -3,7 +3,7 @@ id: 118
 title: core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)
 phase: 1
 owner: letta
-status: todo
+status: done
 depends: []
 estimate: S
 ---

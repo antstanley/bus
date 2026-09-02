@@ -13,6 +13,7 @@ import {
   InvalidPresenceError,
   PRESENCE_MAX_BYTES,
   PRESENCE_MAX_FIELD_BYTES,
+  PRESENCE_MAX_FUTURE_SKEW_MS,
   who,
 } from "../src/index.ts";
 
@@ -98,6 +99,29 @@ describe("presence", () => {
       { name: "claude", instance: c2, online: false },
       { name: "letta", instance: l1, online: true },
     ]);
+  });
+
+  it("treats a far-future ts as offline instead of online forever", async () => {
+    const store = new MemoryStore();
+    const now = 10_000;
+    const skewed = ulid(1_100);
+    const farFuture = ulid(1_200);
+    // Within the 5-minute skew allowance: still online (age slightly negative).
+    await heartbeat(store, { name: "claude", instance: skewed, now: () => now + PRESENCE_MAX_FUTURE_SKEW_MS - 1_000 });
+    // Far in the future: must never count as online, at any observation time.
+    await heartbeat(store, { name: "codex", instance: farFuture, now: () => now + 86_400_000 });
+
+    const at = (t: number) => who(store, { maxAgeMs: 120_000, now: () => t });
+    const entries = await at(now);
+    expect(entries.find((e) => e.name === "claude")?.online).toBe(true);
+    expect(entries.find((e) => e.name === "codex")?.online).toBe(false);
+    // Even long after the forged record was written, its future ts keeps it
+    // ageless — the skew rule, not the max age, is what keeps it offline.
+    const later = await at(now + 3_600_000);
+    expect(later.find((e) => e.name === "codex")?.online).toBe(false);
+    // And a modestly-future record ages out normally once the clock passes it.
+    const caughtUp = await at(now + PRESENCE_MAX_FUTURE_SKEW_MS + 200_000);
+    expect(caughtUp.find((e) => e.name === "claude")?.online).toBe(false);
   });
 
   it("ignores malformed, mismatched, and unrelated objects", async () => {

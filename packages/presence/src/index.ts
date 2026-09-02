@@ -14,6 +14,13 @@ export const PRESENCE_MAX_BYTES = 64 * 1024;
 export const PRESENCE_MAX_FIELD_BYTES = 1_024;
 export const DEFAULT_WHO_LIMIT = 200;
 export const MAX_WHO_LIMIT = 1_000;
+/**
+ * Records whose ts is more than this far in the future are never online: the
+ * same 5-minute clock-skew allowance the core post validator applies to
+ * ts-vs-id. Guard against an attacker-supplied far-future ts pinning a record
+ * online indefinitely.
+ */
+export const PRESENCE_MAX_FUTURE_SKEW_MS = 300_000;
 
 export class InvalidPresenceError extends Error {
   override name = "InvalidPresenceError";
@@ -152,7 +159,12 @@ async function readBatch(store: Store, batch: string[], now: number, maxAgeMs: n
       const bytes = await store.get(key);
       if (!bytes) return null;
       const record = parsePresence(bytes, path.name, path.instance);
-      return record ? { ...record, online: now - Date.parse(record.ts) <= maxAgeMs } : null;
+      if (!record) return null;
+      const age = now - Date.parse(record.ts);
+      // A future ts beyond a small clock-skew allowance must not pin a record
+      // online: an attacker-chosen far-future timestamp would otherwise keep
+      // it fresh indefinitely (negative age passes the max-age check).
+      return { ...record, online: age >= -PRESENCE_MAX_FUTURE_SKEW_MS && age <= maxAgeMs };
     } catch {
       // Presence is advisory and best-effort. A deleted object or one failed
       // remote read must not hide every other agent.
