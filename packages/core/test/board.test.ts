@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys } from "../src/index.ts";
+import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys, ulid, ulidTime, LIMITS } from "../src/index.ts";
 
 function clock(start: number) {
   let t = start;
@@ -110,6 +110,45 @@ describe("Board", () => {
     ac.abort();
     await done;
     expect(got).toEqual(["new"]);
+  });
+
+  it("rejects forged objects: wrong key, future id, skewed ts, oversized, too deep", async () => {
+    const store = new MemoryStore();
+    const now = Date.UTC(2026, 8, 2, 12, 0, 0);
+    const c = clock(now);
+    const b = new Board(store, { board: "g", author: "codex", now: c.now });
+    const good = await b.post({ body: "ok" });
+    // 1. same object planted under another bucket/key
+    await store.put("boards/g/posts/2026-09-01/" + good.id + ".json", (await store.get(b.keyFor(good.id)))!);
+    // 2. far-future id (max ULID), consistent ts
+    const futureId = "7ZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    const future = { ...good, id: futureId, thread: futureId, ts: new Date(ulidTime(futureId)).toISOString() };
+    await store.put(keys.post("g", futureId, ulidTime(futureId)), canonicalize(future) + "\n");
+    // 3. ts far from the id timestamp
+    const skewed = { ...good, ts: "2030-01-01T00:00:00.000Z" };
+    await store.put(b.keyFor(good.id), canonicalize(skewed) + "\n");
+    // 4. oversized
+    const bigId = ulid(now + 1);
+    await store.put(keys.post("g", bigId, now + 1), canonicalize({ ...good, id: bigId, thread: bigId, ts: new Date(now + 1).toISOString(), body: "x".repeat(LIMITS.maxBytes) }) + "\n");
+    // 5. too deep
+    let deep: unknown = "leaf"; for (let i = 0; i < 20; i++) deep = { d: deep };
+    const deepId = ulid(now + 2);
+    await store.put(keys.post("g", deepId, now + 2), canonicalize({ ...good, id: deepId, thread: deepId, ts: new Date(now + 2).toISOString(), ext: { deep } }) + "\n");
+
+    const seen = await b.since();
+    expect(seen.posts).toEqual([]);           // the skewed overwrite of the good key is rejected too
+    expect(seen.cursor).toBeDefined();        // but the cursor still advanced past every key
+    expect(await b.get(good.id)).toBeNull();
+    let scanned = 0; for await (const _ of b.scan()) scanned++;
+    expect(scanned).toBe(0);
+  });
+
+  it("accepts a legitimate post read back with key binding", async () => {
+    const store = new MemoryStore();
+    const b = new Board(store, { board: "g", author: "codex" });
+    const p = await b.post({ body: "fine", ext: { a: { b: { c: 1 } } } });
+    expect((await b.since()).posts.map((x) => x.id)).toEqual([p.id]);
+    expect(await b.get(p.id)).toEqual(p);
   });
 
   it("board events fold into info()", async () => {

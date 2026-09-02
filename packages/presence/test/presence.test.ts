@@ -7,7 +7,14 @@ import {
   type ListOptions,
   type ListResult,
 } from "@board/core";
-import { heartbeat, InvalidPresenceError, who } from "../src/index.ts";
+import {
+  DEFAULT_WHO_LIMIT,
+  heartbeat,
+  InvalidPresenceError,
+  PRESENCE_MAX_BYTES,
+  PRESENCE_MAX_FIELD_BYTES,
+  who,
+} from "../src/index.ts";
 
 describe("presence", () => {
   it("writes a canonical owner-only heartbeat and overwrites it", async () => {
@@ -19,9 +26,19 @@ describe("presence", () => {
       status: "working",
       tool: "letta",
       host: "delorean",
+      runtime: "letta",
+      sessionId: "conv-123",
+      socket: "/tmp/cc-socks/claude.sock",
+      cmuxSurface: "surface:7",
       now: () => 10_000,
     });
-    expect(first.ts).toBe("1970-01-01T00:00:10.000Z");
+    expect(first).toMatchObject({
+      ts: "1970-01-01T00:00:10.000Z",
+      runtime: "letta",
+      sessionId: "conv-123",
+      socket: "/tmp/cc-socks/claude.sock",
+      cmuxSurface: "surface:7",
+    });
 
     const key = keys.presence("letta", instance);
     const stored = new TextDecoder().decode((await store.get(key))!);
@@ -35,6 +52,33 @@ describe("presence", () => {
       instance,
       ts: "1970-01-01T00:00:20.000Z",
       status: "idle",
+      online: true,
+    }]);
+  });
+
+  it("round-trips optional delivery targets through who", async () => {
+    const store = new MemoryStore();
+    const instance = ulid(1_000);
+    await heartbeat(store, {
+      name: "claude",
+      instance,
+      runtime: "claude",
+      sessionId: "session-123",
+      socket: "/tmp/cc-socks/peer.sock",
+      cmuxSurface: "surface-9",
+      serverUrl: "http://127.0.0.1:4096/",
+      now: () => 20_000,
+    });
+    expect(await who(store, { maxAgeMs: 1_000, now: () => 20_500 })).toEqual([{
+      v: 1,
+      name: "claude",
+      instance,
+      ts: "1970-01-01T00:00:20.000Z",
+      runtime: "claude",
+      sessionId: "session-123",
+      socket: "/tmp/cc-socks/peer.sock",
+      cmuxSurface: "surface-9",
+      serverUrl: "http://127.0.0.1:4096/",
       online: true,
     }]);
   });
@@ -91,6 +135,47 @@ describe("presence", () => {
     expect(store.listCalls).toBeGreaterThan(2);
   });
 
+  it("skips oversized untrusted records and rejects oversized writer fields", async () => {
+    const store = new MemoryStore();
+    const oversizedRecord = ulid(5_000);
+    await store.put(keys.presence("letta", oversizedRecord), canonicalize({
+      v: 1,
+      name: "letta",
+      instance: oversizedRecord,
+      ts: new Date(5_000).toISOString(),
+      padding: "x".repeat(PRESENCE_MAX_BYTES),
+    }));
+    const oversizedField = ulid(5_001);
+    await store.put(keys.presence("letta", oversizedField), canonicalize({
+      v: 1,
+      name: "letta",
+      instance: oversizedField,
+      ts: new Date(5_001).toISOString(),
+      status: "x".repeat(PRESENCE_MAX_FIELD_BYTES + 1),
+    }));
+
+    expect(await who(store, { maxAgeMs: 10_000, now: () => 6_000 })).toEqual([]);
+    await expect(heartbeat(store, {
+      name: "letta",
+      instance: ulid(5_002),
+      status: "😀".repeat(Math.floor(PRESENCE_MAX_FIELD_BYTES / 4) + 1),
+    })).rejects.toBeInstanceOf(InvalidPresenceError);
+  });
+
+  it("bounds untrusted record work and validates an explicit limit", async () => {
+    const store = new CountingStore();
+    for (let i = 0; i < DEFAULT_WHO_LIMIT + 5; i++) {
+      await heartbeat(store, { name: "letta", instance: ulid(6_000 + i), now: () => 10_000 });
+    }
+
+    expect(await who(store, { maxAgeMs: 1_000, now: () => 10_000 })).toHaveLength(DEFAULT_WHO_LIMIT);
+    expect(store.getCalls).toBe(DEFAULT_WHO_LIMIT);
+    store.getCalls = 0;
+    expect(await who(store, { maxAgeMs: 1_000, now: () => 10_000, limit: 3 })).toHaveLength(3);
+    expect(store.getCalls).toBe(3);
+    await expect(who(store, { maxAgeMs: 1_000, limit: 0 })).rejects.toBeInstanceOf(InvalidPresenceError);
+  });
+
   it("rejects invalid inputs", async () => {
     const store = new MemoryStore();
     await expect(heartbeat(store, { name: "letta", instance: "not-a-ulid" })).rejects.toBeInstanceOf(InvalidPresenceError);
@@ -98,6 +183,15 @@ describe("presence", () => {
     await expect(who(store, { maxAgeMs: -1 })).rejects.toBeInstanceOf(InvalidPresenceError);
   });
 });
+
+class CountingStore extends MemoryStore {
+  getCalls = 0;
+
+  override async get(key: string): Promise<Uint8Array | null> {
+    this.getCalls++;
+    return super.get(key);
+  }
+}
 
 class PagingStore extends MemoryStore {
   listCalls = 0;

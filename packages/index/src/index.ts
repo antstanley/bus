@@ -152,8 +152,22 @@ export class BoardIndex {
         ON CONFLICT(root_id) DO UPDATE SET
           board = excluded.board,
           title = excluded.title,
-          last_activity = max(threads.last_activity, excluded.last_activity)
+          last_activity = excluded.last_activity,
+          reply_count = 0
       `).run(post.id, post.board, post.title ?? null, post.ts);
+      // Replies may arrive before their root. Recompute from posts on the
+      // root's board so an identically named thread on another board cannot
+      // contaminate this summary.
+      this.db.query(`
+        UPDATE threads SET
+          last_activity = COALESCE((
+            SELECT max(ts) FROM posts WHERE thread = ? AND board = ?
+          ), ?),
+          reply_count = (
+            SELECT count(*) FROM posts WHERE thread = ? AND board = ? AND id <> ?
+          )
+        WHERE root_id = ? AND board = ?
+      `).run(post.id, post.board, post.ts, post.id, post.board, post.id, post.id, post.board);
     } else {
       this.db.query(`
         INSERT INTO threads (root_id, board, title, last_activity, reply_count)
@@ -161,6 +175,7 @@ export class BoardIndex {
         ON CONFLICT(root_id) DO UPDATE SET
           last_activity = max(threads.last_activity, excluded.last_activity),
           reply_count = threads.reply_count + 1
+        WHERE threads.board = excluded.board
       `).run(post.thread, post.board, post.ts);
     }
 
@@ -299,9 +314,9 @@ export class BoardIndex {
       FROM threads WHERE root_id = ?
     `).get(rootId);
     if (!row) return null;
-    const posts = this.db.query<JsonRow, [string]>(`
-      SELECT post_json FROM posts WHERE thread = ? ORDER BY id
-    `).all(rootId).map(rowPost);
+    const posts = this.db.query<JsonRow, [string, string]>(`
+      SELECT post_json FROM posts WHERE thread = ? AND board = ? ORDER BY id
+    `).all(rootId, row.board).map(rowPost);
     return { ...fromThreadRow(row), posts };
   }
 
@@ -407,7 +422,9 @@ export class BoardIndex {
     for (;;) {
       const result = await board.since(state.cursor ?? undefined);
       const transaction = this.db.transaction(() => {
-        for (const post of result.posts) if (this.ingestOne(post)) ingested++;
+        for (const post of result.posts) {
+          if (post.board === board.name && this.ingestOne(post)) ingested++;
+        }
         state.cursor = result.cursor ?? state.cursor;
         // Cursor and page contents commit together, so a crash retries either
         // the whole page or none of it.

@@ -6,7 +6,7 @@
 import { ulid, ulidTime } from "./ulid.ts";
 import { keys, dayBucket, nextDay, prevDay, assertName, isDayBucket } from "./keys.ts";
 import { type Store, listAll, DEFAULT_LIST_LIMIT, encoder } from "./store.ts";
-import { type Post, type NewPost, encodePost, parsePost, POST_VERSION } from "./post.ts";
+import { type Post, type NewPost, encodePost, parsePost, POST_VERSION, InvalidPostError } from "./post.ts";
 import { canonicalize } from "./post.ts";
 
 export interface BoardOptions {
@@ -125,9 +125,12 @@ export class Board {
     return keys.post(this.name, id, ulidTime(id));
   }
 
+  /** null when absent or when the stored object fails validation (forged, oversized, mis-keyed). */
   async get(id: string): Promise<Post | null> {
-    const bytes = await this.store.get(this.keyFor(id));
-    return bytes ? parsePost(bytes) : null;
+    const key = this.keyFor(id);
+    const bytes = await this.store.get(key);
+    if (!bytes) return null;
+    try { return parsePost(bytes, { key, now: this.now }); } catch (e) { if (e instanceof InvalidPostError) return null; throw e; }
   }
 
   /**
@@ -242,7 +245,7 @@ export class Board {
     if (!key.endsWith(".json")) return null;
     const bytes = await this.store.get(key);
     if (!bytes) return null;
-    try { return parsePost(bytes); } catch { return null; }   // tolerate foreign junk in the prefix
+    try { return parsePost(bytes, { key, now: this.now }); } catch { return null; }   // skip junk/forged objects; the cursor still advances
   }
 
   // ------------------------------------------------------------ events ---

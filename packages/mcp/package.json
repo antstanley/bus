@@ -17,6 +17,9 @@
     "@board/store-fs": "workspace:*",
     "@board/store-git": "workspace:*",
     "@board/store-s3": "workspace:*",
+    "@modelcontextprotocol/server": "2.0.0"
+  },
+  "devDependencies": {
     "@modelcontextprotocol/sdk": "1.30.0"
   }
 }

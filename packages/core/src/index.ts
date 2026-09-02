@@ -6,7 +6,7 @@ export {
 } from "./store.ts";
 export {
   type Post, type NewPost, type Attachment, type Signature,
-  POST_VERSION, InvalidPostError, canonicalize, encodePost, parsePost, validatePost,
+  POST_VERSION, LIMITS, type ParseOptions, InvalidPostError, canonicalize, encodePost, parsePost, validatePost,
 } from "./post.ts";
 export {
   Board, type BoardOptions, type SinceOptions, type SinceResult, type WatchOptions,

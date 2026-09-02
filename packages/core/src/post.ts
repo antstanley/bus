@@ -1,11 +1,28 @@
 // Post schema, validation, and the canonical byte form (needed now so that
 // signatures can be added later without re-shaping stored posts).
 
-import { isUlid } from "./ulid.ts";
-import { assertName, InvalidKeyError } from "./keys.ts";
+import { isUlid, ulidTime } from "./ulid.ts";
+import { assertName, InvalidKeyError, keys } from "./keys.ts";
 import { decoder } from "./store.ts";
 
 export const POST_VERSION = 1 as const;
+
+/** Hard limits enforced on read so a hostile store writer cannot stall or bloat readers. */
+export const LIMITS = {
+  /** Max encoded object size accepted by parsePost. */
+  maxBytes: 64 * 1024,
+  /** Max JSON nesting depth (objects/arrays) anywhere in a post. */
+  maxDepth: 8,
+  /** Max drift allowed between ts and the ULID timestamp, and max distance of an id into the future. */
+  maxSkewMs: 5 * 60_000,
+} as const;
+
+export interface ParseOptions {
+  /** The store key the object was read from; when given, it must equal keyFor(id). */
+  key?: string;
+  /** Clock for future-id checks (default Date.now). */
+  now?: () => number;
+}
 
 export interface Attachment {
   sha256: string;
@@ -81,8 +98,16 @@ export function encodePost(post: Post): string {
   return canonicalize(post) + "\n";
 }
 
-export function validatePost(x: unknown): Post {
+function depthOf(v: unknown, d = 0): number {
+  if (d > LIMITS.maxDepth) return d;
+  if (Array.isArray(v)) return v.reduce<number>((m, x) => Math.max(m, depthOf(x, d + 1)), d + 1);
+  if (v && typeof v === "object") return Object.values(v as object).reduce<number>((m, x) => Math.max(m, depthOf(x, d + 1)), d + 1);
+  return d;
+}
+
+export function validatePost(x: unknown, opts: ParseOptions = {}): Post {
   if (!x || typeof x !== "object") throw new InvalidPostError("post is not an object");
+  if (depthOf(x) > LIMITS.maxDepth) throw new InvalidPostError(`post nesting deeper than ${LIMITS.maxDepth}`);
   const p = x as Record<string, unknown>;
   if (p.v !== POST_VERSION) throw new InvalidPostError(`unsupported post version: ${String(p.v)}`);
   if (!isUlid(p.id)) throw new InvalidPostError("id is not a ulid");
@@ -95,6 +120,14 @@ export function validatePost(x: unknown): Post {
   }
   if (typeof p.instance !== "string" || !isUlid(p.instance)) throw new InvalidPostError("instance is not a ulid");
   if (typeof p.ts !== "string" || Number.isNaN(Date.parse(p.ts))) throw new InvalidPostError("ts is not a date");
+  const idMs = ulidTime(p.id);
+  if (Math.abs(Date.parse(p.ts) - idMs) > LIMITS.maxSkewMs) throw new InvalidPostError("ts disagrees with the id timestamp");
+  const now = (opts.now ?? Date.now)();
+  if (idMs > now + LIMITS.maxSkewMs) throw new InvalidPostError("id is in the future");
+  if (opts.key !== undefined) {
+    const expected = keys.post(p.board, p.id, idMs);
+    if (opts.key !== expected) throw new InvalidPostError(`object key does not match its id/board (expected ${expected})`);
+  }
   if (typeof p.body !== "string") throw new InvalidPostError("body is not a string");
   if (p.title !== undefined && typeof p.title !== "string") throw new InvalidPostError("title is not a string");
   for (const f of ["tags", "mentions"] as const) {
@@ -104,8 +137,9 @@ export function validatePost(x: unknown): Post {
   return p as unknown as Post;
 }
 
-export function parsePost(bytes: Uint8Array): Post {
+export function parsePost(bytes: Uint8Array, opts: ParseOptions = {}): Post {
+  if (bytes.byteLength > LIMITS.maxBytes) throw new InvalidPostError(`post larger than ${LIMITS.maxBytes} bytes`);
   let parsed: unknown;
   try { parsed = JSON.parse(decoder.decode(bytes)); } catch { throw new InvalidPostError("post is not valid JSON"); }
-  return validatePost(parsed);
+  return validatePost(parsed, opts);
 }

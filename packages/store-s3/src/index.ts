@@ -10,6 +10,8 @@ import {
 } from "@board/core";
 
 const INTERNAL_PREFIX = "__board_internal__/";
+const MAX_LIST_PAGE_OVERHEAD = 16;
+const ABSOLUTE_MAX_LIST_PAGES = 10_000;
 
 interface S3ListInput {
   prefix?: string;
@@ -113,8 +115,16 @@ export class S3Store implements Store {
     let continuationToken: string | undefined;
     const keys: string[] = [];
     let truncated = false;
+    let pages = 0;
+    const maxPages = Math.min(
+      ABSOLUTE_MAX_LIST_PAGES,
+      Math.max(MAX_LIST_PAGE_OVERHEAD, Math.ceil(requested / 1_000) + MAX_LIST_PAGE_OVERHEAD),
+    );
+    const seenContinuationTokens = new Set<string>();
 
     while (keys.length < requested) {
+      if (pages >= maxPages) throw new S3StoreError(`S3 list pagination exceeded ${maxPages} pages`);
+      pages++;
       const input: S3ListInput = {
         prefix: physicalPrefix,
         maxKeys: Math.min(requested - keys.length, 1_000),
@@ -142,6 +152,10 @@ export class S3Store implements Store {
       if (!page.isTruncated) break;
 
       continuationToken = page.nextContinuationToken;
+      if (continuationToken !== undefined) {
+        if (seenContinuationTokens.has(continuationToken)) throw new S3StoreError("S3 list pagination repeated a continuation token");
+        seenContinuationTokens.add(continuationToken);
+      }
       if (continuationToken === undefined) {
         const last = contents[contents.length - 1]?.key;
         if (last === undefined || last === startAfter) break;

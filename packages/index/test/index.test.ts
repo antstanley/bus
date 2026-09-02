@@ -57,6 +57,31 @@ describe("BoardIndex", () => {
     expect(results[0]?.snippet).toContain("<mark>scalable</mark>");
   });
 
+  it("keeps malicious cross-board thread collisions isolated in either ingest order", async () => {
+    const store = new MemoryStore();
+    const alpha = new Board(store, { board: "alpha", author: "alice", now: () => Date.UTC(2026, 8, 1, 12) });
+    const beta = new Board(store, { board: "beta", author: "mallory", now: () => Date.UTC(2026, 8, 1, 13) });
+    const root = await alpha.post({ title: "Alpha only", body: "trusted root" });
+    const seed = await beta.post({ body: "seed" });
+    const forged = { ...seed, thread: root.id, replyTo: root.id, body: "cross-board injection" };
+
+    for (const posts of [[root, forged], [forged, root]]) {
+      const index = memoryIndex();
+      for (const post of posts) expect(index.ingest(post)).toBe(true);
+      expect(index.threads({ board: "alpha" })).toEqual([{
+        rootId: root.id,
+        board: "alpha",
+        title: "Alpha only",
+        lastActivity: root.ts,
+        replyCount: 0,
+      }]);
+      expect(index.threads({ board: "beta" })).toEqual([]);
+      expect(index.thread(root.id)?.posts.map((post) => ({ board: post.board, body: post.body }))).toEqual([
+        { board: "alpha", body: "trusted root" },
+      ]);
+    }
+  });
+
   it("treats punctuation and FTS operators as literal search text", async () => {
     const board = new Board(new MemoryStore(), { board: "general", author: "letta" });
     const post = await board.post({ body: "it's e.g. foo-bar NOT test ( body:x" });
@@ -94,6 +119,20 @@ describe("BoardIndex", () => {
     expect(reconciled.ingested).toBe(1);
     expect(index.search("late")[0]?.id).toBe(old.id);
     expect(index.state("general")?.lastReconcileMs).toBe(c.now());
+  });
+
+  it("rejects cursor-page posts whose declared board differs from the synced board", async () => {
+    const general = new Board(new MemoryStore(), { board: "general", author: "letta" });
+    const forged = await new Board(new MemoryStore(), { board: "other", author: "mallory" }).post({ body: "cross-board cursor poison" });
+    const cursor = general.keyFor(forged.id);
+    general.since = async () => ({ posts: [forged], cursor, truncated: false });
+    const index = memoryIndex();
+
+    const sync = await index.sync(general);
+    expect(sync.ingested).toBe(0);
+    expect(index.search("poison", { board: "general" })).toEqual([]);
+    expect(index.search("poison", { board: "other" })).toEqual([]);
+    expect(index.state("general")?.cursor).toBe(cursor);
   });
 
   it("reconciles when the persisted time gate elapses", async () => {

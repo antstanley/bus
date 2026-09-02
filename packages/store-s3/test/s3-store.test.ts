@@ -77,6 +77,18 @@ describe("S3Store", () => {
     expect(await store.list("", { limit: 0 })).toEqual({ keys: [], truncated: false });
   });
 
+  it("bounds pagination from a hostile perpetually truncated endpoint", async () => {
+    const backend = new EndlessPagingS3();
+    const store = new S3Store({ bucket: "test", client: backend });
+    await expect(store.list("", { limit: 1 })).rejects.toThrow("pagination exceeded");
+    expect(backend.listCalls).toBe(17);
+
+    const repeated = new EndlessPagingS3(true);
+    const repeatedStore = new S3Store({ bucket: "test", client: repeated });
+    await expect(repeatedStore.list("", { limit: 1 })).rejects.toThrow("repeated a continuation token");
+    expect(repeated.listCalls).toBe(2);
+  });
+
   it("falls back to serialized exists plus write when conditional PUT is unavailable", async () => {
     const backend = new FakeS3(false);
     const store = new S3Store({ bucket: "test", client: backend });
@@ -198,5 +210,26 @@ class FakeS3 implements S3ClientLike {
     };
     if (response.isTruncated) response.nextContinuationToken = `opaque:${next}`;
     return response;
+  }
+}
+
+class EndlessPagingS3 extends FakeS3 {
+  listCalls = 0;
+
+  constructor(private readonly repeatToken = false) {
+    super(false);
+  }
+
+  override async list(): Promise<{
+    contents: Array<{ key: string }>;
+    isTruncated: boolean;
+    nextContinuationToken: string;
+  }> {
+    this.listCalls++;
+    return {
+      contents: [],
+      isTruncated: true,
+      nextContinuationToken: this.repeatToken ? "same-token" : `token-${this.listCalls}`,
+    };
   }
 }

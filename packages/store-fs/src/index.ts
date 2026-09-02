@@ -218,8 +218,10 @@ export class FsStore implements Store {
     try {
       entries = await readdir(directory, { withFileTypes: true });
     } catch (error) {
-      // Concurrent deletion after the parent was read is harmless to a list.
-      if (hasCode(error, "ENOENT")) return;
+      // Concurrent deletion after the parent was read and an unreadable
+      // shared subtree are both local gaps, not reasons to hide readable
+      // sibling objects from the whole listing.
+      if (hasAnyCode(error, "ENOENT", "EACCES", "EPERM")) return;
       throw error;
     }
 

@@ -90,6 +90,19 @@ describe("FsStore", () => {
     }
   });
 
+  it("skips an unreadable subtree while listing accessible siblings", async () => {
+    const root = await tempRoot();
+    const store = new FsStore(root);
+    await store.put("blocked/hidden", "old");
+    await store.put("visible/object", "new");
+    await chmod(join(root, "blocked"), 0o000);
+    try {
+      expect((await store.list("")).keys).toEqual(["visible/object"]);
+    } finally {
+      await chmod(join(root, "blocked"), 0o700);
+    }
+  });
+
   it("accepts Infinity as an unbounded list limit", async () => {
     const store = new FsStore(await tempRoot());
     await store.put("a/one", "1");

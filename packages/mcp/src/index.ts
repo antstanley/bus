@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { BoardMcpServer, type BoardMcpOptions } from "./server.ts";
 import { createStore, McpConfigError, parseMcpArgs, type McpConfig, type StoreSpec } from "./config.ts";
 
@@ -14,7 +14,11 @@ export async function startBoardMcp(config: McpConfig, overrides: Partial<Pick<B
   if (overrides.heartbeatMs !== undefined) options.heartbeatMs = overrides.heartbeatMs;
   if (overrides.resourcePollMs !== undefined) options.resourcePollMs = overrides.resourcePollMs;
   const app = new BoardMcpServer(options);
-  await app.start(new StdioServerTransport());
+  await app.start();
+  app.attachStdio(serveStdio(({ era }) => app.createProtocolServer(era), {
+    legacy: "serve",
+    onerror: (error) => { console.error(error.message); },
+  }));
   return app;
 }
 
