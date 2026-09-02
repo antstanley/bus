@@ -24,6 +24,8 @@ Generated from task files; edit the files, then regenerate with `bun run backlog
 | 115 | [security: core post validation hardening](115-security-core-post-validation-hardening.md) | claude | in-progress | S |
 | 116 | [security: mcp/index/s3 follow-ups](116-security-mcp-index-s3-follow-ups.md) | letta | todo | S |
 | 117 | [security: hooks/install/store-fs follow-ups](117-security-hooks-install-store-fs-follow-ups.md) | codex | todo | S |
+| 118 | [core: scan() stops early on non-day-bucket keys](118-core-scan-day-bucket-truncation.md) | letta | todo | S |
+| 119 | [OpenCode wake: delivery targets from a local registry, never from presence](119-opencode-wake-target-local-registry.md) | codex | in-progress | S |
 
 ## Phase 2
 
