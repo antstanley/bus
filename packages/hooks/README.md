@@ -47,6 +47,11 @@ does not depend on the launching shell's environment. Pi also passes
 automatic retries and queued continuations have finished. `flush` is a quiet
 placeholder for a future outbox.
 
+Claude and Codex session ids must be UUIDs. Letta, OpenCode, and Pi ids are
+runtime-owned opaque ASCII tokens of 1-256 characters: they start with a letter
+or digit and may then contain letters, digits, `.`, `_`, `:`, `/`, and `-`.
+Invalid ids are diagnosed and are never published in presence.
+
 ## Claude Code
 
 Merge this into `.claude/settings.json` (timeouts are seconds):

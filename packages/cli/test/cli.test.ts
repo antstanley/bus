@@ -176,6 +176,38 @@ describe("board CLI", () => {
     expect(messages).toEqual([]);
   });
 
+  it("publishes only runtime-conforming watch session ids", async () => {
+    const store = new MemoryStore();
+    const rejected = new AbortController();
+    rejected.abort();
+    await expect(runCli([
+      "watch", "--store", "fs:ignored", "--board", "general", "--as", "codex", "--deliver",
+      "--runtime", "codex", "--session", "thread-123",
+    ], {
+      createStore: () => store,
+      signal: rejected.signal,
+      stdout: () => {},
+      stderr: () => {},
+    })).rejects.toThrow("codex session id must be a UUID");
+    expect(await who(store, { maxAgeMs: 60_000 })).toEqual([]);
+
+    const accepted = new AbortController();
+    accepted.abort();
+    await runCli([
+      "watch", "--store", "fs:ignored", "--board", "general", "--as", "letta", "--deliver",
+      "--runtime", "letta", "--session", "conversation-456",
+    ], {
+      createStore: () => store,
+      signal: accepted.signal,
+      stdout: () => {},
+      stderr: () => {},
+      env: { CMUX_SURFACE_ID: "33333333-3333-4333-8333-333333333333" },
+    });
+    expect(await who(store, { maxAgeMs: 60_000 })).toEqual([
+      expect.objectContaining({ runtime: "letta", sessionId: "conversation-456" }),
+    ]);
+  });
+
   it("watch --deliver wakes only loopback OpenCode sessions with optional basic auth", async () => {
     const store = new MemoryStore();
     const root = await mkdtemp(join(tmpdir(), "board-cli-sessions-"));
@@ -313,7 +345,7 @@ describe("board CLI", () => {
       { name: "codex", runtime: "codex", sessionId: codexSession },
       { name: "claude", runtime: "claude", sessionId: claudeSession, socket: "/tmp/cc-socks/stale.sock" },
       { name: "claude", runtime: "claude", sessionId: claudeSession, socket: claudeSocket },
-      { name: "letta", runtime: "letta", cmuxSurface: lettaSurface },
+      { name: "letta", runtime: "letta", sessionId: "conversation-456", cmuxSurface: lettaSurface },
       { name: "human", cmuxSurface: humanSurface },
     ]) {
       await heartbeat(store, {
@@ -414,6 +446,45 @@ describe("board CLI", () => {
     });
     expect(commands).toEqual([]);
     expect(warnings).toEqual([`${new Date(now).toISOString()} delivery: bookkeeping failed; watcher continuing`]);
+  });
+
+  it("rejects invalid mention and target ids without echoing them into delivery logs", async () => {
+    const store = new MemoryStore();
+    const now = Date.now();
+    await heartbeat(store, {
+      name: "codex",
+      instance: ulid(),
+      status: "idle",
+      runtime: "codex",
+      sessionId: "thread\nforged-target",
+      now: () => now,
+    });
+    const post = await new Board(store, { board: "general", author: "operator" }).post({
+      body: "invalid target stays inert",
+      mentions: ["codex"],
+    });
+    const root = await mkdtemp(join(tmpdir(), "board-cli-invalid-target-"));
+    roots.push(root);
+    const warnings: string[] = [];
+    const commands: string[] = [];
+    await deliverOpenCodeMentions(post, store, {
+      now: () => now,
+      deliveryLogDir: join(root, "deliveries"),
+      stderr: (line) => warnings.push(line),
+      runCommand: async (command) => { commands.push(command); return 0; },
+    });
+    expect(commands).toEqual([]);
+    expect(warnings).toEqual([
+      `${new Date(now).toISOString()} delivery: skipped codex: no supported local route`,
+    ]);
+    expect(warnings.join("\n")).not.toContain("forged-target");
+
+    const forgedPost = { ...post, mentions: ["codex\nforged-log-line"] };
+    const forgedWarnings: string[] = [];
+    await expect(deliverOpenCodeMentions(forgedPost, store, {
+      stderr: (line) => forgedWarnings.push(line),
+    })).rejects.toThrow("invalid mention");
+    expect(forgedWarnings).toEqual([]);
   });
 
   it("reads stdin bodies and honours option termination and attached values", async () => {

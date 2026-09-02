@@ -3,7 +3,7 @@ id: 123
 title: wake daemon: log-line hygiene, registry-write isolation, one session-id contract
 phase: 1
 owner: codex
-status: todo
+status: done
 depends: [106]
 estimate: S
 ---

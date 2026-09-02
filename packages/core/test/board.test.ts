@@ -42,6 +42,14 @@ describe("Board", () => {
     expect(parsePost(bytes)).toEqual(p);
   });
 
+  it("rejects invalid mention names when reading stored posts", async () => {
+    const store = new MemoryStore();
+    const b = new Board(store, { board: "general", author: "letta" });
+    const p = await b.post({ body: "x", mentions: ["codex"] });
+    const forged = { ...p, mentions: ["codex\nforged-log-line"] };
+    expect(() => parsePost(new TextEncoder().encode(canonicalize(forged) + "\n"))).toThrow("invalid mention");
+  });
+
   it("never overwrites: a colliding id is a KeyExistsError", async () => {
     const store = new MemoryStore();
     const b = new Board(store, { board: "general", author: "letta" });

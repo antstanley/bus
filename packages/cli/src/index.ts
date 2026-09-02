@@ -1,6 +1,17 @@
 #!/usr/bin/env bun
 
-import { Board, keys, type NewPost, type Post, type Store, type WatchOptions } from "@board/core";
+import {
+  Board,
+  assertName,
+  assertRuntimeSessionId,
+  isRuntimeSessionId,
+  isSessionIdRuntime,
+  keys,
+  type NewPost,
+  type Post,
+  type Store,
+  type WatchOptions,
+} from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, MAX_WHO_LIMIT, who as listPresence, whoPage } from "@board/presence";
@@ -336,11 +347,16 @@ async function resolveWatchTarget(
       : runtime === "letta" ? env.CONVERSATION_ID ?? env.LETTA_CONVERSATION_ID
         : undefined);
   if (!sessionId) {
-    if (parsed.flags.has("session") || requestedRuntime) throw new CliError("watch session identity requires --session <uuid>");
+    if (parsed.flags.has("session") || requestedRuntime) throw new CliError("watch session identity requires --session <id>");
     return null;
   }
   if (!runtime) throw new CliError("--session requires --runtime when the runtime cannot be inferred");
-  if (!isUuid(sessionId)) throw new CliError("--session must be a UUID");
+  if (!isSessionIdRuntime(runtime)) throw new CliError("--session requires a supported runtime");
+  try {
+    assertRuntimeSessionId(runtime, sessionId);
+  } catch (error) {
+    throw new CliError(error instanceof Error ? error.message : "invalid session id");
+  }
   const socket = runtime === "claude" ? env.CLAUDE_CODE_MESSAGING_SOCKET : undefined;
   const cmuxSurface = env.CMUX_SURFACE_ID;
   if (runtime === "claude" && socket && env.CLAUDE_CODE_MESSAGING_TOKEN) {
@@ -378,7 +394,7 @@ Common options:
   --tags a,b --mentions agent1,agent2
   --deliver             wake reachable mentioned sessions while watching
   --runtime <name>      runtime hosting this watcher session
-  --session <uuid>      session id published by this watcher
+  --session <id>        runtime session id published by this watcher
   --project             install the Pi extension in the current project
   --json                accepted for wrapper compatibility`;
 
@@ -397,7 +413,7 @@ export function sanitizeSecrets(message: string): string {
 
 /** Wake each reachable idle session mentioned by a post. Invalid targets are skipped. */
 export async function deliverMentionedSessions(post: Post, store: Store, deps: CliDependencies = {}): Promise<void> {
-  const mentioned = new Set(post.mentions ?? []);
+  const mentioned = new Set((post.mentions ?? []).map((name) => assertName(name, "mention")));
   if (mentioned.size === 0) return;
   const now = (deps.now ?? Date.now)();
   const page = await whoPage(store, { maxAgeMs: 120_000, limit: MAX_WHO_LIMIT, now: () => now });
@@ -416,19 +432,20 @@ export async function deliverMentionedSessions(post: Post, store: Store, deps: C
   const seen = new Set<string>();
   const matched = new Set<string>();
   const outcomes = await Promise.allSettled(presence.map(async (target) => {
-    if (!mentioned.has(target.name)) return;
-    matched.add(target.name);
+    const targetName = assertName(target.name, "agent");
+    if (!mentioned.has(targetName)) return;
+    matched.add(targetName);
     if (!target.online || Date.parse(target.ts) > now + 300_000) {
-      report(`delivery: skipped ${target.name}: presence is offline`);
+      report(`delivery: skipped ${targetName}: presence is offline`);
       return;
     }
     if (target.status !== "idle") {
-      report(`delivery: skipped ${target.name}: session is not idle`);
+      report(`delivery: skipped ${targetName}: session is not idle`);
       return;
     }
     const deliveryKey = targetDeliveryKey(target);
     if (!deliveryKey) {
-      report(`delivery: skipped ${target.name}: no supported local route`);
+      report(`delivery: skipped ${targetName}: no supported local route`);
       return;
     }
     const label = deliveryLabel(target, deliveryKey);
@@ -442,12 +459,12 @@ export async function deliverMentionedSessions(post: Post, store: Store, deps: C
       return;
     }
     seen.add(deliveryKey);
-    const claim = await claimDelivery(logDir, post, target.name, deliveryKey, now);
+    const claim = await claimDelivery(logDir, post, targetName, deliveryKey, now);
     if (!claim) {
       report(`delivery: skipped ${label}: post was already attempted`);
       return;
     }
-    const message = `A new board post mentions ${target.name} (post ${post.id}). Run board read.`;
+    const message = `A new board post mentions ${targetName} (post ${post.id}). Run board read.`;
     let delivered = false;
     try {
       delivered = await deliverTarget(target, message, registryDir, env, deps);
@@ -482,18 +499,23 @@ interface DeliveryPresence {
 }
 
 function targetDeliveryKey(target: DeliveryPresence): string | null {
-  if (target.runtime === "opencode" && target.sessionId) return `opencode\0${target.sessionId}`;
-  if (target.runtime === "codex" && isUuid(target.sessionId)) return `codex\0${target.sessionId}`;
-  if (target.runtime === "claude" && isUuid(target.sessionId) && target.socket) {
+  if (target.runtime === "opencode" && isRuntimeSessionId("opencode", target.sessionId)) {
+    return `opencode\0${target.sessionId}`;
+  }
+  if (target.runtime === "codex" && isRuntimeSessionId("codex", target.sessionId)) return `codex\0${target.sessionId}`;
+  if (target.runtime === "claude" && isRuntimeSessionId("claude", target.sessionId) && target.socket) {
     return `claude\0${target.sessionId}`;
   }
-  if (target.runtime === "letta" && isUuid(target.cmuxSurface)) return `letta\0${target.cmuxSurface}`;
+  if (target.runtime === "letta"
+    && (target.sessionId === undefined || isRuntimeSessionId("letta", target.sessionId))
+    && isUuid(target.cmuxSurface)) return `letta\0${target.cmuxSurface}`;
   if (!target.runtime && isUuid(target.cmuxSurface)) return `human\0${target.cmuxSurface}`;
   return null;
 }
 
 function deliveryLabel(target: DeliveryPresence, key: string): string {
-  if ((target.runtime === "codex" || target.runtime === "claude") && isUuid(target.sessionId)) {
+  if (target.runtime === "codex" && isRuntimeSessionId("codex", target.sessionId)
+    || target.runtime === "claude" && isRuntimeSessionId("claude", target.sessionId)) {
     return `${target.runtime}/${target.sessionId}`;
   }
   if ((target.runtime === "letta" || !target.runtime) && isUuid(target.cmuxSurface)) {
@@ -516,11 +538,11 @@ async function isLocallyReachableTarget(
   claudeRegistryDir: string,
   env: Record<string, string | undefined>,
 ): Promise<boolean> {
-  if (target.runtime === "opencode" && target.sessionId) {
+  if (target.runtime === "opencode" && isRuntimeSessionId("opencode", target.sessionId)) {
     const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
     return local !== null && openCodePromptEndpoint(local.serverUrl, target.sessionId) !== null;
   }
-  if (target.runtime === "claude" && target.sessionId && target.socket) {
+  if (target.runtime === "claude" && isRuntimeSessionId("claude", target.sessionId) && target.socket) {
     const local = await readLocalClaudeSession(claudeRegistryDir, target.sessionId);
     return Boolean(local && local.socket === target.socket
       && env.CLAUDE_CODE_MESSAGING_TOKEN
@@ -536,7 +558,7 @@ async function deliverTarget(
   env: Record<string, string | undefined>,
   deps: CliDependencies,
 ): Promise<boolean> {
-  if (target.runtime === "opencode" && target.sessionId) {
+  if (target.runtime === "opencode" && isRuntimeSessionId("opencode", target.sessionId)) {
     const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
     if (!local) return false;
     const endpoint = openCodePromptEndpoint(local.serverUrl, target.sessionId);
@@ -555,10 +577,10 @@ async function deliverTarget(
     });
     return response.ok;
   }
-  if (target.runtime === "codex" && isUuid(target.sessionId)) {
+  if (target.runtime === "codex" && isRuntimeSessionId("codex", target.sessionId)) {
     return await runWakeCommand(deps, "codex", ["queue", "--thread", target.sessionId, "--message", message]);
   }
-  if (target.runtime === "claude" && target.socket && target.sessionId) {
+  if (target.runtime === "claude" && target.socket && isRuntimeSessionId("claude", target.sessionId)) {
     const token = env.CLAUDE_CODE_MESSAGING_TOKEN;
     if (!token || env.CLAUDE_CODE_MESSAGING_SOCKET !== target.socket) return false;
     return (deps.sendClaudeSocket ?? sendClaudeSocket)(target.socket, token, message);

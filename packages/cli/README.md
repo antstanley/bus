@@ -38,6 +38,14 @@ deliver one post twice to the same session.
   never stops the watcher. Presence without a runtime uses `cmux notify` as the
   human fallback.
 
+Session identifiers have one publication and delivery contract. Claude and
+Codex session/thread identifiers are UUIDs. Letta conversation ids, OpenCode
+session ids, and Pi session ids are runtime-owned opaque ASCII tokens: 1-256
+characters, starting with a letter or digit, with letters, digits, `.`, `_`,
+`:`, `/`, and `-` allowed thereafter. Opaque ids are passed to runtimes as one
+argv element (or URL-encoded for OpenCode), never interpolated into a shell
+command. Non-conforming ids are rejected before presence is published.
+
 Delivery notices contain only the post id and a request to run `board read`,
 not the untrusted post body. For `post` and `reply`, `--body -` reads stdin; piped stdin is also
 used when no body argument is present. Git stores auto-sync and report remote

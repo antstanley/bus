@@ -1,4 +1,10 @@
-import { assertName, type Store } from "@board/core";
+import {
+  InvalidSessionIdError,
+  assertName,
+  assertRuntimeSessionId,
+  isSessionIdRuntime,
+  type Store,
+} from "@board/core";
 import { createStore, parseStoreSpec } from "@board/cli";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -111,7 +117,7 @@ export function resolveDeliveryTargets(
   env: Record<string, string | undefined> = process.env,
   runtime?: string,
 ): PresenceDeliveryTargets {
-  const sessionId = firstString(
+  const rawSessionId = firstString(
     payload,
     "session_id",
     "sessionId",
@@ -120,6 +126,13 @@ export function resolveDeliveryTargets(
     "conversation_id",
     "conversationId",
   ) ?? runtimeSessionId(runtime, env);
+  let sessionId: string | undefined;
+  if (rawSessionId !== undefined) {
+    if (!isSessionIdRuntime(runtime)) {
+      throw new InvalidSessionIdError("session id requires a supported runtime");
+    }
+    sessionId = assertRuntimeSessionId(runtime, rawSessionId);
+  }
   const socket = runtime === "claude"
     ? firstString(payload, "socket", "messaging_socket", "messagingSocket") ?? nonEmpty(env.CLAUDE_CODE_MESSAGING_SOCKET)
     : undefined;

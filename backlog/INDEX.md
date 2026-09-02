@@ -29,7 +29,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 120 | [install dry-run redaction of reflowed lines; wake scan presence limit](done/120-install-dryrun-redaction-and-presence-limit.md) | codex | done | S |
 | 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | codex | todo | S |
 | 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
-| 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](123-wake-daemon-gate-lows.md) | codex | todo | S |
+| 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
 
 ## Phase 2
 

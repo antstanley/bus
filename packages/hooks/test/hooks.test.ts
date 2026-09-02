@@ -2,10 +2,18 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { Board } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { who } from "@board/presence";
-import { mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { acquireIndexLock, claudeSessionRegistryPath, loadHookConfig, resolveIdentity, resolveRuntime, runHook } from "../src/board-hook.ts";
+import {
+  acquireIndexLock,
+  claudeSessionRegistryPath,
+  loadHookConfig,
+  resolveDeliveryTargets,
+  resolveIdentity,
+  resolveRuntime,
+  runHook,
+} from "../src/board-hook.ts";
 
 const roots: string[] = [];
 
@@ -307,7 +315,8 @@ test("recovers a crash after a stale owner token was displaced", async () => {
 
 test("heartbeat marks the resolved agent idle with a stable session instance", async () => {
   const { store, deps } = await fixture();
-  const payload = JSON.stringify({ session_id: "session-123", runtime: "codex" });
+  const sessionId = "11111111-1111-4111-8111-111111111111";
+  const payload = JSON.stringify({ session_id: sessionId, runtime: "codex" });
   await runHook(["heartbeat"], payload, deps);
   await runHook(["heartbeat"], payload, deps);
   const records = await who(store, { maxAgeMs: 60_000 });
@@ -317,7 +326,7 @@ test("heartbeat marks the resolved agent idle with a stable session instance", a
     status: "idle",
     tool: "codex",
     runtime: "codex",
-    sessionId: "session-123",
+    sessionId,
     online: true,
   });
 });
@@ -374,7 +383,8 @@ test("poll heartbeats Pi and returns unread context once from installer-style ar
 
 test("heartbeat captures runtime delivery targets and omits unavailable hints", async () => {
   const claude = await fixture();
-  await runHook(["heartbeat"], JSON.stringify({ runtime: "claude", session_id: "claude-session" }), {
+  const claudeSession = "22222222-2222-4222-8222-222222222222";
+  await runHook(["heartbeat"], JSON.stringify({ runtime: "claude", session_id: claudeSession }), {
     ...claude.deps,
     env: {
       ...claude.deps.env,
@@ -385,15 +395,15 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
   });
   expect((await who(claude.store, { maxAgeMs: 60_000 }))[0]).toMatchObject({
     runtime: "claude",
-    sessionId: "claude-session",
+    sessionId: claudeSession,
     socket: "/tmp/cc-socks/claude.sock",
     cmuxSurface: "surface-claude",
   });
-  const registryPath = claudeSessionRegistryPath(join(claude.root, ".board", "sessions", "claude"), "claude-session");
+  const registryPath = claudeSessionRegistryPath(join(claude.root, ".board", "sessions", "claude"), claudeSession);
   const registry = await readFile(registryPath, "utf8");
   expect(JSON.parse(registry)).toMatchObject({
     v: 1,
-    sessionId: "claude-session",
+    sessionId: claudeSession,
     socket: "/tmp/cc-socks/claude.sock",
   });
   expect(registry).not.toContain("must-not-be-stored");
@@ -426,7 +436,7 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
   const noCrossRuntimeUrl = await fixture();
   await runHook(["heartbeat"], JSON.stringify({
     runtime: "codex",
-    session_id: "codex-session",
+    session_id: "44444444-4444-4444-8444-444444444444",
     server_url: "http://127.0.0.1:4096/",
   }), noCrossRuntimeUrl.deps);
   expect((await who(noCrossRuntimeUrl.store, { maxAgeMs: 60_000 }))[0]?.serverUrl).toBeUndefined();
@@ -439,6 +449,65 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
   expect(record.socket).toBeUndefined();
   expect(record.cmuxSurface).toBeUndefined();
   expect(record.serverUrl).toBeUndefined();
+});
+
+test("rejects non-conforming runtime session ids before publishing presence", async () => {
+  expect(() => resolveDeliveryTargets({ session_id: "thread-123" }, {}, "codex")).toThrow(
+    "codex session id must be a UUID",
+  );
+  expect(resolveDeliveryTargets({ conversation_id: "conversation-456" }, {}, "letta")).toMatchObject({
+    sessionId: "conversation-456",
+  });
+  expect(resolveDeliveryTargets({ session_id: "session/123" }, {}, "opencode")).toMatchObject({
+    sessionId: "session/123",
+  });
+
+  const { store, deps } = await fixture();
+  const diagnostics: string[] = [];
+  await runHook(["heartbeat"], JSON.stringify({ runtime: "codex", session_id: "thread\nforged" }), {
+    ...deps,
+    stderr: (text) => diagnostics.push(text),
+  });
+  expect(diagnostics).toEqual(["codex session id must be a UUID"]);
+  expect(await who(store, { maxAgeMs: 60_000 })).toEqual([]);
+});
+
+test("a failed Claude registry write does not suppress poll injection", async () => {
+  const { root, store, config } = await fixture();
+  await new Board(store, { board: "general", author: "operator" }).post({
+    body: "poll still injects this mention",
+    mentions: ["claude"],
+  });
+  const registryDir = join(root, ".board", "sessions", "claude");
+  await mkdir(registryDir, { recursive: true });
+  await chmod(registryDir, 0o755);
+  const output: string[] = [];
+  const diagnostics: string[] = [];
+  const sessionId = "33333333-3333-4333-8333-333333333333";
+  await runHook(["poll"], JSON.stringify({
+    runtime: "claude",
+    session_id: sessionId,
+    socket: "/tmp/cc-socks/claude.sock",
+  }), {
+    home: root,
+    env: {
+      HOME: root,
+      BOARD_AS: "claude",
+      BOARD_STORE: config.store,
+      BOARD_BOARDS: "general",
+      BOARD_INDEX: config.indexPath,
+      CLAUDE_CODE_MESSAGING_TOKEN: "not-persisted",
+    },
+    createStore: async () => store,
+    stdout: (text) => output.push(text),
+    stderr: (text) => diagnostics.push(text),
+  });
+
+  expect(output.join("\n")).toContain("poll still injects this mention");
+  expect(diagnostics).toEqual(["board-hook: Claude session registry write failed"]);
+  expect(await who(store, { maxAgeMs: 60_000 })).toEqual([
+    expect.objectContaining({ name: "claude", status: "idle", sessionId }),
+  ]);
 });
 
 test("flush is a quiet no-op without configuration", async () => {

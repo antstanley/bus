@@ -134,6 +134,14 @@ export function validatePost(x: unknown, opts: ParseOptions = {}): Post {
     const v = p[f];
     if (v !== undefined && (!Array.isArray(v) || !v.every((s) => typeof s === "string"))) throw new InvalidPostError(`${f} is not a string[]`);
   }
+  if (Array.isArray(p.mentions)) {
+    try {
+      for (const mention of p.mentions) assertName(mention, "mention");
+    } catch (e) {
+      if (e instanceof InvalidKeyError) throw new InvalidPostError(e.message);
+      throw e;
+    }
+  }
   return p as unknown as Post;
 }
 

@@ -1,4 +1,8 @@
 export { ulid, isUlid, ulidTime } from "./ulid.ts";
+export {
+  SESSION_ID_RUNTIMES, type SessionIdRuntime, InvalidSessionIdError,
+  isSessionIdRuntime, isRuntimeSessionId, assertRuntimeSessionId,
+} from "./session.ts";
 export { keys, dayBucket, nextDay, prevDay, isDayBucket, joinKey, assertSegment, assertName, InvalidKeyError } from "./keys.ts";
 export {
   type Store, type PutOptions, type ListOptions, type ListResult, type Changes,

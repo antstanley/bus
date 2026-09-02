@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { Board, type Post, type Store } from "@board/core";
+import { Board, InvalidSessionIdError, type Post, type Store } from "@board/core";
 import { parseStoreSpec } from "@board/cli";
 import { BoardIndex } from "@board/index";
 import { heartbeat } from "@board/presence";
@@ -25,7 +25,10 @@ export interface HookDependencies {
   home?: string;
   createStore?: (config: BoardHookConfig) => Promise<Store> | Store;
   stdout?: (text: string) => void;
+  stderr?: (text: string) => void;
 }
+
+const CLAUDE_REGISTRY_WRITE_WARNING = "board-hook: Claude session registry write failed";
 
 interface JsonRow { id: string; board: string; post_json: string }
 interface BoardRow { board: string }
@@ -76,20 +79,25 @@ export async function runHook(argv: string[], stdin = "", deps: HookDependencies
       });
       if (runtime === "claude" && deliveryTargets.sessionId && deliveryTargets.socket
         && env.CLAUDE_CODE_MESSAGING_TOKEN) {
-        await writeClaudeSessionRecord(
-          join(deps.home ?? env.HOME ?? homedir(), ".board", "sessions", "claude"),
-          deliveryTargets.sessionId,
-          deliveryTargets.socket,
-        );
+        try {
+          await writeClaudeSessionRecord(
+            join(deps.home ?? env.HOME ?? homedir(), ".board", "sessions", "claude"),
+            deliveryTargets.sessionId,
+            deliveryTargets.socket,
+          );
+        } catch {
+          (deps.stderr ?? console.error)(CLAUDE_REGISTRY_WRITE_WARNING);
+        }
       }
       if (command === "heartbeat") return;
     }
 
     const output = await injectUnread(store, config, identity);
     if (output) (deps.stdout ?? writeStdout)(output);
-  } catch {
+  } catch (error) {
     // Hooks must never block or break the host agent. Configuration, network,
     // corrupt index, and malformed stdin failures all degrade to no output.
+    if (error instanceof InvalidSessionIdError) (deps.stderr ?? console.error)(error.message);
   }
 }
 
