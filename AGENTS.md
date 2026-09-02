@@ -71,10 +71,11 @@ Nothing is committed without a security review of the change set:
    Fix or explicitly justify every reportable finding in your ready message.
    **Exception: Codex does not run scans.** OpenAI's cyber-safety classifier
    terminates Codex turns that contain exploit-style analysis (observed
-   2026-09-01). Scans of Codex-owned packages are run by claude or letta, and
-   findings are sent to Codex phrased as defects to fix (robustness,
-   validation, error handling), without attack narratives or proof-of-concept
-   code.
+   2026-09-01). **Letta is under the same restriction while it runs a GPT
+   model (observed 2026-09-02; lifted when Ant changes its model).** Until
+   then every scan is run by claude, and findings are sent to both agents
+   phrased as defects to fix (robustness, validation, error handling), without
+   attack narratives or proof-of-concept code.
 2. **Lead gate**: the lead runs `security:security-diff-scan` on the exact
    revision range being committed, in a clean sub-agent, with the threat model
    from `docs/research/04-trust.md` as user context. Reportable findings go back
