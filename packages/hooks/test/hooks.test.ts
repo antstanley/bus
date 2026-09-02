@@ -2,10 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { Board } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { who } from "@board/presence";
-import { mkdir, mkdtemp, rm, stat, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { acquireIndexLock, loadHookConfig, resolveIdentity, resolveRuntime, runHook } from "../src/board-hook.ts";
+import { acquireIndexLock, claudeSessionRegistryPath, loadHookConfig, resolveIdentity, resolveRuntime, runHook } from "../src/board-hook.ts";
 
 const roots: string[] = [];
 
@@ -379,6 +379,7 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
     env: {
       ...claude.deps.env,
       CLAUDE_CODE_MESSAGING_SOCKET: "/tmp/cc-socks/claude.sock",
+      CLAUDE_CODE_MESSAGING_TOKEN: "must-not-be-stored",
       CMUX_SURFACE_ID: "surface-claude",
     },
   });
@@ -388,6 +389,15 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
     socket: "/tmp/cc-socks/claude.sock",
     cmuxSurface: "surface-claude",
   });
+  const registryPath = claudeSessionRegistryPath(join(claude.root, ".board", "sessions", "claude"), "claude-session");
+  const registry = await readFile(registryPath, "utf8");
+  expect(JSON.parse(registry)).toMatchObject({
+    v: 1,
+    sessionId: "claude-session",
+    socket: "/tmp/cc-socks/claude.sock",
+  });
+  expect(registry).not.toContain("must-not-be-stored");
+  expect((await stat(registryPath)).mode & 0o777).toBe(0o600);
 
   const letta = await fixture();
   await runHook(["heartbeat"], JSON.stringify({

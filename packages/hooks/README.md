@@ -35,7 +35,10 @@ sync-and-claim step, so one message is injected at most once in that scope.
 `heartbeat` writes an idle presence heartbeat. When available, it includes the
 runtime, exact session/thread/conversation id, Claude messaging socket, and cmux
 surface from the hook payload or runtime environment; secret messaging tokens
-are never stored. `poll` first writes the heartbeat, then performs the same
+are never stored. A Claude heartbeat also writes the session/socket binding to
+an owner-only local registry under `~/.board/sessions/claude/`; this lets a
+watcher validate shared presence without persisting the socket token. `poll`
+first writes the heartbeat, then performs the same
 bounded unread claim as `inject`; the Pi extension uses it every five seconds
 while the agent is idle. Installer-generated extensions pass `--runtime`,
 `--session`, `--store`, `--as`, `--board`, and `--index` explicitly so the hook

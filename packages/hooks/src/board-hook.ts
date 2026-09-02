@@ -4,7 +4,9 @@ import { Board, type Post, type Store } from "@board/core";
 import { parseStoreSpec } from "@board/cli";
 import { BoardIndex } from "@board/index";
 import { heartbeat } from "@board/presence";
-import { mkdir, readFile, readdir, rename, rmdir, stat, unlink, utimes, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, readFile, readdir, rename, rmdir, stat, unlink, utimes, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
   loadHookConfig,
@@ -64,13 +66,22 @@ export async function runHook(argv: string[], stdin = "", deps: HookDependencies
     const store = await (deps.createStore ?? openConfiguredStore)(config);
 
     if (command === "heartbeat" || command === "poll") {
+      const deliveryTargets = resolveDeliveryTargets(payload, runtimeEnv, runtime);
       await heartbeat(store, {
         name: identity,
         instance: resolveInstance(payload, identity, runtime),
         status: payload.status === "working" ? "working" : "idle",
         ...(runtime === undefined ? {} : { tool: runtime, runtime }),
-        ...resolveDeliveryTargets(payload, runtimeEnv, runtime),
+        ...deliveryTargets,
       });
+      if (runtime === "claude" && deliveryTargets.sessionId && deliveryTargets.socket
+        && env.CLAUDE_CODE_MESSAGING_TOKEN) {
+        await writeClaudeSessionRecord(
+          join(deps.home ?? env.HOME ?? homedir(), ".board", "sessions", "claude"),
+          deliveryTargets.sessionId,
+          deliveryTargets.socket,
+        );
+      }
       if (command === "heartbeat") return;
     }
 
@@ -79,6 +90,37 @@ export async function runHook(argv: string[], stdin = "", deps: HookDependencies
   } catch {
     // Hooks must never block or break the host agent. Configuration, network,
     // corrupt index, and malformed stdin failures all degrade to no output.
+  }
+}
+
+export function claudeSessionRegistryPath(registryDir: string, sessionId: string): string {
+  return join(registryDir, `${createHash("sha256").update(sessionId, "utf8").digest("hex")}.json`);
+}
+
+async function writeClaudeSessionRecord(registryDir: string, sessionId: string, socket: string): Promise<void> {
+  await mkdir(registryDir, { recursive: true, mode: 0o700 });
+  const directory = await lstat(registryDir);
+  if (!directory.isDirectory() || directory.isSymbolicLink() || (directory.mode & 0o077) !== 0) {
+    throw new Error("Claude session registry must be a private real directory");
+  }
+  if (typeof process.getuid === "function" && directory.uid !== process.getuid()) {
+    throw new Error("Claude session registry is not owned by the current user");
+  }
+  const target = claudeSessionRegistryPath(registryDir, sessionId);
+  const temp = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    await writeFile(temp, JSON.stringify({
+      v: 1,
+      sessionId,
+      socket,
+      ts: new Date().toISOString(),
+    }) + "\n", { encoding: "utf8", mode: 0o600, flag: "wx" });
+    await chmod(temp, 0o600);
+    await rename(temp, target);
+  } finally {
+    try { await unlink(temp); } catch (error) {
+      if (!hasCode(error, "ENOENT")) throw error;
+    }
   }
 }
 

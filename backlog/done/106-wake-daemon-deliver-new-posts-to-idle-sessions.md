@@ -3,7 +3,7 @@ id: 106
 title: wake daemon: deliver new posts to idle sessions
 phase: 1
 owner: codex
-status: todo
+status: done
 depends: [105]
 estimate: M
 ---

@@ -10,7 +10,8 @@ import { join, resolve } from "node:path";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { constants } from "node:fs";
-import { open } from "node:fs/promises";
+import { chmod, lstat, mkdir, open, rename, unlink, writeFile } from "node:fs/promises";
+import { createConnection } from "node:net";
 
 export type StoreSpec =
   | { kind: "fs"; dir: string }
@@ -29,7 +30,11 @@ export interface CliDependencies {
   fetch?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
   env?: Record<string, string | undefined>;
   sessionRegistryDir?: string;
+  claudeSessionRegistryDir?: string;
+  deliveryLogDir?: string;
   now?: () => number;
+  runCommand?: (command: string, args: string[]) => Promise<number>;
+  sendClaudeSocket?: (path: string, token: string, message: string) => Promise<boolean>;
 }
 
 export class DegradedReplicationError extends Error {
@@ -129,11 +134,13 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
       watchOptions.cursor = cursor;
       if (deps.signal !== undefined) watchOptions.signal = deps.signal;
       let finalCursor = cursor;
+      const watchTarget = parsed.flags.has("deliver") ? await resolveWatchTarget(parsed, deps) : null;
       const beat = () => heartbeat(store, {
         name: board.author,
         instance: board.instance,
         status: "watching",
         tool: "cli",
+        ...watchTarget,
       });
       await beat();
       const timer = setInterval(() => { void beat().catch(() => {}); }, deps.heartbeatIntervalMs ?? 30_000);
@@ -142,7 +149,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
         await board.watch((post) => {
           finalCursor = board.keyFor(post.id);
           output(JSON.stringify(post));
-          if (parsed.flags.has("deliver")) return deliverOpenCodeMentions(post, store, deps);
+          if (parsed.flags.has("deliver")) return deliverMentionedSessions(post, store, deps);
         }, watchOptions);
       } finally {
         clearInterval(timer);
@@ -220,7 +227,7 @@ interface ParsedArgs {
 
 const VALUE_FLAGS = new Set([
   "store", "board", "as", "title", "body", "tags", "mentions",
-  "after", "limit", "interval", "max-age", "index",
+  "after", "limit", "interval", "max-age", "index", "runtime", "session",
 ]);
 const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
 const COMMANDS = new Set(["init", "post", "reply", "read", "watch", "who", "install"]);
@@ -311,6 +318,43 @@ function numberFlag(flags: Map<string, string>, name: string, fallback: number, 
   return number;
 }
 
+async function resolveWatchTarget(
+  parsed: ParsedArgs,
+  deps: CliDependencies,
+): Promise<{ runtime: string; sessionId: string; socket?: string; cmuxSurface?: string } | null> {
+  const env = deps.env ?? process.env;
+  const requestedRuntime = parsed.flags.get("runtime");
+  if (requestedRuntime && !["claude", "codex", "letta"].includes(requestedRuntime)) {
+    throw new CliError("--runtime for watch must be claude, codex, or letta");
+  }
+  const runtime = requestedRuntime
+    ?? (env.CLAUDE_CODE_MESSAGING_SOCKET ? "claude"
+      : env.CODEX_THREAD_ID || env.CODEX_SESSION_ID ? "codex"
+        : env.LETTA_AGENT_ID || env.CONVERSATION_ID ? "letta" : undefined);
+  const sessionId = parsed.flags.get("session")
+    ?? (runtime === "codex" ? env.CODEX_THREAD_ID ?? env.CODEX_SESSION_ID
+      : runtime === "letta" ? env.CONVERSATION_ID ?? env.LETTA_CONVERSATION_ID
+        : undefined);
+  if (!sessionId) {
+    if (parsed.flags.has("session") || requestedRuntime) throw new CliError("watch session identity requires --session <uuid>");
+    return null;
+  }
+  if (!runtime) throw new CliError("--session requires --runtime when the runtime cannot be inferred");
+  if (!isUuid(sessionId)) throw new CliError("--session must be a UUID");
+  const socket = runtime === "claude" ? env.CLAUDE_CODE_MESSAGING_SOCKET : undefined;
+  const cmuxSurface = env.CMUX_SURFACE_ID;
+  if (runtime === "claude" && socket && env.CLAUDE_CODE_MESSAGING_TOKEN) {
+    const registryDir = deps.claudeSessionRegistryDir ?? join(homedir(), ".board", "sessions", "claude");
+    await writeLocalClaudeSession(registryDir, sessionId, socket);
+  }
+  return {
+    runtime,
+    sessionId,
+    ...(socket ? { socket } : {}),
+    ...(cmuxSurface ? { cmuxSurface } : {}),
+  };
+}
+
 const USAGE = `board — scalable multi-agent message board
 
 Usage:
@@ -333,6 +377,8 @@ Common options:
   --as <agent>         default: anonymous
   --tags a,b --mentions agent1,agent2
   --deliver             wake reachable mentioned sessions while watching
+  --runtime <name>      runtime hosting this watcher session
+  --session <uuid>      session id published by this watcher
   --project             install the Pi extension in the current project
   --json                accepted for wrapper compatibility`;
 
@@ -349,8 +395,8 @@ export function sanitizeSecrets(message: string): string {
   return message.replace(/([a-z][a-z0-9+.-]*:\/\/)([^\s/@]+)@/gi, "$1");
 }
 
-/** Wake online OpenCode sessions mentioned by a post. Invalid targets are skipped. */
-export async function deliverOpenCodeMentions(post: Post, store: Store, deps: CliDependencies = {}): Promise<void> {
+/** Wake each reachable idle session mentioned by a post. Invalid targets are skipped. */
+export async function deliverMentionedSessions(post: Post, store: Store, deps: CliDependencies = {}): Promise<void> {
   const mentioned = new Set(post.mentions ?? []);
   if (mentioned.size === 0) return;
   const now = (deps.now ?? Date.now)();
@@ -361,39 +407,292 @@ export async function deliverOpenCodeMentions(post: Post, store: Store, deps: Cl
       `warning: presence scan stopped after ${MAX_WHO_LIMIT} records; some mentioned sessions may not be woken`,
     );
   }
-  const request = deps.fetch ?? globalThis.fetch;
   const env = deps.env ?? process.env;
   const registryDir = deps.sessionRegistryDir ?? join(homedir(), ".board", "sessions", "opencode");
+  const claudeRegistryDir = deps.claudeSessionRegistryDir ?? join(homedir(), ".board", "sessions", "claude");
+  const logDir = deps.deliveryLogDir ?? join(homedir(), ".board", "deliveries");
+  const reportLine = deps.stderr ?? console.error;
+  const report = (line: string) => reportLine(`${new Date((deps.now ?? Date.now)()).toISOString()} ${line}`);
   const seen = new Set<string>();
-  await Promise.allSettled(presence.map(async (target) => {
-    if (!target.online || Date.parse(target.ts) > now + 300_000
-      || !mentioned.has(target.name) || target.runtime !== "opencode" || !target.sessionId) return;
-    const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
-    if (!local) return;
-    const endpoint = openCodePromptEndpoint(local.serverUrl, target.sessionId);
-    if (!endpoint) return;
-    const deliveryKey = `${endpoint.origin}\0${target.sessionId}`;
-    if (seen.has(deliveryKey)) return;
+  const matched = new Set<string>();
+  const outcomes = await Promise.allSettled(presence.map(async (target) => {
+    if (!mentioned.has(target.name)) return;
+    matched.add(target.name);
+    if (!target.online || Date.parse(target.ts) > now + 300_000) {
+      report(`delivery: skipped ${target.name}: presence is offline`);
+      return;
+    }
+    if (target.status !== "idle") {
+      report(`delivery: skipped ${target.name}: session is not idle`);
+      return;
+    }
+    const deliveryKey = targetDeliveryKey(target);
+    if (!deliveryKey) {
+      report(`delivery: skipped ${target.name}: no supported local route`);
+      return;
+    }
+    const label = deliveryLabel(target, deliveryKey);
+    const method = deliveryMethod(target.runtime, target.cmuxSurface);
+    if (!await isLocallyReachableTarget(target, registryDir, claudeRegistryDir, env)) {
+      report(`delivery: skipped ${label}: local route is unavailable`);
+      return;
+    }
+    if (seen.has(deliveryKey)) {
+      report(`delivery: skipped ${label}: duplicate presence`);
+      return;
+    }
     seen.add(deliveryKey);
+    const claim = await claimDelivery(logDir, post, target.name, deliveryKey, now);
+    if (!claim) {
+      report(`delivery: skipped ${label}: post was already attempted`);
+      return;
+    }
+    const message = `A new board post mentions ${target.name} (post ${post.id}). Run board read.`;
+    let delivered = false;
+    try {
+      delivered = await deliverTarget(target, message, registryDir, env, deps);
+    } catch {
+      delivered = false;
+    }
+    await finishDelivery(claim, delivered ? "delivered" : "failed", method, (deps.now ?? Date.now)());
+    report(delivered
+      ? `delivery: delivered to ${label} via ${method}`
+      : `delivery: failed for ${label} via ${method}; watcher continuing`);
+  }));
+  for (const outcome of outcomes) {
+    if (outcome.status === "rejected") {
+      report("delivery: bookkeeping failed; watcher continuing");
+    }
+  }
+  for (const name of mentioned) {
+    if (!matched.has(name)) report(`delivery: skipped ${name}: no presence record`);
+  }
+}
+
+/** Compatibility name retained for callers introduced with the OpenCode adapter. */
+export const deliverOpenCodeMentions = deliverMentionedSessions;
+
+interface DeliveryPresence {
+  name: string;
+  instance: string;
+  runtime?: string;
+  sessionId?: string;
+  socket?: string;
+  cmuxSurface?: string;
+}
+
+function targetDeliveryKey(target: DeliveryPresence): string | null {
+  if (target.runtime === "opencode" && target.sessionId) return `opencode\0${target.sessionId}`;
+  if (target.runtime === "codex" && isUuid(target.sessionId)) return `codex\0${target.sessionId}`;
+  if (target.runtime === "claude" && isUuid(target.sessionId) && target.socket) {
+    return `claude\0${target.sessionId}`;
+  }
+  if (target.runtime === "letta" && isUuid(target.cmuxSurface)) return `letta\0${target.cmuxSurface}`;
+  if (!target.runtime && isUuid(target.cmuxSurface)) return `human\0${target.cmuxSurface}`;
+  return null;
+}
+
+function deliveryLabel(target: DeliveryPresence, key: string): string {
+  if ((target.runtime === "codex" || target.runtime === "claude") && isUuid(target.sessionId)) {
+    return `${target.runtime}/${target.sessionId}`;
+  }
+  if ((target.runtime === "letta" || !target.runtime) && isUuid(target.cmuxSurface)) {
+    return `${target.runtime ?? "human"}/${target.cmuxSurface}`;
+  }
+  return `${target.runtime ?? "unknown"}/${createHash("sha256").update(key).digest("hex").slice(0, 12)}`;
+}
+
+function deliveryMethod(runtime: string | undefined, cmuxSurface: string | undefined): string {
+  if (runtime === "opencode") return "opencode";
+  if (runtime === "codex") return "codex-queue";
+  if (runtime === "claude") return "claude-socket";
+  if (runtime === "letta" && cmuxSurface) return "cmux-send";
+  return "cmux-notify";
+}
+
+async function isLocallyReachableTarget(
+  target: DeliveryPresence,
+  registryDir: string,
+  claudeRegistryDir: string,
+  env: Record<string, string | undefined>,
+): Promise<boolean> {
+  if (target.runtime === "opencode" && target.sessionId) {
+    const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
+    return local !== null && openCodePromptEndpoint(local.serverUrl, target.sessionId) !== null;
+  }
+  if (target.runtime === "claude" && target.sessionId && target.socket) {
+    const local = await readLocalClaudeSession(claudeRegistryDir, target.sessionId);
+    return Boolean(local && local.socket === target.socket
+      && env.CLAUDE_CODE_MESSAGING_TOKEN
+      && env.CLAUDE_CODE_MESSAGING_SOCKET === local.socket);
+  }
+  return true;
+}
+
+async function deliverTarget(
+  target: DeliveryPresence,
+  message: string,
+  registryDir: string,
+  env: Record<string, string | undefined>,
+  deps: CliDependencies,
+): Promise<boolean> {
+  if (target.runtime === "opencode" && target.sessionId) {
+    const local = await readLocalOpenCodeSession(registryDir, target.sessionId);
+    if (!local) return false;
+    const endpoint = openCodePromptEndpoint(local.serverUrl, target.sessionId);
+    if (!endpoint) return false;
     const headers: Record<string, string> = { "content-type": "application/json" };
     const password = env.OPENCODE_SERVER_PASSWORD;
     if (password) {
       const username = env.OPENCODE_SERVER_USERNAME || "opencode";
       headers.authorization = `Basic ${Buffer.from(`${username}:${password}`, "utf8").toString("base64")}`;
     }
-    const response = await request(endpoint, {
+    const response = await (deps.fetch ?? globalThis.fetch)(endpoint, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        parts: [{
-          type: "text",
-          text: `A new board post mentions ${target.name} (post ${post.id}). Run board read.`,
-        }],
-      }),
+      body: JSON.stringify({ parts: [{ type: "text", text: message }] }),
       signal: AbortSignal.timeout(5_000),
     });
-    if (!response.ok) throw new Error(`OpenCode wake returned HTTP ${response.status}`);
-  }));
+    return response.ok;
+  }
+  if (target.runtime === "codex" && isUuid(target.sessionId)) {
+    return await runWakeCommand(deps, "codex", ["queue", "--thread", target.sessionId, "--message", message]);
+  }
+  if (target.runtime === "claude" && target.socket && target.sessionId) {
+    const token = env.CLAUDE_CODE_MESSAGING_TOKEN;
+    if (!token || env.CLAUDE_CODE_MESSAGING_SOCKET !== target.socket) return false;
+    return (deps.sendClaudeSocket ?? sendClaudeSocket)(target.socket, token, message);
+  }
+  if (target.runtime === "letta" && isUuid(target.cmuxSurface)) {
+    return await runWakeCommand(deps, "cmux", ["send", "--surface", target.cmuxSurface, `${message}\\n`]);
+  }
+  if (!target.runtime && isUuid(target.cmuxSurface)) {
+    return await runWakeCommand(deps, "cmux", [
+      "notify", "--title", "Board mention", "--body", message, "--surface", target.cmuxSurface,
+    ]);
+  }
+  return false;
+}
+
+async function runWakeCommand(deps: CliDependencies, command: string, args: string[]): Promise<boolean> {
+  if (deps.runCommand) return (await deps.runCommand(command, args)) === 0;
+  let process: ReturnType<typeof Bun.spawn> | undefined;
+  const timeout = setTimeout(() => process?.kill(), 5_000);
+  timeout.unref?.();
+  try {
+    process = Bun.spawn([command, ...args], { stdout: "ignore", stderr: "ignore" });
+    return await process.exited === 0;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function sendClaudeSocket(path: string, token: string, message: string): Promise<boolean> {
+  return new Promise((resolveResult) => {
+    let settled = false;
+    const finish = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      socket.destroy();
+      resolveResult(result);
+    };
+    const socket = createConnection({ path });
+    const timeout = setTimeout(() => finish(false), 5_000);
+    timeout.unref?.();
+    socket.once("error", () => finish(false));
+    socket.once("connect", () => {
+      socket.end(encodeClaudeWakeFrames(token, message), () => finish(true));
+    });
+  });
+}
+
+export function encodeClaudeWakeFrames(token: string, message: string): string {
+  return [
+    { type: "auth", token },
+    { type: "user", message: { role: "user", content: message } },
+  ].map((frame) => JSON.stringify(frame)).join("\n") + "\n";
+}
+
+interface DeliveryClaim {
+  path: string;
+  record: Record<string, unknown>;
+}
+
+async function claimDelivery(
+  logDir: string,
+  post: Post,
+  agent: string,
+  target: string,
+  now: number,
+): Promise<DeliveryClaim | null> {
+  await mkdir(logDir, { recursive: true, mode: 0o700 });
+  const directory = await lstat(logDir);
+  if (!directory.isDirectory() || directory.isSymbolicLink() || (directory.mode & 0o077) !== 0) {
+    throw new Error("delivery log directory must be a private real directory");
+  }
+  if (typeof process.getuid === "function" && directory.uid !== process.getuid()) {
+    throw new Error("delivery log directory is not owned by the current user");
+  }
+  const digest = createHash("sha256").update(`${post.board}\0${post.id}\0${target}`, "utf8").digest("hex");
+  const path = join(logDir, `${digest}.json`);
+  const record = {
+    v: 1,
+    board: post.board,
+    postId: post.id,
+    agent,
+    targetHash: createHash("sha256").update(target, "utf8").digest("hex"),
+    status: "attempting",
+    ts: new Date(now).toISOString(),
+  };
+  let handle;
+  let created = false;
+  let failure: unknown;
+  try {
+    handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0), 0o600);
+    created = true;
+    await handle.writeFile(JSON.stringify(record) + "\n");
+    await handle.chmod(0o600);
+  } catch (error) {
+    failure = error;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+  if (failure !== undefined) {
+    if (created) await unlink(path).catch(() => {});
+    if (hasErrorCode(failure, "EEXIST")) return null;
+    throw failure;
+  }
+  return { path, record };
+}
+
+async function finishDelivery(claim: DeliveryClaim, status: "delivered" | "failed", method: string, now: number): Promise<void> {
+  const temp = `${claim.path}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    await writeFile(temp, JSON.stringify({
+      ...claim.record,
+      status,
+      method,
+      completedAt: new Date(now).toISOString(),
+    }) + "\n", { encoding: "utf8", mode: 0o600, flag: "wx" });
+    await chmod(temp, 0o600);
+    await rename(temp, claim.path);
+  } finally {
+    try { await unlink(temp); } catch (error) {
+      if (!hasErrorCode(error, "ENOENT")) throw error;
+    }
+  }
+}
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === code;
+}
+
+function isUuid(value: string | undefined): value is string {
+  return value !== undefined
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 interface LocalOpenCodeSession {
@@ -403,10 +702,68 @@ interface LocalOpenCodeSession {
   ts: string;
 }
 
+interface LocalClaudeSession {
+  v: 1;
+  sessionId: string;
+  socket: string;
+  ts: string;
+}
+
 /** Resolve the non-secret local registry path without using a session id as a path segment. */
 export function openCodeSessionRegistryPath(registryDir: string, sessionId: string): string {
   const digest = createHash("sha256").update(sessionId, "utf8").digest("hex");
   return join(registryDir, `${digest}.json`);
+}
+
+export function claudeSessionRegistryPath(registryDir: string, sessionId: string): string {
+  const digest = createHash("sha256").update(sessionId, "utf8").digest("hex");
+  return join(registryDir, `${digest}.json`);
+}
+
+async function writeLocalClaudeSession(registryDir: string, sessionId: string, socket: string): Promise<void> {
+  await mkdir(registryDir, { recursive: true, mode: 0o700 });
+  const directory = await lstat(registryDir);
+  if (!directory.isDirectory() || directory.isSymbolicLink() || (directory.mode & 0o077) !== 0) {
+    throw new Error("Claude session registry must be a private real directory");
+  }
+  if (typeof process.getuid === "function" && directory.uid !== process.getuid()) {
+    throw new Error("Claude session registry is not owned by the current user");
+  }
+  const target = claudeSessionRegistryPath(registryDir, sessionId);
+  const temp = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    await writeFile(temp, JSON.stringify({ v: 1, sessionId, socket, ts: new Date().toISOString() }) + "\n", {
+      encoding: "utf8", mode: 0o600, flag: "wx",
+    });
+    await chmod(temp, 0o600);
+    await rename(temp, target);
+  } finally {
+    try { await unlink(temp); } catch (error) {
+      if (!hasErrorCode(error, "ENOENT")) throw error;
+    }
+  }
+}
+
+async function readLocalClaudeSession(registryDir: string, sessionId: string): Promise<LocalClaudeSession | null> {
+  let handle;
+  try {
+    handle = await open(
+      claudeSessionRegistryPath(registryDir, sessionId),
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+    );
+    const info = await handle.stat();
+    if (!info.isFile() || info.size > 4_096 || (info.mode & 0o077) !== 0) return null;
+    const parsed: unknown = JSON.parse(await handle.readFile("utf8"));
+    if (!parsed || typeof parsed !== "object") return null;
+    const record = parsed as Record<string, unknown>;
+    if (record.v !== 1 || record.sessionId !== sessionId || typeof record.socket !== "string"
+      || typeof record.ts !== "string" || !Number.isFinite(Date.parse(record.ts))) return null;
+    return record as unknown as LocalClaudeSession;
+  } catch {
+    return null;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
 }
 
 async function readLocalOpenCodeSession(registryDir: string, sessionId: string): Promise<LocalOpenCodeSession | null> {

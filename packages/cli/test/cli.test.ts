@@ -1,13 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { Board, MemoryStore, ulid, type Store } from "@board/core";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   CliError,
+  claudeSessionRegistryPath,
   createStore,
   deliverOpenCodeMentions,
+  encodeClaudeWakeFrames,
   openCodeSessionRegistryPath,
   parseStoreSpec,
   runCli,
@@ -26,6 +28,16 @@ async function writeLocalOpenCodeSession(registryDir: string, sessionId: string,
     v: 1,
     sessionId,
     serverUrl,
+    ts: new Date().toISOString(),
+  }) + "\n", { mode: 0o600 });
+}
+
+async function writeLocalClaudeSession(registryDir: string, sessionId: string, socket: string): Promise<void> {
+  await mkdir(registryDir, { recursive: true, mode: 0o700 });
+  await writeFile(claudeSessionRegistryPath(registryDir, sessionId), JSON.stringify({
+    v: 1,
+    sessionId,
+    socket,
     ts: new Date().toISOString(),
   }) + "\n", { mode: 0o600 });
 }
@@ -110,6 +122,60 @@ describe("board CLI", () => {
     ]);
   });
 
+  it("watch --deliver publishes routing without making its working host session deliverable", async () => {
+    const store = new MemoryStore();
+    const root = await mkdtemp(join(tmpdir(), "board-cli-watch-claude-"));
+    roots.push(root);
+    const sessionId = "77777777-7777-4777-8777-777777777777";
+    const socket = "/tmp/cc-socks/claude-watch.sock";
+    const registryDir = join(root, "claude-sessions");
+    const controller = new AbortController();
+    controller.abort();
+    await runCli([
+      "watch", "--store", "fs:ignored", "--board", "general", "--as", "claude", "--deliver",
+      "--runtime", "claude", "--session", sessionId,
+    ], {
+      createStore: () => store,
+      signal: controller.signal,
+      stdout: () => {},
+      stderr: () => {},
+      claudeSessionRegistryDir: registryDir,
+      env: {
+        CLAUDE_CODE_MESSAGING_SOCKET: socket,
+        CLAUDE_CODE_MESSAGING_TOKEN: "not-persisted",
+      },
+    });
+    expect(await who(store, { maxAgeMs: 60_000 })).toEqual([
+      expect.objectContaining({
+        name: "claude",
+        status: "watching",
+        runtime: "claude",
+        sessionId,
+        socket,
+      }),
+    ]);
+    const record = await readFile(claudeSessionRegistryPath(registryDir, sessionId), "utf8");
+    expect(record).not.toContain("not-persisted");
+    expect(JSON.parse(record)).toMatchObject({ sessionId, socket });
+
+    const post = await new Board(store, { board: "general", author: "operator" }).post({
+      body: "must not target the watcher record",
+      mentions: ["claude"],
+    });
+    const messages: string[] = [];
+    await deliverOpenCodeMentions(post, store, {
+      deliveryLogDir: join(root, "deliveries"),
+      claudeSessionRegistryDir: registryDir,
+      env: {
+        CLAUDE_CODE_MESSAGING_SOCKET: socket,
+        CLAUDE_CODE_MESSAGING_TOKEN: "not-persisted",
+      },
+      sendClaudeSocket: async (_path, _token, message) => { messages.push(message); return true; },
+      stderr: () => {},
+    });
+    expect(messages).toEqual([]);
+  });
+
   it("watch --deliver wakes only loopback OpenCode sessions with optional basic auth", async () => {
     const store = new MemoryStore();
     const root = await mkdtemp(join(tmpdir(), "board-cli-sessions-"));
@@ -169,6 +235,7 @@ describe("board CLI", () => {
     });
     const controller = new AbortController();
     const requests: Array<{ url: string; init: RequestInit }> = [];
+    const deliveryLines: string[] = [];
     const watching = runCli([
       "watch", "--store", "fs:ignored", "--board", "general", "--as", "codex",
       "--interval", "1", "--deliver",
@@ -178,6 +245,8 @@ describe("board CLI", () => {
       stdout: () => {},
       env: { OPENCODE_SERVER_USERNAME: "board-user", OPENCODE_SERVER_PASSWORD: "board-pass" },
       sessionRegistryDir: registryDir,
+      deliveryLogDir: join(root, "deliveries"),
+      stderr: (line) => deliveryLines.push(line),
       now: () => now,
       fetch: async (input, init = {}) => {
         requests.push({ url: String(input), init });
@@ -200,6 +269,7 @@ describe("board CLI", () => {
     expect(JSON.parse(String(requests[0]!.init.body))).toEqual({
       parts: [{ type: "text", text: `A new board post mentions opencode (post ${post.id}). Run board read.` }],
     });
+    expect(deliveryLines).toContainEqual(expect.stringContaining("delivered to opencode/"));
   });
 
   it("warns when the bounded wake presence scan is truncated", async () => {
@@ -213,13 +283,137 @@ describe("board CLI", () => {
       mentions: ["opencode"],
     });
     const warnings: string[] = [];
+    const root = await mkdtemp(join(tmpdir(), "board-cli-deliveries-"));
+    roots.push(root);
     await deliverOpenCodeMentions(post, store, {
       now: () => now,
       stderr: (line) => warnings.push(line),
+      deliveryLogDir: root,
     });
     expect(warnings).toEqual([
       `warning: presence scan stopped after ${MAX_WHO_LIMIT} records; some mentioned sessions may not be woken`,
+      `${new Date(now).toISOString()} delivery: skipped opencode: no presence record`,
     ]);
+  });
+
+  it("delivers Codex, Claude, Letta, and human wakes once with a local result log", async () => {
+    const store = new MemoryStore();
+    const root = await mkdtemp(join(tmpdir(), "board-cli-deliveries-"));
+    roots.push(root);
+    const now = Date.now();
+    const codexSession = "11111111-1111-4111-8111-111111111111";
+    const claudeSession = "22222222-2222-4222-8222-222222222222";
+    const lettaSurface = "33333333-3333-4333-8333-333333333333";
+    const humanSurface = "44444444-4444-4444-8444-444444444444";
+    const claudeSocket = "/tmp/cc-socks/test.sock";
+    const claudeRegistryDir = join(root, "claude-sessions");
+    const deliveryLogDir = join(root, "deliveries");
+    await writeLocalClaudeSession(claudeRegistryDir, claudeSession, claudeSocket);
+    for (const presence of [
+      { name: "codex", runtime: "codex", sessionId: codexSession },
+      { name: "claude", runtime: "claude", sessionId: claudeSession, socket: "/tmp/cc-socks/stale.sock" },
+      { name: "claude", runtime: "claude", sessionId: claudeSession, socket: claudeSocket },
+      { name: "letta", runtime: "letta", cmuxSurface: lettaSurface },
+      { name: "human", cmuxSurface: humanSurface },
+    ]) {
+      await heartbeat(store, {
+        ...presence,
+        instance: ulid(),
+        status: "idle",
+        now: () => now,
+      });
+    }
+    const post = await new Board(store, { board: "general", author: "operator" }).post({
+      body: "wake all runtimes",
+      mentions: ["codex", "claude", "letta", "human"],
+    });
+    const commands: Array<{ command: string; args: string[] }> = [];
+    const claudeMessages: string[] = [];
+    const warnings: string[] = [];
+    const deps = {
+      now: () => now,
+      deliveryLogDir,
+      claudeSessionRegistryDir: claudeRegistryDir,
+      env: {
+        CLAUDE_CODE_MESSAGING_SOCKET: claudeSocket,
+        CLAUDE_CODE_MESSAGING_TOKEN: "not-written-to-log",
+      },
+      runCommand: async (command: string, args: string[]) => {
+        commands.push({ command, args });
+        return command === "cmux" && args[0] === "send" ? 1 : 0;
+      },
+      sendClaudeSocket: async (_path: string, _token: string, message: string) => {
+        claudeMessages.push(message);
+        return true;
+      },
+      stderr: (line: string) => warnings.push(line),
+    };
+    await deliverOpenCodeMentions(post, store, deps);
+    await deliverOpenCodeMentions(post, store, deps);
+
+    expect(commands).toHaveLength(3);
+    expect(commands).toContainEqual({
+      command: "codex",
+      args: ["queue", "--thread", codexSession, "--message", expect.stringContaining(post.id)],
+    });
+    expect(commands).toContainEqual({
+      command: "cmux",
+      args: ["send", "--surface", lettaSurface, expect.stringContaining("Run board read.\\n")],
+    });
+    expect(commands).toContainEqual({
+      command: "cmux",
+      args: ["notify", "--title", "Board mention", "--body", expect.stringContaining(post.id), "--surface", humanSurface],
+    });
+    expect(claudeMessages).toEqual([expect.stringContaining(post.id)]);
+    expect(warnings).toContainEqual(expect.stringContaining(
+      "delivery: failed for letta/33333333-3333-4333-8333-333333333333 via cmux-send; watcher continuing",
+    ));
+    expect(warnings).toContainEqual(expect.stringContaining(
+      "delivery: delivered to claude/22222222-2222-4222-8222-222222222222 via claude-socket",
+    ));
+    expect(warnings.filter((line) => line.includes("delivered to claude/")).length).toBe(1);
+    const records = await Promise.all((await readdir(deliveryLogDir)).map(async (name) => (
+      JSON.parse(await readFile(join(deliveryLogDir, name), "utf8"))
+    )));
+    expect(records).toHaveLength(4);
+    expect(records.map((record) => record.status).sort()).toEqual(["delivered", "delivered", "delivered", "failed"]);
+    expect(JSON.stringify(records)).not.toContain("not-written-to-log");
+    expect(JSON.stringify(records)).not.toContain(claudeSocket);
+    expect(encodeClaudeWakeFrames("token", "wake").trim().split("\n").map((line) => JSON.parse(line))).toEqual([
+      { type: "auth", token: "token" },
+      { type: "user", message: { role: "user", content: "wake" } },
+    ]);
+  });
+
+  it("reports delivery-log failures without running a wake or stopping the watcher", async () => {
+    const store = new MemoryStore();
+    const root = await mkdtemp(join(tmpdir(), "board-cli-delivery-log-error-"));
+    roots.push(root);
+    const invalidLogPath = join(root, "not-a-directory");
+    await writeFile(invalidLogPath, "occupied", { mode: 0o600 });
+    const now = Date.now();
+    await heartbeat(store, {
+      name: "codex",
+      instance: ulid(),
+      status: "idle",
+      runtime: "codex",
+      sessionId: "66666666-6666-4666-8666-666666666666",
+      now: () => now,
+    });
+    const post = await new Board(store, { board: "general", author: "operator" }).post({
+      body: "bookkeeping failure",
+      mentions: ["codex"],
+    });
+    const commands: string[] = [];
+    const warnings: string[] = [];
+    await deliverOpenCodeMentions(post, store, {
+      now: () => now,
+      deliveryLogDir: invalidLogPath,
+      runCommand: async (command) => { commands.push(command); return 0; },
+      stderr: (line) => warnings.push(line),
+    });
+    expect(commands).toEqual([]);
+    expect(warnings).toEqual([`${new Date(now).toISOString()} delivery: bookkeeping failed; watcher continuing`]);
   });
 
   it("reads stdin bodies and honours option termination and attached values", async () => {

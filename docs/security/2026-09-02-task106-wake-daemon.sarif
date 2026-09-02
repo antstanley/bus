@@ -1,0 +1,239 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "20260902T-106-wake-gate"
+      },
+      "properties": {
+        "securitySchemaVersion": "1.0",
+        "securityTargetKind": "git_diff"
+      },
+      "results": [
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 469,
+                  "startLine": 467
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "control_gap"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/core/src/post.ts"
+                },
+                "region": {
+                  "endLine": 136,
+                  "startLine": 133
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "A post object written directly to the untrusted store can carry mention strings of arbitrary shape and length: the read-side validator checks only that mentions is a string array. When a watch --deliver process observes such a post, the final no-presence-record report interpolates the raw string into a timestamped delivery log line, so attacker-chosen newlines and control bytes break the one-event-per-line invariant of the operator's delivery log and can fabricate apparent delivery outcomes. Delivery decisions and wake-message content are unaffected: the wake message uses only presence-path-validated names and the post id."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "4aeacc89e06ec3e6:1",
+            "security/v1": "security/v1:sha256:afc8787c9af178244fc372d2057ef0d20da56ceb3d781a18cdd359a6957b7364"
+          },
+          "properties": {
+            "candidateId": "cand-1-log-line-forgery",
+            "category": "log-injection",
+            "confidence": "high",
+            "findingId": "csf_e90974d9e700ff093008a0e7",
+            "occurrenceId": "occ_86da55bcfc456233e6426a00",
+            "severity": "low"
+          },
+          "ruleId": "log-injection.unvalidated-identifier-echo",
+          "ruleIndex": 1
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 343,
+                  "startLine": 334
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "control_gap"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/config.ts"
+                },
+                "region": {
+                  "endLine": 154,
+                  "startLine": 148
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "control_gap"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 493,
+                  "startLine": 484
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "evidence:evidence_uuid_gate"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/cli/src/index.ts"
+                },
+                "region": {
+                  "endLine": 343,
+                  "startLine": 343
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "The hook publishes whatever thread/conversation identifier its runtime environment contains (any string up to 1 KiB), but the watcher requires a UUID-variant shape: an ambient codex/letta runtime whose native id is not a UUID makes watch --deliver exit with a usage error, and at delivery time targetDeliveryKey silently classifies such ids as 'no supported local route'. The publication and consumption sides enforce different identifier formats, so the same value is accepted into presence and then either blocks the watcher from starting or never wakes, leaving a session that presence says is wakeable but that no watcher will ever deliver to."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "2ec3056ac804a36a:1",
+            "security/v1": "security/v1:sha256:6f890ce1e63a092752905ee9ef1272605a3d6ba124299a33b085798eb78300a3"
+          },
+          "properties": {
+            "candidateId": "cand-3-runtime-id-uuid-gate",
+            "category": "input-validation",
+            "confidence": "high",
+            "findingId": "csf_42a6b1c32db4bb02c30216a5",
+            "occurrenceId": "occ_f69fcf61f66a798f256c9fb3",
+            "severity": "low"
+          },
+          "ruleId": "validation.inconsistent-identifier-format",
+          "ruleIndex": 2
+        },
+        {
+          "level": "note",
+          "locations": [
+            {
+              "message": {
+                "text": "root_control"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 84,
+                  "startLine": 77
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "swallow"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "packages/hooks/src/board-hook.ts"
+                },
+                "region": {
+                  "endLine": 93,
+                  "startLine": 90
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "During heartbeat and poll, the Claude session-registry write is sequenced before the poll's unread-injection step inside the hook's single error-swallowing try block. When the ~/.board/sessions/claude directory exists with an unexpected owner, mode, or as a symlink, the registry write throws on every invocation and the unread-injection step never runs, while the idle heartbeat still publishes presence including the socket. The session therefore advertises an idle, wakeable-looking presence but silently never receives injected mentions, with nothing reported and no recovery path until the directory is repaired manually."
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "478363cb651519fc:1",
+            "security/v1": "security/v1:sha256:f50a3e1d7d104df757d22a7929520d7bb022c41c22ab27dd0898c4c7dbeaabab"
+          },
+          "properties": {
+            "candidateId": "cand-2-poll-wedge-registry",
+            "category": "availability",
+            "confidence": "high",
+            "findingId": "csf_3dd1b65ce786e8cf815647e2",
+            "occurrenceId": "occ_fa87fbcd263f7ec24b408dd6",
+            "severity": "low"
+          },
+          "ruleId": "availability.silent-wedge-on-bookkeeping-failure",
+          "ruleIndex": 0
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "Security Scan",
+          "rules": [
+            {
+              "id": "availability.silent-wedge-on-bookkeeping-failure",
+              "name": "availability.silent-wedge-on-bookkeeping-failure",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "availability.silent-wedge-on-bookkeeping-failure"
+              }
+            },
+            {
+              "id": "log-injection.unvalidated-identifier-echo",
+              "name": "log-injection.unvalidated-identifier-echo",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "log-injection.unvalidated-identifier-echo"
+              }
+            },
+            {
+              "id": "validation.inconsistent-identifier-format",
+              "name": "validation.inconsistent-identifier-format",
+              "properties": {
+                "tags": [
+                  "security"
+                ]
+              },
+              "shortDescription": {
+                "text": "validation.inconsistent-identifier-format"
+              }
+            }
+          ],
+          "version": "1.0"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
