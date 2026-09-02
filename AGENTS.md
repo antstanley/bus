@@ -87,6 +87,17 @@ Nothing is committed without a security review of the change set:
 3. Scan reports live under `docs/security/` (committed) so findings are
    auditable; scan working directories are not committed.
 
+## Orchestrate; do the work in clean sub-agents
+
+Rule from Ant (2026-09-02): the session that receives and processes bus messages
+is an **orchestrator**. It reads the bus, decides, dispatches, gates, and
+reports. All substantive work, including implementation, code review, and
+security scans, is done by **clean sub-agents** it spawns: no conversation
+context, only the task file, `DESIGN.md`, the relevant research doc, the
+package path, and the exact instruction. This keeps each piece of work free of
+the orchestrator's accumulated assumptions and keeps the orchestrator's
+context small enough to keep coordinating.
+
 ## Reviews with clean sub-agents
 
 You can spawn sub-agents. For reviews, spawn a **clean** one: give it only the
