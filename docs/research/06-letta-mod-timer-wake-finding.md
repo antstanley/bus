@@ -1,6 +1,8 @@
 # Finding: can a Letta Code mod start a turn from a timer? (backlog 107 spike)
 
-Date: 2026-09-02 · Author: letta · Status: answered — no, with one partial exception.
+Date: 2026-09-02 · Author: letta · Status: answered — no supported wake path. Corrected same
+day after codex's clean review of 107: the original text wrongly called `turn_end`
+notification-only and overstated an "empirical" check; see points 2 and 4.
 
 ## Question
 
@@ -29,21 +31,27 @@ decreasing strength:
 2. **`turn_start` is a filter, not a generator.** The events reference defines its contract as
    transform/replace/cancel of an *outbound* turn ("Handlers can mutate `event.input` ... or
    return replacement input"; `{ cancel: { reason } }` tells "the host not to submit this
-   turn"). It fires only when a turn is already being submitted. A handler cannot synthesize a
-   turn, and `turn_end`/lifecycle events are notification-only.
+   turn"). It fires only when a turn is already being submitted; a handler cannot synthesize
+   one. Correction (2026-09-02, codex review): `turn_end` is **not** notification-only — its
+   result type is `{ continue?: string }` (`ModTurnEndResult` in the installed harness's
+   `dist/types/mods/types.d.ts`), so a handler can queue a follow-up model run. That still
+   does not close the wake gap: `turn_end` fires when a turn has just finished (its event
+   carries a `stopReason`), so it can only extend a conversation that is already active. An
+   idle session never fires it, and a `turn_end { continue }` loop would simply chain turns
+   back-to-back after real activity — a runaway loop, not a wake mechanism.
 3. **Timers only run while the session process is alive** (architecture reference: "Timers are
    okay for active-session behavior, but they only run while the mod engine is alive"). So even
    a hypothetical timer→turn bridge would not wake a closed TUI or a machine that is asleep;
    at best it covers "TUI open, conversation idle" — the same coverage the external daemon has,
    with strictly less reach.
-4. **Empirical check of the delivered artifact.** The shipped mod
-   (`packages/letta-mod/board.ts`, installed at `~/.letta/mods/board.ts`) registers a 5 s
-   presence-style timer path only implicitly (we deliberately did **not** add a turn-starting
-   timer). The mod API surface exercised — `letta.tools.register`, `letta.events.on`,
-   capability guards, disposers — offers no `submitTurn`/`startTurn`-shaped method; the full
-   mod API list in the skill (tools, commands, events, permissions, providers, ui) contains no
-   turn-submission capability. (Re-verify against the installed mod API after any Letta Code
-   upgrade; the API is young.)
+4. **Static API-surface inspection of the delivered artifact.** The shipped mod
+   (`packages/letta-mod/board.ts`, installed at `~/.letta/mods/board.ts`) registers no timer
+   at all (deliberate). Reviewing the documented mod API surface — tools, commands, events,
+   permissions, providers, ui — there is no `submitTurn`/`startTurn`-shaped method a timer
+   could call. This is a documented-surface review, not an experiment: the skill's events
+   reference does not document `turn_end` yet (its `{ continue }` result turned up in the
+   installed harness types on 2026-09-02), so docs lag the API. Re-verify against the
+   installed mod API after any Letta Code upgrade; the API is young.
 
 ## Consequence for the wake gap
 

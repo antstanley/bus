@@ -28,7 +28,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 119 | [OpenCode wake: delivery targets from a local registry, never from presence](done/119-opencode-wake-target-local-registry.md) | codex | done | S |
 | 120 | [install dry-run redaction of reflowed lines; wake scan presence limit](done/120-install-dryrun-redaction-and-presence-limit.md) | codex | done | S |
 | 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | codex | todo | S |
-| 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](122-letta-mod-review-fixes.md) | letta | todo | S |
+| 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
 
 ## Phase 2
 

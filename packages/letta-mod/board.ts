@@ -6,7 +6,10 @@
 // The mod is a thin driver over this checkout's board CLI and hook: it never
 // links @board/* packages (mods load outside any workspace) and never sees
 // store credentials beyond what the shared ~/.board/config.json already
-// holds. Spawned children use argument arrays — no shell interpolation.
+// holds. Because the host interpreter may be Node (Letta Code loads mods
+// under Node) while the entrypoints are Bun/TypeScript sources, children are
+// always spawned through bun (BOARD_BUN / config "bun" override), with
+// argument arrays — no shell interpolation.
 
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
@@ -15,7 +18,7 @@ import { join } from "node:path";
 
 const DEFAULT_REPO = "/Volumes/Delorean/code/sidekick/tmp";
 const CONFIG_PATH = process.env.BOARD_CONFIG ?? join(homedir(), ".board", "config.json");
-const SPAWN_TIMEOUT_MS = 10_000;
+const DEFAULT_SPAWN_TIMEOUT_MS = 10_000;
 
 interface BoardConfig {
   repo?: string;
@@ -25,6 +28,8 @@ interface BoardConfig {
   as?: string;
   indexPath?: string;
   maxOutputBytes?: number | string;
+  bun?: string;
+  spawnTimeoutMs?: number | string;
 }
 
 function loadConfig(raw: string): BoardConfig {
@@ -58,7 +63,12 @@ function configEnv(config: BoardConfig, extra: Record<string, string> = {}): Rec
 export default function activate(letta: any) {
   const disposers: Array<() => void> = [];
 
-  let repo = DEFAULT_REPO;
+  // BOARD_REPO env wins over the config file's repo field (same precedence as
+  // the other BOARD_* overrides); config wins over the compiled-in default.
+  const envRepo = typeof process.env.BOARD_REPO === "string" && process.env.BOARD_REPO.length > 0
+    ? process.env.BOARD_REPO
+    : undefined;
+  let repo = envRepo ?? DEFAULT_REPO;
   let config: BoardConfig = {};
   // Config loads asynchronously; a turn_start or tool call that races ahead of
   // it would run with defaults, so await a shared promise everywhere.
@@ -66,9 +76,24 @@ export default function activate(letta: any) {
   try {
     configReady = readFile(CONFIG_PATH, "utf8").then((raw) => {
       config = loadConfig(raw);
-      if (typeof config.repo === "string" && config.repo.length > 0) repo = config.repo;
+      const configRepo = typeof config.repo === "string" && config.repo.length > 0 ? config.repo : undefined;
+      repo = envRepo ?? configRepo ?? DEFAULT_REPO;
     }).catch(() => {}); // missing/malformed config falls back to defaults
   } catch {}
+
+  // The board entrypoints are Bun/TypeScript sources, but the host interpreter
+  // may be Node (Letta Code loads mods under Node), so spawn through bun
+  // explicitly — never process.execPath. BOARD_BUN / config "bun" override the
+  // executable name or path.
+  const bunPath = () => {
+    const raw = process.env.BOARD_BUN ?? config.bun;
+    return typeof raw === "string" && raw.length > 0 ? raw : "bun";
+  };
+  const spawnTimeoutMs = () => {
+    const raw = process.env.BOARD_SPAWN_TIMEOUT_MS ?? config.spawnTimeoutMs;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 100 ? Math.min(60_000, Math.floor(n)) : DEFAULT_SPAWN_TIMEOUT_MS;
+  };
 
   const cliPath = () => join(repo, "packages", "cli", "src", "index.ts");
   const hookPath = () => join(repo, "packages", "hooks", "src", "board-hook.ts");
@@ -82,12 +107,18 @@ export default function activate(letta: any) {
   ): Promise<string> {
     return configReady.then(() => new Promise((resolve, reject) => {
       const child = execFile(
-        process.execPath,
+        bunPath(),
         [script(), ...args],
-        { env: { ...process.env, ...env }, timeout: SPAWN_TIMEOUT_MS, signal, maxBuffer: 4 * 1024 * 1024 },
+        { env: { ...process.env, ...env }, timeout: spawnTimeoutMs(), signal, maxBuffer: 4 * 1024 * 1024 },
         (error, stdout) => {
           if (error) {
-            // Deliberately generic: Node's error message embeds the full argv
+            if ((error as { code?: unknown }).code === "ENOENT") {
+              // Missing bun executable: say so plainly. The bun path is
+              // operator configuration, so naming it leaks nothing.
+              reject(new Error(`board command failed: bun not found (looked for "${bunPath()}"); install bun or set BOARD_BUN / "bun" in the board config`));
+              return;
+            }
+            // Deliberately generic: bun/Node error messages embed the full argv
             // (store spec and post body included), which must not reach tool
             // output. Exit-code shape only.
             const code = typeof (error as { code?: unknown }).code === "number" || typeof (error as { code?: string }).code === "string"
@@ -142,7 +173,11 @@ export default function activate(letta: any) {
         if (Array.isArray(mentions) && mentions.length > 0) {
           args.push("--mentions", mentions.map((m) => String(m)).join(","));
         }
-        args.push("--", ...body.split("\n")); // "--" ends option parsing; positional body words, argv array, no shell
+        // The CLI takes --body verbatim, so newlines survive; passing the body
+        // as split positional words would collapse multiline bodies to spaces,
+        // and "--" would still not protect a value from value-parsing edge
+        // cases. As a flag value it can never be re-parsed as a flag.
+        args.push("--body", body);
         const stdout = await runBoard(cliPath, ["post", ...args], configEnv(config), ctx.signal);
         return stdout.trim() || "posted";
       },
@@ -150,7 +185,7 @@ export default function activate(letta: any) {
 
     disposers.push(letta.tools.register({
       name: "board_read",
-      description: "Read recent posts from the shared board. Returns JSON with posts, cursor, and truncated. Pass the previous cursor back as `after` to page.",
+      description: "Read recent posts from the shared board. Reads the first configured board only (the CLI reads one board per invocation). Returns JSON with posts, cursor, and truncated. Pass the previous cursor back as `after` to page.",
       parameters: {
         type: "object",
         properties: {
@@ -194,7 +229,10 @@ export default function activate(letta: any) {
         if (!store) return { status: "error", content: "no board store configured; set store in ~/.board/config.json" };
         const args = ["who", "--store", store];
         if (ctx.args.maxAgeMs !== undefined) {
-          args.push("--max-age", String(Math.max(0, Math.min(3_600_000, Number(ctx.args.maxAgeMs) || 120_000))));
+          // Validate finiteness instead of `Number(x) || fallback`, which
+          // silently rewrites a legitimate maxAgeMs=0 to the default.
+          const n = Number(ctx.args.maxAgeMs);
+          if (Number.isFinite(n)) args.push("--max-age", String(Math.min(3_600_000, Math.max(0, Math.floor(n)))));
         }
         const stdout = await runBoard(cliPath, args, configEnv(config), ctx.signal);
         return stdout.trim() || "nobody";
@@ -229,12 +267,19 @@ export default function activate(letta: any) {
         if (!userMessage) return; // approval-only continuation: never inject
         const output = await spawnHook(["inject", "--runtime", "letta"], ctx.signal);
         if (!output) return; // no unread mentions, or the hook degraded silently
-        // Append the framed, size-capped block as an extra text part of the
-        // user message. The hook output already carries the
-        // UNTRUSTED CONTENT framing and the 4 KiB cap.
+        // Append the framed, size-capped block as an extra typed text part.
+        // Content must stay a valid host shape — never mix a bare string with
+        // part objects, so normalize string content to a typed part first.
+        // The hook output already carries the UNTRUSTED CONTENT framing and
+        // the 4 KiB cap.
         const part = { type: "text", text: output };
-        if (Array.isArray(userMessage.content)) userMessage.content.push(part);
-        else userMessage.content = [userMessage.content, part];
+        const existing = userMessage.content;
+        if (Array.isArray(existing)) existing.push(part);
+        else if (typeof existing === "string" && existing.length > 0) {
+          userMessage.content = [{ type: "text", text: existing }, part];
+        } else {
+          userMessage.content = [part];
+        }
         return { input: event.input };
       }));
     }

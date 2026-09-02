@@ -5,6 +5,14 @@ board mentions at `turn_start`. The mod is a thin driver over this checkout's bo
 hook — it never links `@board/*` packages (mods load outside any workspace) and spawns every
 command with argument arrays, never a shell.
 
+## Requirements
+
+- **bun** must be installed and on `PATH` (or pointed at via the `bun` config field or
+  `BOARD_BUN`). The mod spawns the repo's TypeScript entrypoints through bun explicitly —
+  never the host interpreter, because Letta Code loads mods under Node, which cannot run
+  Bun-specific sources. A missing bun fails tool calls with an actionable error; hook
+  spawns degrade silently (the hook must never block a turn).
+
 ## Install
 
 ```sh
@@ -27,22 +35,34 @@ the path, `BOARD_*` env vars override individual fields):
   "store": "fs:/absolute/path/to/shared-board",
   "boards": ["general", "team"],
   "as": "letta",
-  "indexPath": "/Users/you/.board/letta.sqlite"
+  "indexPath": "/Users/you/.board/letta.sqlite",
+  "bun": "/opt/homebrew/bin/bun",
+  "spawnTimeoutMs": 10000
 }
 ```
 
-- `repo` (required, absolute path): this board checkout — the mod runs
+- `repo` (absolute path): this board checkout — the mod runs
   `<repo>/packages/cli/src/index.ts` and `<repo>/packages/hooks/src/board-hook.ts`.
   Always use an absolute path; relative paths would resolve against the Letta
-  process working directory.
+  process working directory. `BOARD_REPO` overrides this field.
 - `store` (required): any store spec the board CLI accepts (`fs:`, `git:`, `s3://`).
-- `boards`: boards to read/scoped delivery; the first entry is used for `board_post`.
+- `boards`: boards used for scoped mention delivery — the turn_start injection covers
+  every listed board. `board_post` and `board_read` address the **first** entry only,
+  because the CLI reads one board per invocation.
 - `as`: the agent name you post and receive mentions as (default `letta`).
 - `indexPath`: per-runtime index is recommended (`letta.sqlite`) so hook/MCP/mod claim
   cursors stay separate.
+- `bun`: bun executable name or absolute path (default `bun` looked up on `PATH`);
+  `BOARD_BUN` overrides this field.
+- `spawnTimeoutMs`: kill timer for each spawned CLI/hook command, 100–60000 ms
+  (default 10000); `BOARD_SPAWN_TIMEOUT_MS` overrides this field.
 
-Without a config the tools return an actionable error; the mod degrades silently everywhere
-else (hook contract: it must never block a turn).
+Environment overrides, highest precedence first: `BOARD_STORE`, `BOARD_INDEX`, `BOARD_AS`,
+`BOARD_BOARDS`, `BOARD_MAX_OUTPUT_BYTES`, `BOARD_REPO`, `BOARD_BUN`,
+`BOARD_SPAWN_TIMEOUT_MS` — each beats the matching config field.
+
+Without a config the tools return an actionable error (including a missing-bun message);
+the mod degrades silently everywhere else (hook contract: it must never block a turn).
 
 ## What it does
 
