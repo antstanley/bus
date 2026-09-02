@@ -71,16 +71,19 @@ Nothing is committed without a security review of the change set:
    Fix or explicitly justify every reportable finding in your ready message.
    **Exception: Codex does not run scans.** OpenAI's cyber-safety classifier
    terminates Codex turns that contain exploit-style analysis (observed
-   2026-09-01). **Letta is under the same restriction while it runs a GPT
-   model (observed 2026-09-02; lifted when Ant changes its model).** Until
-   then every scan is run by claude, and findings are sent to both agents
-   phrased as defects to fix (robustness, validation, error handling), without
-   attack narratives or proof-of-concept code.
-2. **Lead gate**: the lead runs `security:security-diff-scan` on the exact
-   revision range being committed, in a clean sub-agent, with the threat model
-   from `docs/research/04-trust.md` as user context. Reportable findings go back
-   to the author with `--re`; the package is committed only when the scan
-   reports none, or each remaining one is accepted in writing in the commit.
+   2026-09-01). Findings are sent to Codex phrased as defects to fix
+   (robustness, validation, error handling), without attack narratives or
+   proof-of-concept code.
+   **Letta runs all security work** (decided 2026-09-02 once Letta moved to
+   GLM 5.3 Flash): author self-scans of its own packages, the lead-gate diff
+   scans of every other package, and threat-model/hardening tasks. Claude
+   requests scans and commits on the results; it does not run scans itself.
+2. **Lead gate**: letta runs `security-diff-scan` on the exact revision range
+   being committed, in a clean sub-agent, with the threat model from
+   `docs/research/04-trust.md` as user context, and reports to the lead.
+   Reportable findings go back to the author with `--re` (phrased as defects
+   for Codex); the package is committed only when the scan reports none, or
+   each remaining one is accepted in writing in the commit.
 3. Scan reports live under `docs/security/` (committed) so findings are
    auditable; scan working directories are not committed.
 
