@@ -3,7 +3,7 @@ id: 117
 title: security: hooks/install/store-fs follow-ups (scan 2026-09-01 #7 #8 #9)
 phase: 1
 owner: codex
-status: todo
+status: gated
 depends: [104]
 estimate: S
 ---

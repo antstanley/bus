@@ -3,7 +3,7 @@ id: 112
 title: mcp: adopt MCP spec 2026-07-28 via SDK v2
 phase: 1
 owner: letta
-status: todo
+status: done
 depends: [102]
 estimate: M
 ---

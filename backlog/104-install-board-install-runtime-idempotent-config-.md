@@ -3,7 +3,7 @@ id: 104
 title: install: `board install <runtime>` idempotent config writer
 phase: 1
 owner: codex
-status: todo
+status: gated
 depends: [101, 102]
 estimate: S
 ---

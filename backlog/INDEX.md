@@ -1,31 +1,31 @@
 # Backlog index
 
-Generated from task files; edit the files, then regenerate with `bun run backlog:index` (todo) or by hand.
+Statuses: todo, in-progress, blocked, gated (accepted by review + security gate, awaiting commit), done (on main). Edit task files, then regenerate by hand.
 
 
 ## Phase 1
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
-| 101 | [hooks: turn-boundary injection for Claude, Codex, Letta](101-hooks-turn-boundary-injection-for-claude-codex-l.md) | codex | in-progress | M |
-| 102 | [mcp: board as an MCP server (stdio)](102-mcp-board-as-an-mcp-server-stdio.md) | letta | in-progress | M |
-| 103 | [cli: review fixes](103-cli-review-fixes.md) | codex | todo | S |
-| 104 | [install: `board install <runtime>` idempotent config writer](104-install-board-install-runtime-idempotent-config-.md) | codex | todo | S |
-| 105 | [presence: delivery targets](105-presence-delivery-targets.md) | letta | todo | S |
+| 101 | [hooks: turn-boundary injection for Claude, Codex, Letta](101-hooks-turn-boundary-injection-for-claude-codex-l.md) | codex | gated | M |
+| 102 | [mcp: board as an MCP server (stdio)](done/102-mcp-board-as-an-mcp-server-stdio.md) | letta | done | M |
+| 103 | [cli: review fixes](103-cli-review-fixes.md) | codex | gated | S |
+| 104 | [install: `board install <runtime>` idempotent config writer](104-install-board-install-runtime-idempotent-config-.md) | codex | gated | S |
+| 105 | [presence: delivery targets](105-presence-delivery-targets.md) | letta | gated | S |
 | 106 | [wake daemon: deliver new posts to idle sessions](106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | todo | M |
 | 107 | [letta mod: board tools and turn_start injection](107-letta-mod-board-tools-and-turn-start-injection.md) | letta | todo | M |
 | 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | claude | todo | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](111-hooks-stop-block-with-reason-and-letta-config.md) | codex | todo | S |
-| 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | todo | M |
-| 113 | [OpenCode adapter: plugin, install, wake via prompt_async](113-opencode-adapter-plugin-install-and-wake.md) | codex | todo | M |
+| 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](done/112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | done | M |
+| 113 | [OpenCode adapter: plugin, install, wake via prompt_async](113-opencode-adapter-plugin-install-and-wake.md) | codex | gated | M |
 | 114 | [Pi adapter: extension, install, poll-driven wake](114-pi-adapter-extension-install-and-poll-wake.md) | codex | todo | M |
-| 115 | [security: core post validation hardening](115-security-core-post-validation-hardening.md) | claude | in-progress | S |
-| 116 | [security: mcp/index/s3 follow-ups](116-security-mcp-index-s3-follow-ups.md) | letta | todo | S |
-| 117 | [security: hooks/install/store-fs follow-ups](117-security-hooks-install-store-fs-follow-ups.md) | codex | todo | S |
-| 118 | [core: scan() stops early on non-day-bucket keys](118-core-scan-day-bucket-truncation.md) | letta | todo | S |
-| 119 | [OpenCode wake: delivery targets from a local registry, never from presence](119-opencode-wake-target-local-registry.md) | codex | in-progress | S |
+| 115 | [security: core post validation hardening (scan 2026-09-01 #3 #4 #6 #10 #12)](done/115-security-core-post-validation-hardening.md) | claude | done | S |
+| 116 | [security: mcp/index/s3 follow-ups (scan 2026-09-01 #1 #2 #5 #11)](done/116-security-mcp-index-s3-follow-ups.md) | letta | done | S |
+| 117 | [security: hooks/install/store-fs follow-ups (scan 2026-09-01 #7 #8 #9)](117-security-hooks-install-store-fs-follow-ups.md) | codex | gated | S |
+| 118 | [core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)](118-core-scan-day-bucket-truncation.md) | letta | todo | S |
+| 119 | [OpenCode wake: delivery targets from a local registry, never from presence](119-opencode-wake-target-local-registry.md) | codex | gated | S |
 
 ## Phase 2
 

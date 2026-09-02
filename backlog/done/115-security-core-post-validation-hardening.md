@@ -3,7 +3,7 @@ id: 115
 title: security: core post validation hardening (scan 2026-09-01 #3 #4 #6 #10 #12)
 phase: 1
 owner: claude
-status: in-progress
+status: done
 depends: []
 estimate: S
 ---

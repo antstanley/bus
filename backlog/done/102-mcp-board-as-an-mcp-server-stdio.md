@@ -3,7 +3,7 @@ id: 102
 title: mcp: board as an MCP server (stdio)
 phase: 1
 owner: letta
-status: in-progress
+status: done
 depends: []
 estimate: M
 ---

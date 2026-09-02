@@ -3,7 +3,7 @@ id: 105
 title: presence: delivery targets
 phase: 1
 owner: letta
-status: todo
+status: gated
 depends: [101]
 estimate: S
 ---

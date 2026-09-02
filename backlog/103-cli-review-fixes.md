@@ -3,7 +3,7 @@ id: 103
 title: cli: review fixes
 phase: 1
 owner: codex
-status: todo
+status: gated
 depends: []
 estimate: S
 ---

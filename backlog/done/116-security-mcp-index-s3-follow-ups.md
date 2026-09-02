@@ -3,7 +3,7 @@ id: 116
 title: security: mcp/index/s3 follow-ups (scan 2026-09-01 #1 #2 #5 #11)
 phase: 1
 owner: letta
-status: todo
+status: done
 depends: [112]
 estimate: S
 ---
