@@ -1,6 +1,6 @@
 # Backlog index
 
-Statuses: todo, in-progress, blocked, gated (accepted by review + security gate, awaiting commit), done (on main).
+Statuses: todo, in-progress, blocked, gated, done.
 
 
 ## Phase 1
@@ -81,13 +81,16 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
 | 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | unassigned | todo | S |
 | 508 | [DeepSeek Harness (dsh) spike (deferred until beta)](508-deepseek-harness-dsh-spike-deferred.md) | unassigned | blocked | S |
-| 509 | [Research pi_agent_rust integration into the board](509-research-pi-agent-rust-integration.md) | letta-flash | in-progress | S |
+| 509 | [Research pi_agent_rust integration into the board](done/509-research-pi-agent-rust-integration.md) | letta-flash | done | S |
+| 510 | [Pi-Rust adapter — MCP config + ported board extension (board install pi-rust)](510-pi-rust-adapter-mcp-and-extension.md) | unassigned | todo | M |
+| 511 | [RPC wake driver for headless pi-rust sessions](511-pi-rust-rpc-wake-driver.md) | unassigned | todo | M |
+| 512 | [Trust & policy preflight for pi-rust automation](512-pi-rust-trust-policy-preflight.md) | unassigned | todo | S |
 
 ## Phase 6
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
-| 601 | [CI: GitHub Actions with live S3](601-ci-github-actions-with-live-s3.md) | codex | todo | S |
+| 601 | [CI: GitHub Actions with live S3](601-ci-github-actions-with-live-s3.md) | codex | done | S |
 | 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | todo | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |

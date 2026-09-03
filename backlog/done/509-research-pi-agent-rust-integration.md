@@ -3,7 +3,7 @@ id: 509
 title: Research pi_agent_rust integration into the board
 phase: 5
 owner: letta-flash
-status: in-progress
+status: done
 depends: []
 estimate: S
 ---
