@@ -73,7 +73,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
     if (parsed.flags.has("project") && runtime !== "pi") throw new CliError("--project is only supported for Pi install");
     const uninstall = parsed.flags.has("uninstall");
     const store = parsed.flags.get("store");
-    if (!uninstall && runtime !== "letta" && !store) throw new CliError("install requires --store");
+    if (!uninstall && !store) throw new CliError("install requires --store");
     const result = await installRuntime({
       runtime,
       home: deps.installHome ?? homedir(),

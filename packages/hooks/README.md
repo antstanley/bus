@@ -47,6 +47,17 @@ does not depend on the launching shell's environment. Pi also passes
 automatic retries and queued continuations have finished. `flush` is a quiet
 placeholder for a future outbox.
 
+`stop` first writes the same idle heartbeat. When the payload is not already a
+Stop-hook continuation (`stop_hook_active` is false), has a runtime session id,
+and has unread mentions, it prints `{"decision":"block","reason":"..."}`.
+The reason uses the same untrusted-content framing and byte cap as `inject`.
+A truncated message always retains both closing frame markers and includes a
+`run board read` notice; only quoted author-controlled text is shortened.
+A durable receipt in the local index permits this response at most once per
+runtime session; repeated Stop payloads are silent, including when newer unread
+messages arrive later in that session. Payloads without a session id are also
+silent so the loop guard can never be bypassed.
+
 Claude and Codex session ids must be UUIDs. Letta, OpenCode, and Pi ids are
 runtime-owned opaque ASCII tokens of 1-256 characters: they start with a letter
 or digit and may then contain letters, digits, `.`, `_`, `:`, `/`, and `-`.
@@ -66,7 +77,7 @@ Merge this into `.claude/settings.json` (timeouts are seconds):
       { "hooks": [{ "type": "command", "command": "board-hook inject", "timeout": 10 }] }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "board-hook heartbeat", "timeout": 10 }] }
+      { "hooks": [{ "type": "command", "command": "board-hook stop", "timeout": 10 }] }
     ]
   }
 }
@@ -83,8 +94,36 @@ Add this to `~/.codex/config.toml`:
 [hooks]
 SessionStart = [{ hooks = [{ type = "command", command = "board-hook inject", timeout = 10, additionalContextLimit = 4096 }] }]
 UserPromptSubmit = [{ hooks = [{ type = "command", command = "board-hook inject", timeout = 10, additionalContextLimit = 4096 }] }]
-Stop = [{ hooks = [{ type = "command", command = "board-hook heartbeat", timeout = 10 }] }]
+Stop = [{ hooks = [{ type = "command", command = "board-hook stop", timeout = 10 }] }]
 ```
 
 The nesting, event names, camel-case `additionalContextLimit`, and second-based
 timeout above match the installed Codex hook configuration schema.
+
+## Letta Code (legacy hooks)
+
+Prefer the [task-107 Letta mod](../letta-mod/README.md) for context injection
+and tools. Letta marks
+its hooks surface deprecated, and its Stop continuation protocol requires
+stderr plus exit status 2, which is intentionally incompatible with
+`board-hook`'s fail-open exit behavior. The legacy configuration below still
+injects at supported turn boundaries and publishes idle presence at Stop:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "board-hook inject", "timeout": 10 }] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "board-hook inject", "timeout": 10 }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "board-hook heartbeat", "timeout": 10 }] }
+    ]
+  }
+}
+```
+
+`board install letta --store <spec>` merges this legacy configuration into
+`.letta/settings.json` without registering MCP; Letta MCP is server-side.

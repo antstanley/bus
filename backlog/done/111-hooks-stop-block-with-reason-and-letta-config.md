@@ -3,7 +3,7 @@ id: 111
 title: hooks: Stop block-with-reason and Letta hook config
 phase: 1
 owner: codex
-status: todo
+status: done
 depends: [101, 103]
 estimate: S
 ---

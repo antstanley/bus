@@ -17,7 +17,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | claude | todo | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
-| 111 | [hooks: Stop block-with-reason and Letta hook config](111-hooks-stop-block-with-reason-and-letta-config.md) | codex | todo | S |
+| 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
 | 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](done/112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | done | M |
 | 113 | [OpenCode adapter: plugin, install, wake via prompt_async](done/113-opencode-adapter-plugin-install-and-wake.md) | codex | done | M |
 | 114 | [Pi adapter: extension, install, poll-driven wake](done/114-pi-adapter-extension-install-and-poll-wake.md) | codex | done | M |

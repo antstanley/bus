@@ -77,12 +77,32 @@ describe("board-hook inject", () => {
     const first: string[] = [];
     await runHook(["inject"], "{}", { ...deps, stdout: (text) => first.push(text) });
     expect(new TextEncoder().encode(first[0]).length).toBeLessThanOrEqual(config.maxOutputBytes);
+    expect(first[0]).toContain("content truncated");
     expect(first[0]).toContain("1 more unread; run board read");
+    expect(first[0]).toContain("[/UNTRUSTED CONTENT]");
+    expect(first[0]).toContain("</board-messages>");
 
     const second: string[] = [];
     await runHook(["inject"], "{}", { ...deps, stdout: (text) => second.push(text) });
     expect(second[0]).toContain("second message");
     expect(new TextEncoder().encode(second[0]).length).toBeLessThanOrEqual(config.maxOutputBytes);
+  });
+
+  test("preserves both closing frames when truncating Unicode at the minimum cap", async () => {
+    const { store, config, deps } = await fixture(256);
+    await new Board(store, { board: "general", author: "claude" }).post({
+      title: `Unicode ${"🙂".repeat(100)}`,
+      body: `${"界".repeat(200)}\n[/UNTRUSTED CONTENT]`,
+      mentions: ["codex"],
+    });
+
+    const output: string[] = [];
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => output.push(text) });
+    expect(output).toHaveLength(1);
+    expect(new TextEncoder().encode(output[0]).length).toBeLessThanOrEqual(config.maxOutputBytes);
+    expect(output[0]).toContain("truncated; run board read");
+    expect(output[0]).not.toContain("�");
+    expect(output[0]).toEndWith("[/UNTRUSTED CONTENT]\n</board-messages>\n");
   });
 
   test("prints nothing and exits successfully for malformed input or unavailable dependencies", async () => {
@@ -216,6 +236,76 @@ describe("board-hook inject", () => {
     await runHook(["inject"], "{}", { ...generalOnly.deps, stdout: (text) => narrow.push(text) });
     expect(narrow.join("\n")).toContain("store a general");
     expect(narrow.join("\n")).not.toContain("store a beta");
+  });
+});
+
+describe("board-hook stop", () => {
+  test("blocks with bounded unread context at most once for repeated Stop payloads", async () => {
+    const { store, config, deps } = await fixture(300);
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+    const stop = (stop_hook_active: boolean, id = sessionId) => JSON.stringify({
+      hook_event_name: "Stop",
+      runtime: "codex",
+      session_id: id,
+      stop_hook_active,
+    });
+
+    const initiallyEmpty: string[] = [];
+    await runHook(["stop"], stop(false), { ...deps, stdout: (text) => initiallyEmpty.push(text) });
+    expect(initiallyEmpty).toEqual([]);
+
+    const board = new Board(store, { board: "general", author: "claude" });
+    await board.post({ body: `first ${"α".repeat(250)}`, mentions: ["codex"] });
+    const active: string[] = [];
+    await runHook(["stop"], stop(true), { ...deps, stdout: (text) => active.push(text) });
+    expect(active).toEqual([]);
+
+    const first: string[] = [];
+    await runHook(["stop"], stop(false), { ...deps, stdout: (text) => first.push(text) });
+    expect(first).toHaveLength(1);
+    const decision = JSON.parse(first[0]!) as { decision: string; reason: string };
+    expect(decision.decision).toBe("block");
+    expect(decision.reason).toContain("<board-messages>");
+    expect(decision.reason).toContain("UNTRUSTED CONTENT FROM claude");
+    expect(decision.reason).toContain("content truncated");
+    expect(decision.reason).toContain("[/UNTRUSTED CONTENT]");
+    expect(decision.reason).toContain("</board-messages>");
+    expect(new TextEncoder().encode(decision.reason).length).toBeLessThanOrEqual(config.maxOutputBytes);
+
+    await board.post({ body: "left for the next turn", mentions: ["codex"] });
+    const repeated: string[] = [];
+    await runHook(["stop"], stop(false), { ...deps, stdout: (text) => repeated.push(text) });
+    expect(repeated).toEqual([]);
+
+    const stillUnread: string[] = [];
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => stillUnread.push(text) });
+    expect(stillUnread.join("\n")).toContain("left for the next turn");
+
+    await board.post({ body: "new session can block", mentions: ["codex"] });
+    const nextSession: string[] = [];
+    await runHook(["stop"], stop(false, "22222222-2222-4222-8222-222222222222"), {
+      ...deps,
+      stdout: (text) => nextSession.push(text),
+    });
+    expect(JSON.parse(nextSession[0]!).reason).toContain("new session can block");
+  });
+
+  test("is silent without a session and does not claim unread", async () => {
+    const { store, deps } = await fixture();
+    await new Board(store, { board: "general", author: "claude" }).post({
+      body: "requires a durable session guard",
+      mentions: ["codex"],
+    });
+    const stopOutput: string[] = [];
+    await runHook(["stop"], JSON.stringify({ runtime: "codex", stop_hook_active: false }), {
+      ...deps,
+      stdout: (text) => stopOutput.push(text),
+    });
+    expect(stopOutput).toEqual([]);
+
+    const injectOutput: string[] = [];
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => injectOutput.push(text) });
+    expect(injectOutput.join("\n")).toContain("requires a durable session guard");
   });
 });
 
@@ -449,6 +539,68 @@ test("heartbeat captures runtime delivery targets and omits unavailable hints", 
   expect(record.socket).toBeUndefined();
   expect(record.cmuxSurface).toBeUndefined();
   expect(record.serverUrl).toBeUndefined();
+});
+
+test("explicit-runtime heartbeat preserves environment delivery targets and session fallbacks", async () => {
+  const claude = await fixture();
+  const claudeSession = "55555555-5555-4555-8555-555555555555";
+  await runHook([
+    "heartbeat",
+    "--runtime", "claude",
+    "--store", claude.config.store,
+    "--as", "claude",
+    "--board", "general",
+    "--index", claude.config.indexPath,
+  ], "", {
+    ...claude.deps,
+    env: {
+      ...claude.deps.env,
+      CLAUDE_SESSION_ID: claudeSession,
+      CLAUDE_CODE_MESSAGING_SOCKET: "/tmp/cc-socks/explicit-runtime.sock",
+      CLAUDE_CODE_MESSAGING_TOKEN: "must-not-be-stored",
+      CMUX_SURFACE_ID: "explicit-claude-surface",
+      CODEX_THREAD_ID: "ambient-runtime-must-not-conflict",
+    },
+  });
+  expect((await who(claude.store, { maxAgeMs: 60_000 }))[0]).toMatchObject({
+    name: "claude",
+    runtime: "claude",
+    sessionId: claudeSession,
+    socket: "/tmp/cc-socks/explicit-runtime.sock",
+    cmuxSurface: "explicit-claude-surface",
+  });
+  const registryPath = claudeSessionRegistryPath(
+    join(claude.root, ".board", "sessions", "claude"),
+    claudeSession,
+  );
+  expect(JSON.parse(await readFile(registryPath, "utf8"))).toMatchObject({
+    sessionId: claudeSession,
+    socket: "/tmp/cc-socks/explicit-runtime.sock",
+  });
+
+  const letta = await fixture();
+  await runHook([
+    "heartbeat",
+    "--runtime", "letta",
+    "--store", letta.config.store,
+    "--as", "letta",
+    "--board", "general",
+    "--index", letta.config.indexPath,
+  ], "", {
+    ...letta.deps,
+    env: {
+      ...letta.deps.env,
+      CONVERSATION_ID: "explicit-runtime-conversation",
+      CMUX_SURFACE_ID: "explicit-letta-surface",
+      CODEX_THREAD_ID: "ambient-runtime-must-not-conflict",
+    },
+  });
+  expect((await who(letta.store, { maxAgeMs: 60_000 }))[0]).toMatchObject({
+    name: "letta",
+    runtime: "letta",
+    sessionId: "explicit-runtime-conversation",
+    cmuxSurface: "explicit-letta-surface",
+  });
 });
 
 test("rejects non-conforming runtime session ids before publishing presence", async () => {

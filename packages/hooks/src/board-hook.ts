@@ -40,6 +40,11 @@ export interface IndexLockOptions {
   timeoutMs?: number;
 }
 
+interface StopSession {
+  runtime: string;
+  sessionId: string;
+}
+
 interface LockOwner {
   token: string;
   mtimeMs: number;
@@ -47,10 +52,10 @@ interface LockOwner {
 
 /** Execute a hook command. Hook failures are deliberately swallowed. */
 export async function runHook(argv: string[], stdin = "", deps: HookDependencies = {}): Promise<void> {
+  const command = argv[0];
   try {
-    const command = argv[0];
     if (command === "flush") return;
-    if (command !== "inject" && command !== "heartbeat" && command !== "poll") return;
+    if (command !== "inject" && command !== "heartbeat" && command !== "poll" && command !== "stop") return;
 
     const invocation = parseHookArguments(argv.slice(1));
     const payload = { ...parsePayload(stdin), ...invocation.payload };
@@ -68,8 +73,9 @@ export async function runHook(argv: string[], stdin = "", deps: HookDependencies
     const runtime = resolveRuntime(payload, runtimeEnv);
     const store = await (deps.createStore ?? openConfiguredStore)(config);
 
-    if (command === "heartbeat" || command === "poll") {
-      const deliveryTargets = resolveDeliveryTargets(payload, runtimeEnv, runtime);
+    let stopSession: StopSession | undefined;
+    if (command === "heartbeat" || command === "poll" || command === "stop") {
+      const deliveryTargets = resolveDeliveryTargets(payload, env, runtime);
       await heartbeat(store, {
         name: identity,
         instance: resolveInstance(payload, identity, runtime),
@@ -90,14 +96,21 @@ export async function runHook(argv: string[], stdin = "", deps: HookDependencies
         }
       }
       if (command === "heartbeat") return;
+      if (command === "stop") {
+        if (payload.stop_hook_active !== false || runtime === undefined || deliveryTargets.sessionId === undefined) return;
+        stopSession = { runtime, sessionId: deliveryTargets.sessionId };
+      }
     }
 
-    const output = await injectUnread(store, config, identity);
-    if (output) (deps.stdout ?? writeStdout)(output);
+    const output = await injectUnread(store, config, identity, stopSession);
+    if (!output) return;
+    (deps.stdout ?? writeStdout)(command === "stop"
+      ? JSON.stringify({ decision: "block", reason: output }) + "\n"
+      : output);
   } catch (error) {
     // Hooks must never block or break the host agent. Configuration, network,
     // corrupt index, and malformed stdin failures all degrade to no output.
-    if (error instanceof InvalidSessionIdError) (deps.stderr ?? console.error)(error.message);
+    if (command !== "stop" && error instanceof InvalidSessionIdError) (deps.stderr ?? console.error)(error.message);
   }
 }
 
@@ -158,7 +171,12 @@ function parseHookArguments(args: string[]): HookInvocation {
   return { payload, env, explicitRuntime };
 }
 
-export async function injectUnread(store: Store, config: BoardHookConfig, identity: string): Promise<string> {
+export async function injectUnread(
+  store: Store,
+  config: BoardHookConfig,
+  identity: string,
+  stopSession?: StopSession,
+): Promise<string> {
   const releaseClaim = await acquireIndexLock(config.indexPath, "hook-claim");
   let index: BoardIndex | undefined;
   try {
@@ -179,8 +197,18 @@ export async function injectUnread(store: Store, config: BoardHookConfig, identi
         singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
         store_id TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS hook_stop_blocks (
+        runtime TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        blocked_at TEXT NOT NULL,
+        PRIMARY KEY (runtime, session_id)
+      );
     `);
     const { storeId, boardSetId, boards } = deliveryScope(config);
+    if (stopSession && index.db.query<{ present: number }, [string, string]>(`
+      SELECT 1 AS present FROM hook_stop_blocks
+      WHERE runtime = ? AND session_id = ?
+    `).get(stopSession.runtime, stopSession.sessionId)) return "";
     const priorStoreId = index.db.query<StoreContextRow, []>(
       "SELECT store_id FROM hook_index_context WHERE singleton = 1",
     ).get()?.store_id;
@@ -249,6 +277,11 @@ export async function injectUnread(store: Store, config: BoardHookConfig, identi
       for (const post of posts.slice(0, rendered.consumed)) {
         claim.run(storeId, boardSetId, identity, post.id, deliveredAt);
       }
+      if (stopSession) index.db.query(`
+        INSERT OR IGNORE INTO hook_stop_blocks
+          (runtime, session_id, blocked_at)
+        VALUES (?, ?, ?)
+      `).run(stopSession.runtime, stopSession.sessionId, deliveredAt);
       index.db.exec("COMMIT");
       return rendered.output;
     } catch (error) {
@@ -403,6 +436,7 @@ function renderPosts(posts: Post[], cap: number): { output: string; consumed: nu
   const close = "</board-messages>\n";
   const blocks: string[] = [];
   let consumed = 0;
+  let truncatedFirst = false;
 
   for (let i = 0; i < posts.length; i++) {
     const block = renderPost(posts[i]!);
@@ -416,12 +450,11 @@ function renderPosts(posts: Post[], cap: number): { output: string; consumed: nu
     }
 
     if (consumed === 0) {
-      const rest = posts.length - 1;
-      const reserved = byteLength(open + overflowSuffix(rest) + close);
-      const truncated = truncateUtf8(block, Math.max(0, cap - reserved));
-      if (truncated) {
-        blocks.push(truncated.endsWith("\n") ? truncated : truncated + "\n");
+      const truncated = renderTruncatedPost(posts[i]!, Math.max(0, cap - byteLength(open + close)), remaining);
+      if (truncated !== "") {
+        blocks.push(truncated);
         consumed = 1;
+        truncatedFirst = true;
       }
     }
     break;
@@ -429,9 +462,67 @@ function renderPosts(posts: Post[], cap: number): { output: string; consumed: nu
 
   if (consumed === 0) return { output: "", consumed: 0 };
   const remaining = posts.length - consumed;
-  let output = open + blocks.join("") + (remaining > 0 ? overflowSuffix(remaining) : "") + close;
-  if (byteLength(output) > cap) output = truncateUtf8(output, cap);
+  const output = open + blocks.join("") + (!truncatedFirst && remaining > 0 ? overflowSuffix(remaining) : "") + close;
+  if (byteLength(output) > cap) return { output: "", consumed: 0 };
   return { output, consumed };
+}
+
+function renderTruncatedPost(post: Post, budget: number, remaining: number): string {
+  const header = `[UNTRUSTED CONTENT FROM ${post.author} | board ${post.board} | post ${post.id}]\n`;
+  const bodyLabel = "| body:\n";
+  const innerClose = "[/UNTRUSTED CONTENT]\n";
+  const detailedNotice = remaining > 0
+    ? `[content truncated; ${remaining} more unread; run board read]\n`
+    : "[content truncated; run board read for full content]\n";
+  const compactNotice = "[truncated; run board read]\n";
+  const notice = byteLength(header + bodyLabel + detailedNotice + innerClose) <= budget
+    ? detailedNotice
+    : compactNotice;
+  const fixed = header + bodyLabel + notice + innerClose;
+  if (byteLength(fixed) > budget) return "";
+
+  let available = budget - byteLength(fixed);
+  let title = "";
+  if (post.title !== undefined) {
+    const fullTitle = renderQuotedSection(post.title, "| title: ");
+    if (byteLength(fullTitle) <= available) {
+      title = fullTitle;
+      available -= byteLength(fullTitle);
+    } else {
+      title = fitQuotedSection(post.title, "| title: ", available);
+      available -= byteLength(title);
+    }
+  }
+  const body = fitQuotedSection(post.body, "| ", available);
+  return header + title + bodyLabel + body + notice + innerClose;
+}
+
+function fitQuotedSection(value: string, prefix: string, maxBytes: number): string {
+  const full = renderQuotedSection(value, prefix);
+  if (byteLength(full) <= maxBytes) return full;
+  if (byteLength(prefix + "\n") > maxBytes) return "";
+
+  const bytes = new TextEncoder().encode(value);
+  let low = 0;
+  let high = bytes.length;
+  let best = "";
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    let end = middle;
+    while (end > 0 && end < bytes.length && (bytes[end]! & 0xc0) === 0x80) end--;
+    const candidate = renderQuotedSection(new TextDecoder().decode(bytes.slice(0, end)), prefix);
+    if (byteLength(candidate) <= maxBytes) {
+      best = candidate;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return best;
+}
+
+function renderQuotedSection(value: string, prefix: string): string {
+  return prefix + value.split("\n").join("\n| ") + "\n";
 }
 
 function renderPost(post: Post): string {
@@ -448,18 +539,6 @@ function quoteUntrusted(value: string): string {
 
 function overflowSuffix(count: number): string {
   return count > 0 ? `[${count} more unread; run board read]\n` : "";
-}
-
-function truncateUtf8(value: string, maxBytes: number): string {
-  if (maxBytes <= 0) return "";
-  const bytes = new TextEncoder().encode(value);
-  if (bytes.length <= maxBytes) return value;
-  const marker = "…\n";
-  const markerBytes = new TextEncoder().encode(marker);
-  const bodyLimit = Math.max(0, maxBytes - markerBytes.length);
-  let end = bodyLimit;
-  while (end > 0 && (bytes[end]! & 0xc0) === 0x80) end--;
-  return new TextDecoder().decode(bytes.slice(0, end)) + (maxBytes >= markerBytes.length ? marker : "");
 }
 
 function byteLength(value: string): number {

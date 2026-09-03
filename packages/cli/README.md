@@ -62,6 +62,7 @@ checkout's board hook or MCP server.
 ```sh
 board install claude --store git:/absolute/replica,remote=https://example/board.git
 board install codex  --store s3://bucket/team --board general
+board install letta  --store fs:/absolute/shared
 board install gemini --store fs:/absolute/shared --dry-run
 board install cursor --uninstall
 board install opencode --store fs:/absolute/shared
@@ -70,11 +71,13 @@ board install pi --project --store fs:/absolute/shared
 ```
 
 Claude is configured in `~/.claude/settings.json` and `~/.claude.json`; Codex
-in `~/.codex/config.toml`. Gemini (`~/.gemini/settings.json`) and Cursor
+in `~/.codex/config.toml`. Letta receives legacy turn-boundary hooks in
+`~/.letta/settings.json`, but the
+[task-107 Letta mod](../letta-mod/README.md) is preferred because Letta has
+deprecated hooks; MCP registration remains server-side. Gemini
+(`~/.gemini/settings.json`) and Cursor
 (`~/.cursor/mcp.json`) receive MCP only: their hooks require runtime-specific
-JSON output and are deferred to adapter task 503. Letta makes no local changes
-and points to task 107 for its mod/server MCP path and task 111 for legacy
-hooks, because Letta MCP registration is server-side.
+JSON output and are deferred to adapter task 503.
 
 OpenCode receives project-local `opencode.json` MCP configuration and a
 `.opencode/plugins/board.ts` plugin. The plugin injects unread context before a

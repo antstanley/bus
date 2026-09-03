@@ -39,10 +39,6 @@ export class CliError extends Error {
 export async function installRuntime(options: InstallOptions): Promise<InstallResult> {
   const runtime = options.runtime;
   const notices: string[] = [];
-  if (runtime === "letta") {
-    notices.push("Letta local install is deferred: use task 107 for the mod/server MCP path and task 111 for legacy hooks.");
-    return { changes: [], notices };
-  }
   if (!options.uninstall && !options.store) throw new CliError("install requires --store");
 
   const author = installName(options.author ?? runtime, "agent");
@@ -59,7 +55,14 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
   const changes: InstallChange[] = [];
   const removals = new Set<string>();
 
-  if (runtime === "codex") {
+  if (runtime === "letta") {
+    await planJson(changes, join(options.home, ".letta", "settings.json"), (root) => {
+      mergeGroupedHooks(root, lettaHooks(executable, hookPath, store, author, board, indexPath), options.uninstall ?? false, hookPath);
+    });
+    notices.push(options.uninstall
+      ? "Removed legacy Letta hooks. Preferred mod setup: packages/letta-mod/README.md."
+      : "Installed legacy Letta hooks only; prefer packages/letta-mod/README.md for the mod path. Letta MCP registration remains server-side.");
+  } else if (runtime === "codex") {
     const path = join(options.home, ".codex", "config.toml");
     const before = await readText(path);
     const after = mergeCodex(before, {
@@ -600,10 +603,21 @@ function mcpDefinition(
 }
 
 function claudeHooks(executable: string, hookPath: string, store: string, author: string, board: string, indexPath: string): Record<string, JsonObject> {
-  const command = (subcommand: string) => hookCommand(executable, hookPath, subcommand, store, author, board, indexPath);
+  const command = (subcommand: string) => hookCommand(executable, hookPath, subcommand, "claude", store, author, board, indexPath);
   return {
     SessionStart: { hooks: [{ type: "command", command: command("inject"), timeout: 10 }] },
     UserPromptSubmit: { hooks: [{ type: "command", command: command("inject"), timeout: 10 }] },
+    Stop: { hooks: [{ type: "command", command: command("stop"), timeout: 10 }] },
+  };
+}
+
+function lettaHooks(executable: string, hookPath: string, store: string, author: string, board: string, indexPath: string): Record<string, JsonObject> {
+  const command = (subcommand: string) => hookCommand(executable, hookPath, subcommand, "letta", store, author, board, indexPath);
+  return {
+    SessionStart: { hooks: [{ type: "command", command: command("inject"), timeout: 10 }] },
+    UserPromptSubmit: { hooks: [{ type: "command", command: command("inject"), timeout: 10 }] },
+    // Letta's legacy Stop protocol requires stderr plus exit 2 to continue.
+    // board-hook deliberately remains fail-open, so this hook only records idle presence.
     Stop: { hooks: [{ type: "command", command: command("heartbeat"), timeout: 10 }] },
   };
 }
@@ -639,7 +653,7 @@ function stripOwnedHookGroup(value: unknown, hookPath: string): { value?: unknow
 
 function isOwnedHookHandler(value: unknown, hookPath: string): boolean {
   const command = objectValue(value)?.command;
-  return typeof command === "string" && command.includes(hookPath) && /\b(?:inject|heartbeat)\b/.test(command);
+  return typeof command === "string" && command.includes(hookPath) && /\b(?:inject|heartbeat|stop)\b/.test(command);
 }
 
 function mergeMcp(root: JsonObject, definition: JsonObject, uninstall: boolean, mcpPath: string): void {
@@ -800,7 +814,7 @@ function codexHookEntries(
   const entry = (subcommand: string, context: boolean): JsonObject => ({
     hooks: [{
       type: "command",
-      command: hookCommand(executable, hookPath, subcommand, store, author, board, indexPath),
+      command: hookCommand(executable, hookPath, subcommand, "codex", store, author, board, indexPath),
       timeout: 10,
       ...(context ? { additionalContextLimit: 4096 } : {}),
     }],
@@ -808,7 +822,7 @@ function codexHookEntries(
   return {
     SessionStart: entry("inject", true),
     UserPromptSubmit: entry("inject", true),
-    Stop: entry("heartbeat", false),
+    Stop: entry("stop", false),
   };
 }
 
@@ -816,6 +830,7 @@ function hookCommand(
   executable: string,
   hookPath: string,
   subcommand: string,
+  runtime: "claude" | "codex" | "letta",
   store: string,
   author: string,
   board: string,
@@ -829,6 +844,8 @@ function hookCommand(
     shellQuote(executable),
     shellQuote(hookPath),
     subcommand,
+    "--runtime",
+    shellQuote(runtime),
   ].join(" ");
 }
 

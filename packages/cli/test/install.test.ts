@@ -79,6 +79,8 @@ describe("board install", () => {
     expect(installedSettings.hooks.SessionStart[1].hooks[0].command).toContain("BOARD_AS='claude'");
     expect(installedSettings.hooks.SessionStart[1].hooks[0].command).toContain(`'${process.execPath}'`);
     expect(installedSettings.hooks.SessionStart[1].hooks[0].timeout).toBe(10);
+    expect(installedSettings.hooks.Stop[0].hooks[0].command).toContain(" stop");
+    expect(installedSettings.hooks.Stop[0].hooks[0].command).toContain("--runtime 'claude'");
     expect(installedMcp.mcpServers.board.command).toBe("unrelated-board");
     expect(installedMcp.mcpServers.docs.command).toBe("docs-server");
     expect(installedMcp.mcpServers["board-bus"].args).toContain("fs:/shared/board");
@@ -110,6 +112,8 @@ describe("board install", () => {
     expect(installed.model).toBe("gpt-test");
     expect(installed.hooks.SessionStart).toHaveLength(2);
     expect(installed.hooks.PostToolUse).toHaveLength(1);
+    expect(installed.hooks.Stop[0].hooks[0].command).toContain(" stop");
+    expect(installed.hooks.Stop[0].hooks[0].command).toContain("--runtime 'codex'");
     expect(installed.mcp_servers.board.command).toBe("unrelated-board");
     expect(installed.mcp_servers["board-bus"].args).toContain("fs:/shared/board");
     expect((await installRuntime(options(home, "codex"))).changes).toEqual([]);
@@ -423,13 +427,41 @@ export const Type = {
     expect(calls.some(({ args }) => args.includes("who") && args.includes("60000"))).toBe(true);
   });
 
-  test("Letta is a no-write pointer to the mod/server and legacy-hook tasks", async () => {
+  test("merges legacy Letta hooks without replacing foreign config and prefers the mod path", async () => {
     const home = await fixture();
+    const path = join(home, ".letta", "settings.json");
+    await put(path, JSON.stringify({
+      theme: "dark",
+      hooks: {
+        SessionStart: [{ hooks: [{ type: "command", command: "existing-start" }] }],
+        Notification: [{ hooks: [{ type: "command", command: "existing-notification" }] }],
+      },
+    }, null, 2) + "\n");
     const result = await installRuntime(options(home, "letta"));
-    expect(result.changes).toEqual([]);
-    expect(result.notices.join(" ")).toContain("task 107");
-    expect(result.notices.join(" ")).toContain("task 111");
-    expect(await Bun.file(join(home, ".letta", "settings.json")).exists()).toBe(false);
+    expect(result.changes).toHaveLength(1);
+    expect(result.notices.join(" ")).toContain("packages/letta-mod/README.md");
+    expect(result.notices.join(" ")).toContain("Installed");
+    expect(result.notices.join(" ")).toContain("legacy");
+    const installed = JSON.parse(await text(path));
+    expect(installed.theme).toBe("dark");
+    expect(installed.hooks.SessionStart).toHaveLength(2);
+    expect(installed.hooks.UserPromptSubmit[0].hooks[0].command).toContain(" inject");
+    expect(installed.hooks.Stop[0].hooks[0].command).toContain(" heartbeat");
+    expect(installed.hooks.Stop[0].hooks[0].command).toContain("--runtime 'letta'");
+    expect(installed.hooks.Notification[0].hooks[0].command).toBe("existing-notification");
+    expect((await installRuntime(options(home, "letta"))).changes).toEqual([]);
+
+    const uninstall = await installRuntime(uninstallOptions(home, "letta"));
+    expect(uninstall.notices.join(" ")).toContain("Removed");
+    expect(uninstall.notices.join(" ")).toContain("packages/letta-mod/README.md");
+    expect(JSON.parse(await text(path))).toEqual({
+      theme: "dark",
+      hooks: {
+        SessionStart: [{ hooks: [{ type: "command", command: "existing-start" }] }],
+        Notification: [{ hooks: [{ type: "command", command: "existing-notification" }] }],
+      },
+    });
+    expect((await installRuntime(uninstallOptions(home, "letta"))).changes).toEqual([]);
   });
 
   test("dry-run prints changes without writing and CLI uninstall does not require a store", async () => {
@@ -692,6 +724,31 @@ export const Type = {
     expect(code, stderr).toBe(0);
     expect(stdout).toContain("UNTRUSTED CONTENT FROM codex");
     expect(stdout).toContain("installer integration");
+  });
+
+  test("the generated Codex Stop hook blocks without ambient runtime evidence", async () => {
+    const home = await fixture();
+    const storePath = join(home, "shared-board");
+    await new Board(new FsStore(storePath), { board: "general", author: "claude" }).post({
+      body: "generated Codex Stop integration",
+      mentions: ["codex"],
+    });
+    await installRuntime({ ...options(home, "codex"), store: `fs:${storePath}` });
+    const config = Bun.TOML.parse(await text(join(home, ".codex", "config.toml"))) as Record<string, any>;
+    const command = config.hooks.Stop[0].hooks[0].command as string;
+    const proc = Bun.spawn(["sh", "-c", command], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
+    proc.stdin.write(JSON.stringify({
+      session_id: "33333333-3333-4333-8333-333333333333",
+      stop_hook_active: false,
+    }));
+    proc.stdin.end();
+    const [stdout, stderr, code] = await Promise.all([
+      new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited,
+    ]);
+    expect(code, stderr).toBe(0);
+    const decision = JSON.parse(stdout) as { decision: string; reason: string };
+    expect(decision.decision).toBe("block");
+    expect(decision.reason).toContain("generated Codex Stop integration");
   });
 });
 
