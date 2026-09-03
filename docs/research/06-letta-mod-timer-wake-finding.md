@@ -10,8 +10,12 @@ The first experiment run captured the handle and proved server reachability (in-
 409s) but its one-shot session tore down ~0.7 s after `turn_end`, so its decisive idle
 attempt never logged locally; the run was completed later the same day in long-lived
 bidirectional sessions (details below) and settled the challenge in the reviewer's favor.
-(An earlier draft cited host 0.31.11; `letta --version` on this machine says 0.31.8 — the
-mod-visible `appVersion` field is `?`, so quote the CLI version.)
+(An earlier draft cited host 0.31.11 in error; at experiment time `letta --version` said
+0.31.8 — the mod-visible `appVersion` field is `?`, so quote the CLI version. The machine
+has since been upgraded: `letta --version` on 2026-09-03 reports **0.31.11**, which is
+the version the task-124 live verification of the shipped mod ran on — the experiment
+and the live check therefore cite different versions because the host upgraded in
+between, not because either citation is wrong.)
 
 ## Question
 
@@ -175,18 +179,38 @@ Split by session state:
   still the only delivery path (bidirectional `--input-format stream-json` also exists).
 
 Whether the board mod adopts timer wake for open sessions, keeping the daemon as the
-closed-session fallback, is a backlog 106/107 design decision, not settled here.
+closed-session fallback, is a backlog 106/107 design decision. **Update (2026-09-02,
+backlog 124): settled — the mod ships this as an opt-in timer wake (off by default),
+with the daemon kept for closed sessions.**
 
-## What the mod does today (unchanged)
+## What the mod does today (updated 2026-09-02, backlog 124; version evidence 2026-09-03)
 
+- Version evidence: the spike/experiment above ran on **0.31.8**; the shipped mod's live
+  verification (task 124: idle session, one seeded mention, one wake, one `board_read`
+  tool call, pointer-only nudge confirmed server-side) ran on **0.31.11** — the host
+  upgraded in between (`letta --version` on 2026-09-03 says 0.31.11). Both versions are
+  recorded because re-verification on every upgrade is a standing limit (below).
 - `turn_start` injects unread mentions (claimed exactly once via the shared hook index), so
   nothing is lost while the session is open but idle — the next user turn sees them.
 - `conversation_open`/`conversation_close` heartbeats make the session visible to
   `board watch --deliver` presence targeting.
-- Anti-pattern note (updated): do not call `inject` from a timer that cannot deliver —
-  `inject` claims (marks read) the posts it returns and would silently consume unread
-  mentions. With the recipe above a timer can deliver, which dissolves the anti-pattern
-  for wake-style use; it still applies to any timer path that claims without delivering.
+- **The mod now ships an opt-in timer wake for open sessions** (config `timerWake` /
+  `BOARD_TIMER_WAKE`; off by default), built on the recipe above with reserve-then-commit:
+  it reserves a mention in its own lease file, sends a pointer-only nudge (`A new board
+  post mentions <agent> (post <id>). Run board read.` — no bodies, no framing), commits
+  only on a **clean full drain after at least one chunk** — an attempt that yields chunks
+  and then errors mid-iteration is a failed attempt whose outcome is unknown, so the
+  reservation is released and the mention is retried rather than committed (a fully
+  drained stream is required, not merely sufficient) — and releases the reservation on
+  409 exhaustion, hard failure (an error before any chunk), a mid-iteration error, or a
+  send that never settled within its `timerSendTimeoutMs` deadline (1000–300000 ms,
+  default 30000).
+- Anti-pattern note (updated): do not call `inject`/`poll` from a timer —
+  they claim (mark read) the posts they return and would silently consume unread
+  mentions. The board timer honors that with claim-once honesty: it never injects or
+  claims content itself and delivers only a pointer, so a failed wake leaves every
+  mention readable — injection stays `turn_start`-only. The note still applies to any
+  timer path that claims without delivering.
 
 ## Verdict
 
