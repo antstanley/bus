@@ -81,6 +81,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
 | 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | unassigned | todo | S |
 | 508 | [DeepSeek Harness (dsh) spike (deferred until beta)](508-deepseek-harness-dsh-spike-deferred.md) | unassigned | blocked | S |
+| 509 | [Research pi_agent_rust integration into the board](509-research-pi-agent-rust-integration.md) | codex | in-progress | S |
 
 ## Phase 6
 
