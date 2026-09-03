@@ -2,8 +2,8 @@
 id: 609
 title: OIDC setup --delete: fail closed on truncated list-roles pagination
 phase: 6
-owner: unassigned
-status: todo
+owner: codex
+status: in-progress
 depends: [608]
 estimate: S
 ---
