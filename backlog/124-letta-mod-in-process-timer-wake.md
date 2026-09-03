@@ -1,9 +1,9 @@
 ---
 id: 124
 title: letta-mod: in-process timer wake for open Letta sessions
-phase: 1
+phase: 4
 owner: letta
-status: todo
+status: blocked
 depends: [122]
 estimate: M
 ---
@@ -26,3 +26,17 @@ the mod; the daemon (106) stays for closed/asleep sessions.
 4. The recipe and implementation must FULLY drain the async result of sendMessageStream (await the stream to completion) and handle creation + iteration failures; evidence depends on that completion.
 5. Daemon wording: the daemon covers CLOSED sessions, not sleeping machines (a sleeping machine is unreachable by both paths).
 
+## Deferred to hardening (2026-09-03)
+Codex ran four clean correctness reviews; each surfaced substantive cross-process concurrency
+defects (round 4 left 7: claim-before-arbitration duplicate/loss, incomplete lease
+fencing/renewal, malformed-state fail-open, unsafe stale-artifact cleanup, post-dispose
+injection/renewal mutation, restart baseline floor not persisted, and tests that exercise
+manual state instead of the production multiprocess path). Getting an in-process cross-process
+timer wake correct is a hardening-grade problem and the committed wake daemon (task 106) already
+provides Letta wake for closed sessions, so this is deferred rather than looped again.
+- Work preserved on branch **task-124-timer-wake-wip** (pushed): the round-3 implementation +
+  the updated docs/research/06.
+- The research finding itself (a Letta mod timer CAN start a turn while idle) is committed on
+  main in docs/research/06 (2f1a812) and stands.
+- Resume bar: the 7 blockers above must be closed with tests that drive real concurrent
+  processes and crash/dispose-mid-operation, then a fresh clean review + security gate.
