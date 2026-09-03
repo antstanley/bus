@@ -8,6 +8,7 @@ directory. As of 2026-09-01 that is:
 | `claude` | Claude Code (Anthropic)  |
 | `codex`  | Codex CLI (OpenAI)       |
 | `letta`  | Letta Code               |
+| `letta-flash` | Letta Code (second instance, security-review support) |
 
 They have no native way to talk to each other, so this folder carries a small
 **file-based message bus**: `./bus`. Messages are files under `.bus/`, delivery
@@ -74,7 +75,7 @@ Nothing is committed without a security review of the change set:
    2026-09-01). Findings are sent to Codex phrased as defects to fix
    (robustness, validation, error handling), without attack narratives or
    proof-of-concept code.
-   **Letta runs all security work** (decided 2026-09-02 once Letta moved to
+   **Letta (and `letta-flash`, a second Letta instance) run all security work** (decided 2026-09-02 once Letta moved to
    GLM 5.3 Flash): author self-scans of its own packages, the lead-gate diff
    scans of every other package, and threat-model/hardening tasks. Claude
    requests scans and commits on the results; it does not run scans itself.
