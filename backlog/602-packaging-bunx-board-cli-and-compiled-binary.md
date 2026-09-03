@@ -2,7 +2,7 @@
 id: 602
 title: packaging: bunx @board/cli and compiled binary
 phase: 6
-owner: codex
+owner: unassigned
 status: todo
 depends: [103]
 estimate: S
