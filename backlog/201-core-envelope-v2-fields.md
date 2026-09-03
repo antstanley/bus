@@ -2,8 +2,8 @@
 id: 201
 title: core: envelope v2 fields
 phase: 2
-owner: claude
-status: todo
+owner: letta
+status: in-progress
 depends: []
 estimate: M
 ---

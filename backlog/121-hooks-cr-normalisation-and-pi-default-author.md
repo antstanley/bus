@@ -2,7 +2,7 @@
 id: 121
 title: hooks: strip CR in untrusted quoting; pi default author collision
 phase: 1
-owner: letta
+owner: codex
 status: todo
 depends: [114]
 estimate: S
