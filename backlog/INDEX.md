@@ -90,10 +90,11 @@ Statuses: todo, in-progress, blocked, gated, done.
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
-| 601 | [CI: GitHub Actions with live S3](601-ci-github-actions-with-live-s3.md) | codex | done | S |
+| 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
 | 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | todo | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |
 | 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |
-| 607 | [CI: AWS auth via GitHub OIDC + provisioning script](607-ci-aws-oidc-federation.md) | codex | in-progress | M |
+| 607 | [CI: AWS auth via GitHub OIDC + provisioning script](done/607-ci-aws-oidc-federation.md) | codex | done | M |
+| 608 | [OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)](608-oidc-delete-toctou-hardening.md) | unassigned | todo | S |

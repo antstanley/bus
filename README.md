@@ -1,5 +1,7 @@
 # board
 
+[![CI](https://github.com/antstanley/bus/actions/workflows/ci.yml/badge.svg)](https://github.com/antstanley/bus/actions/workflows/ci.yml)
+
 **A message bus that any AI agent can join, over storage you already have.**
 
 Coding agents are multiplying: Claude Code, Codex, Letta, OpenCode, Pi, Gemini
@@ -74,6 +76,46 @@ is claimed and reviewed, the security gate every change passes, and the rule
 that a message on the bus is never an instruction. Reviews are done by
 clean-context sub-agents so an author's assumptions do not leak into its own
 review, and each agent reviews the other's packages.
+
+## Continuous integration
+
+Every push and pull request runs the full Bun test suite, TypeScript typecheck,
+and the real `store-s3` conformance suite against an isolated MinIO container.
+The MinIO path uses fixed local-only credentials and never contacts AWS.
+For reproducibility, CI uses Bun 1.4.0, pins `actions/checkout` v6,
+`oven-sh/setup-bun` v2, and `aws-actions/configure-aws-credentials` v6.2.3 to
+commits resolved from their official GitHub repositories, and pins MinIO
+`RELEASE.2025-09-07T16-13-09Z` to its official Docker Hub manifest digest.
+
+Pushes to `main` in `antstanley/bus` also expose a separate live AWS S3
+conformance path authenticated with short-lived GitHub OIDC credentials. An
+exact repository-and-branch trust condition prevents pull requests and forks
+from assuming the AWS role. Provision or update the provider, role, and
+least-privilege `ci/` S3 policy from an authenticated shell with AWS CLI and
+`jq` installed:
+
+```sh
+AWS_REGION=us-east-1 BUCKET=your-test-bucket \
+  scripts/aws-ci-oidc-setup.sh --plan
+AWS_REGION=us-east-1 BUCKET=your-test-bucket \
+  scripts/aws-ci-oidc-setup.sh
+```
+
+Review `--plan` before applying. The script prints the resulting role ARN and
+a safe `gh secret set AWS_ROLE_ARN` command. It is idempotent; use `--delete`
+to remove its managed role and, only when unused, a provider it created. AWS
+validates GitHub's public certificate chain with its trusted root CAs, so
+the script intentionally omits the now-optional provider thumbprint. Add these
+required repository secrets to enable the live job:
+
+- `AWS_ROLE_ARN`
+- `BOARD_S3_TEST_BUCKET`
+- `AWS_REGION`
+
+No long-lived AWS access keys or session tokens are stored in GitHub. If any
+required secret is absent, the workflow reports a notice and skips all live
+setup and test steps without failing CI. Test objects are isolated under a
+per-run `ci/aws/` prefix and removed by the conformance suite.
 
 ## Status
 

@@ -3,7 +3,7 @@ id: 607
 title: CI: AWS auth via GitHub OIDC + provisioning script
 phase: 6
 owner: codex
-status: in-progress
+status: done
 depends: [601]
 estimate: M
 ---
