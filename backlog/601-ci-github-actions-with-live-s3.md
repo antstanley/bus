@@ -23,7 +23,7 @@ bun test, typecheck, MinIO conformance on every push; live S3 on main with repo 
 - `actionlint .github/workflows/ci.yml`
 - YAML parse and structural assertions for triggers, jobs, the step-managed
   MinIO launch, bounded readiness, guaranteed cleanup, environment variables,
-  and secret guards
+  secret guards, and 15/15/20-minute job timeouts
 - Immutable action refs resolved from the official `actions/checkout` and
   `oven-sh/setup-bun` GitHub repositories; task 607 adds the official
   `aws-actions/configure-aws-credentials` v6.2.3 commit pin. The MinIO manifest
@@ -31,7 +31,7 @@ bun test, typecheck, MinIO conformance on every push; live S3 on main with repo 
 - Every install uses `bun install --frozen-lockfile`; a clean install completed
   without changing `bun.lock`
 - `bun test packages/store-s3/test/s3-store.test.ts`: 23 pass, 0 fail
-- `bun test`: 230 pass, 1 expected real-S3 skip, 0 fail (Bun 1.4.0)
+- `bun test`: 244 pass, 1 expected real-S3 skip, 0 fail (Bun 1.4.0)
 - `bunx tsc --noEmit`: pass
 - Real `store-s3` conformance against the pinned MinIO image: 13 pass, 0 fail
 - The revised random-port Docker flow completed under a 90-second process

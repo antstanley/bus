@@ -40,22 +40,25 @@ never ships with static keys. No long-lived AWS keys should live in GitHub secre
   optional.
 - `shellcheck scripts/aws-ci-oidc-setup.sh scripts/aws-ci-oidc-setup.test.sh`:
   pass with zero suppressions.
-- `scripts/aws-ci-oidc-setup.test.sh`: pass. A deliberately failing AWS shim
-  proves apply and delete plans issue no AWS calls; assertions cover the exact
-  repository/branch subject, audience, least-privilege `ci/*` resources,
-  required actions, absence of static credentials, validation, and scoped
-  teardown checks.
+- `scripts/aws-ci-oidc-setup.test.sh`: pass. An isolated stateful AWS CLI shim
+  exercises plan, apply, and delete with missing, existing, and unmanaged
+  providers/roles plus AWS errors. It compares the generated trust and S3
+  documents structurally against exact JSON documents, and confirms that both
+  object-form and array-form trust `Statement` values preserve a shared
+  provider. Malformed or ambiguous trusts and failed AWS inspection all stop
+  provider deletion. Teardown remains ownership-tag guarded: an untagged OIDC
+  provider is always preserved before any account-wide trust inspection.
 - Apply and delete `--plan` runs: pass. No apply or delete operation was run
   against AWS.
 - `actionlint .github/workflows/ci.yml`: pass with zero suppressions. Additional
   structural assertions confirm three Bun 1.4.0 jobs, three frozen installs,
-  the upstream-main push gate, OIDC permission/action/role, and no static AWS
-  credential references.
+  15/15/20-minute job timeouts, the upstream-main push gate, OIDC
+  permission/action/role, and no static AWS credential references.
 - Clean temporary checkout `bun install --frozen-lockfile`: 100 packages
   installed with Bun 1.4.0; `bun.lock` byte-for-byte unchanged. The temporary
   checkout was removed.
 - `bun --version`: `1.4.0`.
-- `bun test`: 230 pass, 1 expected real-S3 skip, 0 fail.
+- `bun test`: 244 pass, 1 expected real-S3 skip, 0 fail.
 - `bunx tsc --noEmit`: pass.
 
 The remaining DoD item is the separately owned clean correctness review and
