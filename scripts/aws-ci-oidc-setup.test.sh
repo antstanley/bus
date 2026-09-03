@@ -79,7 +79,7 @@ case "${service}:${operation}" in
     ;;
   iam:get-role)
     case "$scenario" in
-      apply_missing|delete_missing|delete_unmanaged_provider|delete_shared_object|delete_shared_array|delete_malformed|delete_ambiguous|delete_roles_error)
+      apply_missing|delete_missing|delete_unmanaged_provider|delete_shared_object|delete_shared_array|delete_malformed|delete_ambiguous|delete_roles_error|delete_final_reference|delete_final_ambiguous|delete_final_roles_error)
         not_found
         ;;
       apply_existing|apply_unmanaged_role|delete_unmanaged_role|delete_clear)
@@ -138,13 +138,14 @@ case "${service}:${operation}" in
     case "$scenario" in
       delete_missing) not_found ;;
       delete_unmanaged_provider) printf '%s\n' '{"Tags":[]}' ;;
-      delete_shared_object|delete_shared_array|delete_clear|delete_malformed|delete_ambiguous|delete_roles_error)
+      delete_shared_object|delete_shared_array|delete_clear|delete_malformed|delete_ambiguous|delete_roles_error|delete_final_reference|delete_final_ambiguous|delete_final_roles_error)
         printf '%s\n' '{"Tags":[{"Key":"board-ci-oidc-setup","Value":"managed"}]}'
         ;;
       *) exit 97 ;;
     esac
     ;;
   iam:list-roles)
+    scan_number="$(awk '$1 == "iam" && $2 == "list-roles" { count++ } END { print count + 0 }' "$call_log")"
     case "$scenario" in
       delete_shared_object)
         printf '{"Roles":[{"RoleName":"other","AssumeRolePolicyDocument":{"Statement":{"Effect":"Allow","Principal":{"Federated":"%s"},"Action":"sts:AssumeRoleWithWebIdentity"}}}]}\n' "$provider_arn"
@@ -154,6 +155,27 @@ case "${service}:${operation}" in
         ;;
       delete_clear)
         printf '%s\n' '{"Roles":[{"RoleName":"other","AssumeRolePolicyDocument":{"Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}}]}'
+        ;;
+      delete_final_reference)
+        if [[ "$scan_number" -eq 1 ]]; then
+          printf '%s\n' '{"Roles":[]}'
+        else
+          printf '{"Roles":[{"RoleName":"late-role","AssumeRolePolicyDocument":{"Statement":{"Effect":"Allow","Principal":{"Federated":"%s"},"Action":"sts:AssumeRoleWithWebIdentity"}}}]}\n' "$provider_arn"
+        fi
+        ;;
+      delete_final_ambiguous)
+        if [[ "$scan_number" -eq 1 ]]; then
+          printf '%s\n' '{"Roles":[]}'
+        else
+          printf '%s\n' '{"Roles":[{"RoleName":"late-role","AssumeRolePolicyDocument":{"Statement":{"Effect":"Allow","Principal":{"Federated":42}}}}]}'
+        fi
+        ;;
+      delete_final_roles_error)
+        if [[ "$scan_number" -eq 1 ]]; then
+          printf '%s\n' '{"Roles":[]}'
+        else
+          access_denied
+        fi
         ;;
       delete_malformed)
         printf '%s\n' '{"Roles":[{"RoleName":"other","AssumeRolePolicyDocument":{"Statement":"not-readable"}}]}'
@@ -188,6 +210,37 @@ assert_contains() {
 
 assert_not_contains() {
   [[ "$1" != *"$2"* ]] || fail "expected value not to contain: $2"
+}
+
+assert_occurrence_count() {
+  local value="$1"
+  local needle="$2"
+  local expected="$3"
+  local actual=0 line
+  while IFS= read -r line; do
+    [[ "$line" == *"$needle"* ]] && ((actual += 1))
+  done <<<"$value"
+  [[ "$actual" -eq "$expected" ]] ||
+    fail "expected ${expected} lines containing '${needle}', got ${actual}"
+}
+
+assert_call_count() {
+  local needle="$1"
+  local expected="$2"
+  assert_occurrence_count "$CASE_CALLS" "$needle" "$expected"
+}
+
+assert_final_provider_calls_adjacent() {
+  local previous="" line
+  while IFS= read -r line; do
+    if [[ "$line" == iam\ delete-open-id-connect-provider* ]]; then
+      [[ "$previous" == iam\ list-roles* ]] ||
+        fail "provider deletion was not immediately preceded by a fresh list-roles call"
+      return
+    fi
+    previous="$line"
+  done <<<"$CASE_CALLS"
+  fail "expected provider deletion call"
 }
 
 reset_case() {
@@ -269,6 +322,9 @@ assert_contains "$CASE_OUTPUT" 'Plan only; no AWS calls will be executed.'
 run_case plan_forbid --delete --plan
 assert_success
 assert_contains "$CASE_OUTPUT" 'Delete plan only; no AWS calls will be executed.'
+assert_contains "$CASE_OUTPUT" 'second complete role-trust scan is fresh and runs immediately before provider deletion'
+assert_contains "$CASE_OUTPUT" 'only operator changing IAM role trusts'
+assert_occurrence_count "$CASE_OUTPUT" 'iam list-roles' 2
 [[ -z "$CASE_CALLS" ]] || fail "delete --plan invoked AWS"
 
 # Missing resources are created, and generated policies must match exactly.
@@ -334,7 +390,29 @@ assert_success
 assert_contains "$CASE_CALLS" 'iam delete-role-policy'
 assert_contains "$CASE_CALLS" 'iam delete-role'
 assert_contains "$CASE_CALLS" 'iam list-roles'
+assert_call_count 'iam list-roles' 2
+assert_final_provider_calls_adjacent
 assert_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+
+# A role added after the first inspection is observed by the genuinely fresh
+# final scan, which is the last AWS call before a possible provider deletion.
+run_case delete_final_reference --delete
+assert_success
+assert_contains "$CASE_OUTPUT" 'a role trusted it during the final inspection'
+assert_call_count 'iam list-roles' 2
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+
+# Errors and ambiguous trust documents in the final scan also fail closed.
+run_case delete_final_ambiguous --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'final role trusts were malformed or ambiguous'
+assert_call_count 'iam list-roles' 2
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+run_case delete_final_roles_error --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'could not complete the final role trust inspection'
+assert_call_count 'iam list-roles' 2
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
 
 # Malformed, ambiguous, or unreadable role trusts always fail closed.
 run_case delete_malformed --delete

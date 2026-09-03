@@ -27,9 +27,11 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 118 | [core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)](done/118-core-scan-day-bucket-truncation.md) | letta | done | S |
 | 119 | [OpenCode wake: delivery targets from a local registry, never from presence](done/119-opencode-wake-target-local-registry.md) | codex | done | S |
 | 120 | [install dry-run redaction of reflowed lines; wake scan presence limit](done/120-install-dryrun-redaction-and-presence-limit.md) | codex | done | S |
-| 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | codex | todo | S |
+| 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | codex | in-progress | S |
 | 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
+| 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | todo | S |
+| 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | claude | todo | S |
 
 ## Phase 2
 
@@ -97,4 +99,5 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |
 | 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |
 | 607 | [CI: AWS auth via GitHub OIDC + provisioning script](done/607-ci-aws-oidc-federation.md) | codex | done | M |
-| 608 | [OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)](608-oidc-delete-toctou-hardening.md) | unassigned | todo | S |
+| 608 | [OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)](done/608-oidc-delete-toctou-hardening.md) | codex | done | S |
+| 609 | [OIDC setup --delete: fail closed on truncated list-roles pagination](609-oidc-delete-pagination-failclosed.md) | unassigned | todo | S |

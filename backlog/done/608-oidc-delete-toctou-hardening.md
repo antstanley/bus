@@ -2,8 +2,8 @@
 id: 608
 title: OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)
 phase: 6
-owner: unassigned
-status: todo
+owner: codex
+status: done
 depends: [607]
 estimate: S
 ---

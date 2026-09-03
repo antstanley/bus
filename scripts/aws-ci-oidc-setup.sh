@@ -216,8 +216,11 @@ plan_delete() {
   print_aws iam delete-role --role-name "$ROLE_NAME"
   print_aws iam list-open-id-connect-provider-tags --open-id-connect-provider-arn "$provider_arn" --output json
   print_aws iam list-roles --output json
+  print_aws iam list-roles --output json
   print_aws iam delete-open-id-connect-provider --open-id-connect-provider-arn "$provider_arn"
   printf 'The provider deletion is skipped unless this script created it and no role still trusts it.\n'
+  printf 'The second complete role-trust scan is fresh and runs immediately before provider deletion.\n'
+  printf 'Ordering assumption: run --delete as the only operator changing IAM role trusts; AWS cannot make the final scan and provider deletion atomic.\n'
 }
 
 if [[ "$PLAN" == true ]]; then
@@ -394,6 +397,7 @@ apply_resources() {
 
 delete_resources() {
   local role_json role_error tags_json inline_json attached_json profiles_json provider_tags roles_json output reference_state
+  local final_roles_json final_reference_state
   if capture_aws role_json iam get-role --role-name "$ROLE_NAME" --output json; then
     tags_json="$(aws_cli iam list-role-tags --role-name "$ROLE_NAME" --output json)"
     managed_tag_present "$tags_json" ||
@@ -448,6 +452,25 @@ delete_resources() {
     fi
     [[ "$reference_state" == "clear" ]] ||
       die "refusing to delete the GitHub OIDC provider: unknown role trust state"
+
+    # AWS has no atomic "delete if unreferenced" operation. This fresh,
+    # auto-paginated complete scan runs immediately before deletion to narrow
+    # that ordering window; safety still assumes a single operator is changing
+    # relevant IAM role trusts while --delete runs.
+    if ! capture_aws final_roles_json iam list-roles --output json; then
+      printf '%s\n' "$final_roles_json" >&2
+      die "refusing to delete the GitHub OIDC provider: could not complete the final role trust inspection"
+    fi
+    if ! final_reference_state="$(provider_reference_state "$final_roles_json" "$provider_arn" 2>&1)"; then
+      printf '%s\n' "$final_reference_state" >&2
+      die "refusing to delete the GitHub OIDC provider: final role trusts were malformed or ambiguous"
+    fi
+    if [[ "$final_reference_state" == "referenced" ]]; then
+      printf 'Preserved managed GitHub OIDC provider because a role trusted it during the final inspection.\n'
+      return
+    fi
+    [[ "$final_reference_state" == "clear" ]] ||
+      die "refusing to delete the GitHub OIDC provider: unknown final role trust state"
     aws_cli iam delete-open-id-connect-provider --open-id-connect-provider-arn "$provider_arn"
     printf 'Deleted unused GitHub OIDC provider created by this script.\n'
   elif is_not_found "$provider_tags"; then

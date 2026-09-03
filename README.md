@@ -103,10 +103,14 @@ AWS_REGION=us-east-1 BUCKET=your-test-bucket \
 
 Review `--plan` before applying. The script prints the resulting role ARN and
 a safe `gh secret set AWS_ROLE_ARN` command. It is idempotent; use `--delete`
-to remove its managed role and, only when unused, a provider it created. AWS
-validates GitHub's public certificate chain with its trusted root CAs, so
-the script intentionally omits the now-optional provider thumbprint. Add these
-required repository secrets to enable the live job:
+to remove its managed role and, only when unused, a provider it created. Before
+provider deletion it performs a fresh, complete second scan of IAM role trusts,
+immediately after the first ownership and dependency checks. AWS cannot make
+that scan and deletion atomic, so the ordering assumption is that `--delete`
+is the only operator changing relevant role trusts while it runs. AWS validates
+GitHub's public certificate chain with its trusted root CAs, so the script
+intentionally omits the now-optional provider thumbprint. Add these required
+repository secrets to enable the live job:
 
 - `AWS_ROLE_ARN`
 - `BOARD_S3_TEST_BUCKET`
