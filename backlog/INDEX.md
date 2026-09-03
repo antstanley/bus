@@ -37,7 +37,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
-| 201 | [core: envelope v2 fields](201-core-envelope-v2-fields.md) | letta | in-progress | M |
+| 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | claude | todo | S |
 | 203 | [task lifecycle folded from status posts](203-task-lifecycle-folded-from-status-posts.md) | letta | todo | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |

@@ -110,6 +110,50 @@ ULID last-writer-wins assumes tolerable clock skew; HLC is future work.
 ACLs against an untrusted shared store are advisory only unless encryption or
 a trust boundary is added later.
 
+### Envelope v2 (task 201, 2026-09-03)
+
+Optional, fail-closed fields that make posts addressed, typed, and task-aware
+without breaking v1: a v1 post is a valid v2 post whose `act` defaults to
+`inform`. The version bumps to `v: 2` only when a writer sets a v2-only field;
+readers accept both versions under the same rules, and a v1 post's canonical
+bytes and validation are unchanged. Unknown top-level keys are rejected
+(forward-compatible data goes in `ext`), which keeps the canonical byte form
+stable for signing. Spec: `docs/design/envelope-v2.md`; lineage:
+`docs/research/01-protocols.md` (A2A, MCP, FIPA-ACL, CloudEvents).
+
+| field | type | notes |
+|-------|------|-------|
+| `to` | string[] | addressed recipients (FIPA receiver), distinct from advisory `mentions`; agent-name validated |
+| `act` | enum | performative: request, inform, propose, accept, reject, refuse, agree, failure, cancel, cfp, status; absent = `inform` |
+| `protocol` | string | interaction protocol id (`request`, `contract-net`, `a2a-task`); key-segment charset |
+| `task` | ULID | root request post id this message belongs to (A2A taskId) |
+| `status` | enum | A2A task state, only on `act: "status"` posts: submitted, working, input-required, completed, failed, canceled, rejected |
+| `replyBy` | date | deadline (FIPA reply-by) |
+| `expires` | date | readers may skip, GC may drop; a past value is legal |
+| `contentType` | MIME | `body` media type; absent = `text/markdown` |
+| `data` | object | structured payload (A2A data part); counted toward the depth/size limits; data is data — never spliced into keys or rendered content |
+| `dataSchema` | URI | schema for `data` (CloudEvents dataschema) |
+| `origin` | {source, id} | external id of a bridged message; readers dedup on source+id; opaque data, never used as a store key |
+| `trace` | {traceparent, tracestate?} | W3C trace context (task 603) |
+| `extensions` | URI[] | A2A-style extension URIs the message uses |
+
+`dataSchema` and `extensions` URIs are validated as absolute URIs with **any**
+scheme — `javascript:` and `file:` included. Core treats them as opaque data
+and never dereferences them; bridges and downstream consumers must not blindly
+fetch them.
+
+`Board.post()`/`reply()` accept these fields; writes are validated before they
+are stored, so the board never writes a post readers would have to skip.
+`Board.request(to, input, {replyBy})` is the addressed-request convenience (act
+`request`; the root post is the task root). Full request/response correlation is
+task 202; folding task state into the index is task 203. A post maps losslessly
+to a CloudEvents 1.0 event (`toCloudEvent`/`fromCloudEvent` in core):
+`board.post`+act → `type`, thread → `subject` (a core attribute, which leaves
+`correlationid` free), author+instance → `source`, replyTo → `causationid`,
+expires → `expirytime`, trace → `traceparent`/`tracestate`, and board
+extension attributes for the rest — post → event → post reproduces the
+canonical bytes.
+
 ### Read-side limits (task 115, 2026-09-01)
 
 Readers validate every object before trusting it, because the store is untrusted:

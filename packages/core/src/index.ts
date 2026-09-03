@@ -10,8 +10,12 @@ export {
 } from "./store.ts";
 export {
   type Post, type NewPost, type Attachment, type Signature,
-  POST_VERSION, LIMITS, type ParseOptions, InvalidPostError, canonicalize, encodePost, parsePost, validatePost,
+  type PostOrigin, type PostTrace, type PostVersion, type Act, type Status,
+  ACTS, STATUSES, DEFAULT_ACT, DEFAULT_CONTENT_TYPE, V2_FIELDS,
+  isAct, isStatus, hasV2Fields,
+  POST_VERSION, POST_VERSION_V2, LIMITS, type ParseOptions, InvalidPostError, canonicalize, encodePost, parsePost, validatePost,
 } from "./post.ts";
+export { type CloudEvent, toCloudEvent, fromCloudEvent } from "./cloudevents.ts";
 export {
   Board, type BoardOptions, type SinceOptions, type SinceResult, type WatchOptions,
   type BoardEvent, type BoardEventType, type BoardInfo,

@@ -1,9 +1,14 @@
 import { describe, it, expect } from "bun:test";
-import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys, dayBucket, ulid, ulidTime, LIMITS } from "../src/index.ts";
+import { Board, MemoryStore, KeyExistsError, parsePost, canonicalize, keys, dayBucket, ulid, ulidTime, LIMITS, InvalidPostError, type NewPost } from "../src/index.ts";
 
 function clock(start: number) {
   let t = start;
   return { now: () => t, tick: (ms: number) => { t += ms; } };
+}
+
+/** NewPost literal with unchecked overrides, for exercising write-side validation. */
+function input(over: Record<string, unknown>): NewPost {
+  return { body: "x", ...over } as NewPost;
 }
 
 describe("Board", () => {
@@ -183,6 +188,25 @@ describe("Board", () => {
     expect(scanned).toBe(0);
   });
 
+  it("skips a stored post with an unknown top-level key instead of crashing", async () => {
+    const store = new MemoryStore();
+    const c = clock(Date.UTC(2026, 8, 2, 12, 0, 0));
+    const b = new Board(store, { board: "g", author: "codex", now: c.now });
+    const good = await b.post({ body: "ok" });
+    // A buggy or hostile writer plants a v1-shaped object carrying a key that
+    // is not in the schema; it goes in past Board.post, straight via the store.
+    const id = ulid(c.now() + 1);
+    const smuggled = { ...good, id, thread: id, ts: new Date(c.now() + 1).toISOString(), boardExt: { forged: true } };
+    await store.put(b.keyFor(id), canonicalize(smuggled) + "\n");
+    expect(await b.get(id)).toBeNull();
+    const seen = await b.since();
+    expect(seen.posts.map((p) => p.id)).toEqual([good.id]); // the smuggled object is skipped...
+    expect(seen.cursor).toBe(b.keyFor(id));                 // ...but the cursor still advanced past it
+    const scanned: string[] = [];
+    for await (const p of b.scan()) scanned.push(p.body);
+    expect(scanned).toEqual(["ok"]);
+  });
+
   it("accepts a legitimate post read back with key binding", async () => {
     const store = new MemoryStore();
     const b = new Board(store, { board: "g", author: "codex" });
@@ -199,5 +223,76 @@ describe("Board", () => {
     await b.emit("pin", { id: p.id });
     await b.emit("close");
     expect(await b.info()).toEqual({ board: "g", title: "General chat", closed: true, pinned: [p.id], createdBy: "claude", createdAt: expect.any(String) });
+  });
+
+  it("Board.request posts an addressed v2 request and stores it byte-canonically", async () => {
+    const store = new MemoryStore();
+    const c = clock(Date.UTC(2026, 8, 3, 9, 0, 0));
+    const b = new Board(store, { board: "general", author: "claude", now: c.now });
+    const p = await b.request("codex", { body: "please summarize", title: "Task" }, { replyBy: "2026-09-04T09:00:00Z" });
+    expect(p.act).toBe("request");
+    expect(p.to).toEqual(["codex"]);
+    expect(p.replyBy).toBe("2026-09-04T09:00:00Z");
+    expect(p.v).toBe(2);
+    expect(p.thread).toBe(p.id); // the root request is the task root
+    const key = b.keyFor(p.id);
+    const stored = parsePost((await store.get(key))!, { key, now: c.now });
+    expect(stored).toEqual(p);
+
+    // multiple recipients, no deadline; extra v2 fields from input survive
+    const p2 = await b.request(["codex", "letta"], { body: "all hands", protocol: "a2a-task" });
+    expect(p2.to).toEqual(["codex", "letta"]);
+    expect(p2.replyBy).toBeUndefined();
+    expect(p2.protocol).toBe("a2a-task");
+    expect(p2.v).toBe(2);
+
+    // recipients and deadlines are checked at write time, as post errors
+    await expect(b.request("bad name", { body: "x" })).rejects.toThrow(/invalid to/);
+    await expect(b.request("codex", { body: "x" }, { replyBy: "next tuesday" })).rejects.toThrow(/replyBy is not a date/);
+    await expect(b.request("bad name", { body: "x" })).rejects.toThrow(InvalidPostError); // uniform type, not InvalidKeyError
+    // an empty recipient list is a post error, not a silently unaddressed request
+    await expect(b.request([], { body: "x" })).rejects.toThrow(/at least one recipient/);
+    await expect(b.request([], { body: "x" })).rejects.toThrow(InvalidPostError);
+    // bad mention names surface as InvalidPostError too
+    await expect(b.post({ body: "x", mentions: ["BAD NAME"] })).rejects.toThrow(InvalidPostError);
+    await expect(b.post(input({ to: ["BAD NAME"] }))).rejects.toThrow(InvalidPostError);
+  });
+
+  it("stores envelope-v2 fields and bumps v only when a v2-only field is set", async () => {
+    const store = new MemoryStore();
+    const b = new Board(store, { board: "general", author: "claude" });
+    const v1 = await b.post({ body: "plain" });
+    expect(v1.v).toBe(1);
+    expect(v1.act).toBeUndefined(); // absent, not defaulted
+    const raw1 = new TextDecoder().decode((await store.get(b.keyFor(v1.id)))!);
+    expect(JSON.parse(raw1).v).toBe(1);
+
+    const v2 = await b.reply(v1, {
+      body: "done",
+      act: "status", status: "completed", to: ["codex"], task: v1.id,
+      protocol: "a2a-task", contentType: "application/json",
+      data: { done: true }, dataSchema: "https://example.com/s.json",
+      origin: { source: "https://bridge.example/x", id: "1" },
+      trace: { traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01" },
+      extensions: ["https://example.com/ext/v1"],
+      expires: "2000-01-01T00:00:00Z", replyBy: "2026-09-09T09:00:00Z",
+    });
+    expect(v2.v).toBe(2);
+    const raw2 = new TextDecoder().decode((await store.get(b.keyFor(v2.id)))!);
+    expect(raw2).toBe(canonicalize(v2) + "\n");
+    expect(await b.get(v2.id)).toEqual(v2);
+    expect((await b.since()).posts.map((x) => x.id)).toEqual([v1.id, v2.id]);
+  });
+
+  it("refuses to store posts readers would have to skip (fail-closed writes)", async () => {
+    const b = new Board(new MemoryStore(), { board: "general", author: "claude" });
+    await expect(b.post(input({ act: "requast" }))).rejects.toThrow(/unknown act/);
+    await expect(b.post(input({ status: "completed" }))).rejects.toThrow(/status is only valid when act is "status"/);
+    await expect(b.post(input({ act: "status", status: "done" }))).rejects.toThrow(/unknown status/);
+    await expect(b.post(input({ to: ["BAD NAME"] }))).rejects.toThrow(/invalid to/);
+    await expect(b.post(input({ task: "nope" }))).rejects.toThrow(/task is not a ulid/);
+    await expect(b.post(input({ data: "not an object" }))).rejects.toThrow(/data is not an object/);
+    // oversized writes are rejected too, not stored for readers to skip
+    await expect(b.post({ body: "x".repeat(LIMITS.maxBytes) })).rejects.toThrow(/larger than/);
   });
 });

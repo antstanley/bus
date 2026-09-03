@@ -6,7 +6,7 @@
 import { ulid, ulidTime } from "./ulid.ts";
 import { keys, dayBucket, nextDay, prevDay, assertName, isDayBucket } from "./keys.ts";
 import { type Store, listAll, DEFAULT_LIST_LIMIT, encoder } from "./store.ts";
-import { type Post, type NewPost, encodePost, parsePost, POST_VERSION, InvalidPostError } from "./post.ts";
+import { type Post, type NewPost, encodePost, parsePost, validatePost, hasV2Fields, POST_VERSION, POST_VERSION_V2, InvalidPostError, invalidKey, checkEncodedSize } from "./post.ts";
 import { canonicalize } from "./post.ts";
 
 export interface BoardOptions {
@@ -92,15 +92,54 @@ export class Board {
     return this.write((id, ts) => ({ ...this.base(id, ts, rest), thread: parent.thread, replyTo: parent.id }));
   }
 
+  /**
+   * Addressed request (envelope v2, task 201): a root post with act "request",
+   * the recipients in `to`, and an optional replyBy deadline; both override any
+   * `act`/`to` in `input`. The full request/response correlation helper is task
+   * 202. The root post is the task root; replies carry `task` = this id.
+   */
+  request(to: string | string[], input: NewPost, opts: { replyBy?: string } = {}): Promise<Post> {
+    return this.write((id, ts) => {
+      const recipients = names(Array.isArray(to) ? [...to] : [to], "to");
+      if (recipients.length === 0) throw new InvalidPostError("request needs at least one recipient in to");
+      if (opts.replyBy !== undefined) assertDate(opts.replyBy, "replyBy");
+      const p: Post = { ...this.base(id, ts, input), thread: id };
+      p.act = "request";
+      p.to = recipients;
+      if (opts.replyBy !== undefined) p.replyBy = opts.replyBy;
+      p.v = POST_VERSION_V2;
+      return p;
+    });
+  }
+
   private base(id: string, ts: string, input: NewPost): Omit<Post, "thread"> {
     const p: Omit<Post, "thread"> = {
       v: POST_VERSION, id, board: this.name, author: this.author, instance: this.instance, ts, body: input.body,
     };
     if (input.title !== undefined) p.title = input.title;
     if (input.tags?.length) p.tags = [...input.tags];
-    if (input.mentions?.length) p.mentions = input.mentions.map((m) => assertName(m, "mention"));
+    if (input.mentions?.length) p.mentions = names(input.mentions, "mention");
     if (input.attachments?.length) p.attachments = [...input.attachments];
     if (input.ext) p.ext = { ...input.ext };
+    // Envelope v2 (task 201): optional fields, copied only when set. The
+    // version bumps to 2 only when at least one v2-only field is set, so a
+    // plain post still encodes — and signs — exactly like a v1 post.
+    if (input.to?.length) p.to = names(input.to, "to");
+    if (input.act !== undefined) p.act = input.act;
+    if (input.protocol !== undefined) p.protocol = input.protocol;
+    if (input.task !== undefined) p.task = input.task;
+    if (input.status !== undefined) p.status = input.status;
+    if (input.replyBy !== undefined) { assertDate(input.replyBy, "replyBy"); p.replyBy = input.replyBy; }
+    if (input.expires !== undefined) { assertDate(input.expires, "expires"); p.expires = input.expires; }
+    if (input.contentType !== undefined) p.contentType = input.contentType;
+    // Assigned as-is, never spread: a hostile non-object (e.g. a string) must
+    // stay a non-object so write-side validation rejects it fail-closed.
+    if (input.data !== undefined) p.data = input.data;
+    if (input.dataSchema !== undefined) p.dataSchema = input.dataSchema;
+    if (input.origin !== undefined) p.origin = { ...input.origin };
+    if (input.trace !== undefined) p.trace = { ...input.trace };
+    if (input.extensions?.length) p.extensions = [...input.extensions];
+    if (hasV2Fields(p)) p.v = POST_VERSION_V2;
     return p;
   }
 
@@ -110,7 +149,12 @@ export class Board {
       const ms = this.now();
       const id = ulid(ms);
       const post = build(id, new Date(ms).toISOString());
-      await this.store.put(keys.post(this.name, id, ulidTime(id)), encodePost(post), { ifNoneMatch: true });
+      // Fail closed at write time: the board never stores a post that readers
+      // would have to skip — same limits on write as on read.
+      validatePost(post, { now: this.now });
+      const bytes = encoder.encode(encodePost(post));
+      checkEncodedSize(bytes);
+      await this.store.put(keys.post(this.name, id, ulidTime(id)), bytes, { ifNoneMatch: true });
       return post;
     };
     const p = this.writeChain.then(run, run);
@@ -285,6 +329,21 @@ export class Board {
 function dayOf(postKey: string): string {
   // boards/<b>/posts/<day>/<id>.json
   return postKey.split("/")[3] ?? "";
+}
+
+/** Dates are stored as written but must parse, so a typo cannot poison a post. */
+function assertDate(s: string, what: string): string {
+  if (typeof s !== "string" || Number.isNaN(Date.parse(s))) throw new InvalidPostError(`${what} is not a date`);
+  return s;
+}
+
+/**
+ * Validate post-field names (to, mentions) with the agent-name rules, but as
+ * the uniform post error: bad recipient names are a post-validation failure,
+ * not a key-construction one.
+ */
+function names(values: string[], what: string): string[] {
+  try { return values.map((n) => assertName(n, what)); } catch (e) { return invalidKey(e); }
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
