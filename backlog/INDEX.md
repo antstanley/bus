@@ -27,7 +27,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 118 | [core: scan() stops early on non-day-bucket keys (scan 2026-09-01 core diff, cand-004)](done/118-core-scan-day-bucket-truncation.md) | letta | done | S |
 | 119 | [OpenCode wake: delivery targets from a local registry, never from presence](done/119-opencode-wake-target-local-registry.md) | codex | done | S |
 | 120 | [install dry-run redaction of reflowed lines; wake scan presence limit](done/120-install-dryrun-redaction-and-presence-limit.md) | codex | done | S |
-| 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | unassigned | todo | S |
+| 121 | [hooks: strip CR in untrusted quoting; pi default author collision](121-hooks-cr-normalisation-and-pi-default-author.md) | codex | todo | S |
 | 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
 
@@ -63,7 +63,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | claude | todo | L |
 | 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | claude | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
-| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | unassigned | todo | S |
+| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | codex | todo | S |
 | 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
 | 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | codex | todo | M |
@@ -75,7 +75,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 |----|------|-------|--------|-----|
 | 501 | [A2A gateway](501-a2a-gateway.md) | unassigned | todo | L |
 | 502 | [MCP streamable-HTTP transport and subscriptions/listen](502-mcp-streamable-http-transport-and-subscriptions-.md) | letta | todo | M |
-| 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | unassigned | todo | M |
+| 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | codex | todo | M |
 | 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
 | 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
@@ -91,7 +91,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
-| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | unassigned | todo | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | todo | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |

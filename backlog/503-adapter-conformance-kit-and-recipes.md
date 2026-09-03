@@ -2,7 +2,7 @@
 id: 503
 title: adapter conformance kit and recipes
 phase: 5
-owner: unassigned
+owner: codex
 status: todo
 depends: [104]
 estimate: M
