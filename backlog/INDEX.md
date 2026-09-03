@@ -92,3 +92,4 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |
 | 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |
+| 607 | [CI: AWS auth via GitHub OIDC + provisioning script](607-ci-aws-oidc-federation.md) | codex | in-progress | M |
