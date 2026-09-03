@@ -3,7 +3,7 @@ id: 601
 title: CI: GitHub Actions with live S3
 phase: 6
 owner: codex
-status: todo
+status: in-progress
 depends: []
 estimate: S
 ---
