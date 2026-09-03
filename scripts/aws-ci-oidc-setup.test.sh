@@ -79,7 +79,7 @@ case "${service}:${operation}" in
     ;;
   iam:get-role)
     case "$scenario" in
-      apply_missing|delete_missing|delete_unmanaged_provider|delete_shared_object|delete_shared_array|delete_malformed|delete_ambiguous|delete_roles_error|delete_final_reference|delete_final_ambiguous|delete_final_roles_error)
+      apply_missing|delete_missing|delete_unmanaged_provider|delete_shared_object|delete_shared_array|delete_malformed|delete_ambiguous|delete_roles_error|delete_initial_truncated|delete_initial_bad_pagination|delete_final_reference|delete_final_ambiguous|delete_final_roles_error|delete_final_truncated|delete_final_marker)
         not_found
         ;;
       apply_existing|apply_unmanaged_role|delete_unmanaged_role|delete_clear)
@@ -138,7 +138,7 @@ case "${service}:${operation}" in
     case "$scenario" in
       delete_missing) not_found ;;
       delete_unmanaged_provider) printf '%s\n' '{"Tags":[]}' ;;
-      delete_shared_object|delete_shared_array|delete_clear|delete_malformed|delete_ambiguous|delete_roles_error|delete_final_reference|delete_final_ambiguous|delete_final_roles_error)
+      delete_shared_object|delete_shared_array|delete_clear|delete_malformed|delete_ambiguous|delete_roles_error|delete_initial_truncated|delete_initial_bad_pagination|delete_final_reference|delete_final_ambiguous|delete_final_roles_error|delete_final_truncated|delete_final_marker)
         printf '%s\n' '{"Tags":[{"Key":"board-ci-oidc-setup","Value":"managed"}]}'
         ;;
       *) exit 97 ;;
@@ -155,6 +155,12 @@ case "${service}:${operation}" in
         ;;
       delete_clear)
         printf '%s\n' '{"Roles":[{"RoleName":"other","AssumeRolePolicyDocument":{"Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}}]}'
+        ;;
+      delete_initial_truncated)
+        printf '%s\n' '{"Roles":[],"IsTruncated":true,"Marker":"next-page"}'
+        ;;
+      delete_initial_bad_pagination)
+        printf '%s\n' '{"Roles":[],"IsTruncated":"false"}'
         ;;
       delete_final_reference)
         if [[ "$scan_number" -eq 1 ]]; then
@@ -175,6 +181,20 @@ case "${service}:${operation}" in
           printf '%s\n' '{"Roles":[]}'
         else
           access_denied
+        fi
+        ;;
+      delete_final_truncated)
+        if [[ "$scan_number" -eq 1 ]]; then
+          printf '%s\n' '{"Roles":[]}'
+        else
+          printf '%s\n' '{"Roles":[],"IsTruncated":true,"Marker":"next-page"}'
+        fi
+        ;;
+      delete_final_marker)
+        if [[ "$scan_number" -eq 1 ]]; then
+          printf '%s\n' '{"Roles":[]}'
+        else
+          printf '%s\n' '{"Roles":[],"IsTruncated":false,"Marker":"unexpected-marker"}'
         fi
         ;;
       delete_malformed)
@@ -411,6 +431,29 @@ assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
 run_case delete_final_roles_error --delete
 assert_failure
 assert_contains "$CASE_OUTPUT" 'could not complete the final role trust inspection'
+assert_call_count 'iam list-roles' 2
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+
+# Incomplete or malformed pagination metadata never qualifies as a complete
+# account-wide trust inspection, in either the initial or final fresh scan.
+run_case delete_initial_truncated --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'list-roles response is truncated'
+assert_call_count 'iam list-roles' 1
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+run_case delete_initial_bad_pagination --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'list-roles response has malformed pagination state'
+assert_call_count 'iam list-roles' 1
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+run_case delete_final_truncated --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'list-roles response is truncated'
+assert_call_count 'iam list-roles' 2
+assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
+run_case delete_final_marker --delete
+assert_failure
+assert_contains "$CASE_OUTPUT" 'list-roles response contains an unexpected pagination marker'
 assert_call_count 'iam list-roles' 2
 assert_not_contains "$CASE_CALLS" 'iam delete-open-id-connect-provider'
 

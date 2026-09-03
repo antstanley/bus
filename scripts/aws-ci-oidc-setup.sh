@@ -304,6 +304,12 @@ provider_reference_state() {
       end;
     if type != "object" or (.Roles | type) != "array" then
       error("list-roles response does not contain a Roles array")
+    elif has("IsTruncated") and (.IsTruncated | type) != "boolean" then
+      error("list-roles response has malformed pagination state")
+    elif (.IsTruncated // false) then
+      error("list-roles response is truncated")
+    elif has("Marker") or has("NextToken") then
+      error("list-roles response contains an unexpected pagination marker")
     else
       [
         .Roles[]

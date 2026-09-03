@@ -100,4 +100,4 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |
 | 607 | [CI: AWS auth via GitHub OIDC + provisioning script](done/607-ci-aws-oidc-federation.md) | codex | done | M |
 | 608 | [OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)](done/608-oidc-delete-toctou-hardening.md) | codex | done | S |
-| 609 | [OIDC setup --delete: fail closed on truncated list-roles pagination](609-oidc-delete-pagination-failclosed.md) | unassigned | todo | S |
+| 609 | [OIDC setup --delete: fail closed on truncated list-roles pagination](done/609-oidc-delete-pagination-failclosed.md) | codex | done | S |
