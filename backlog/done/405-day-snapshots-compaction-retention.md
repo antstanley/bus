@@ -3,7 +3,7 @@ id: 405
 title: day snapshots, compaction, retention
 phase: 4
 owner: letta
-status: todo
+status: done
 depends: []
 estimate: M
 ---

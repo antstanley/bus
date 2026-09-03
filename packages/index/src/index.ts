@@ -1,4 +1,4 @@
-import { Database } from "bun:sqlite";
+import { Database, type Statement } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -6,13 +6,50 @@ import {
   dayBucket,
   keys,
   parsePost,
-  ulidTime,
   validatePost,
   type Board,
   type Post,
 } from "@board/core";
+import {
+  discoverBucketDays,
+  isCalendarDay,
+  iterLiveBucketDays,
+  iterSnapshotChunks,
+  listSnapshotDays,
+  readDayBucket,
+  snapshotScanStart,
+} from "./compaction.ts";
+
+export {
+  DAY_MS,
+  compactBoard,
+  compactDay,
+  discoverBucketDays,
+  iterSnapshotChunks,
+  listSnapshotDays,
+  readDayBucket,
+  retainBoard,
+  snapshotKey,
+  snapshotScanStart,
+  snapshotsPrefix,
+  verifySnapshot,
+  type Bucket,
+  type CompactionOptions,
+  type RetentionOptions,
+  type RetentionResult,
+  type RetentionStatus,
+  type SnapshotChunk,
+  type SnapshotDayStats,
+  type SnapshotReadOptions,
+  type SnapshotResult,
+  type SnapshotStatus,
+  type SnapshotVerification,
+} from "./compaction.ts";
 
 const SCHEMA_VERSION = 2;
+
+/** Posts per transaction while rebuilding from snapshots or live scans. */
+const REBUILD_CHUNK = 4000;
 
 export interface BoardIndexOptions {
   /** Re-list recent day buckets every N cursor syncs (default 15). */
@@ -58,6 +95,18 @@ export interface BoardSyncState {
   lastReconcileMs: number | null;
 }
 
+export interface RebuildOptions {
+  /**
+   * Fold day snapshots into the rebuild instead of re-reading every live
+   * object (default true). Snapshots are read first; only buckets newer than
+   * the last snapshot day (plus any bucket the snapshots cannot fully cover)
+   * are scanned live, with de-duplication by post id.
+   */
+  useSnapshots?: boolean | undefined;
+  /** Receives warnings about skipped or unreadable snapshot content. */
+  onWarning?: ((message: string) => void) | undefined;
+}
+
 export interface SyncResult extends BoardSyncState {
   ingested: number;
   reconciled: boolean;
@@ -96,6 +145,8 @@ export class BoardIndex {
   private readonly now: () => number;
   private readonly syncedBoards = new Set<string>();
   private operationChain: Promise<unknown> = Promise.resolve();
+  /** Prepared statements for the bulk rebuild path, created lazily. */
+  private bulk: { insertPost: Statement; insertFts: Statement; insertMention: Statement } | null = null;
 
   constructor(path: string, opts: BoardIndexOptions = {}) {
     this.reconcileEvery = opts.reconcileEvery ?? 15;
@@ -104,10 +155,19 @@ export class BoardIndex {
     if (!Number.isInteger(this.reconcileEvery) || this.reconcileEvery < 1) throw new Error("reconcileEvery must be a positive integer");
     if (!Number.isInteger(this.lookbackDays) || this.lookbackDays < 0) throw new Error("lookbackDays must be a non-negative integer");
 
-    if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
-    this.db = new Database(path, { create: true });
-    this.db.exec("PRAGMA foreign_keys = ON");
-    if (path !== ":memory:") this.db.exec("PRAGMA journal_mode = WAL");
+    if (path !== ":memory:") {
+      mkdirSync(dirname(path), { recursive: true });
+      this.db = new Database(path, { create: true });
+      this.db.exec("PRAGMA foreign_keys = ON");
+      this.db.exec("PRAGMA journal_mode = WAL");
+      // The index is derived and rebuildable: WAL + NORMAL trades only the
+      // per-transaction fsync of FULL, which a bulk rebuild pays hundreds of
+      // times, while staying durable across application crashes.
+      this.db.exec("PRAGMA synchronous = NORMAL");
+    } else {
+      this.db = new Database(path, { create: true });
+      this.db.exec("PRAGMA foreign_keys = ON");
+    }
     this.migrate();
   }
 
@@ -249,35 +309,91 @@ export class BoardIndex {
     return { ...state, ingested, reconciled };
   }
 
-  /** Clear and reconstruct one board while preserving other indexed boards. */
-  rebuild(board: Board): Promise<number> {
-    return this.enqueue(() => this.rebuildNow(board));
+  /**
+   * Clear and reconstruct one board while preserving other indexed boards.
+   * By default day snapshots (see ./compaction.ts) are read first and only
+   * buckets newer than the last snapshot day — plus any bucket a snapshot
+   * cannot fully cover — are scanned live; posts de-duplicate by id.
+   */
+  rebuild(board: Board, opts: RebuildOptions = {}): Promise<number> {
+    return this.enqueue(() => this.rebuildNow(board, opts));
   }
 
-  private async rebuildNow(board: Board): Promise<number> {
+  private async rebuildNow(board: Board, opts: RebuildOptions = {}): Promise<number> {
     let changeToken: string | null = null;
     if (board.store.changes) changeToken = (await board.store.changes()).token;
+
+    // The whole scan plan is resolved before anything is cleared, so a
+    // throw — a hostile snapshot day name, a store failure — leaves the
+    // current index intact and every retry possible. Nothing between
+    // clearBoard and the loops below derives plan state from untrusted
+    // input or can throw on it.
+    const today = dayBucket(this.now());
+    const from = opts.useSnapshots === false ? null : await snapshotScanStart(board, today, opts.onWarning);
+    const snapshotDays = from === null
+      ? []
+      // snapshotScanStart already warned about the days left out here.
+      : (await listSnapshotDays(board)).filter((day) => day <= today && isCalendarDay(day));
+    const liveScanDays = from === null
+      // Sorted ascending, so filtering to today ends the scan, as in Board.scan.
+      ? (await discoverBucketDays(board.store, board.name)).filter((day) => day <= today)
+      : [];
+
     this.clearBoard(board.name);
 
     let count = 0;
-    let cursor: string | null = null;
-    let batch: Post[] = [];
-    let batchDay: string | null = null;
-    for await (const post of board.scan()) {
-      const postDay = dayBucket(ulidTime(post.id));
-      if (batchDay !== null && postDay !== batchDay) {
-        count += this.ingestBatch(batch);
-        batch = [];
+    let maxId: string | null = null;
+    let chunk: Post[] = [];
+    let chunkJsons: Array<string | null> = [];
+    // Store keys sort like their ids within a board (both lead with the ULID
+    // time part), so the cursor derives from the single max id.
+    const offer = (post: Post, json?: string | null) => {
+      if (maxId === null || post.id > maxId) maxId = post.id;
+      chunk.push(post);
+      chunkJsons.push(json ?? null);
+      if (chunk.length >= REBUILD_CHUNK) {
+        count += this.ingestChunk(chunk, chunkJsons);
+        chunk = [];
+        chunkJsons = [];
       }
-      batchDay = postDay;
-      batch.push(post);
-      const key = board.keyFor(post.id);
-      if (cursor === null || key > cursor) cursor = key;
+    };
+    // Live buckets are folded with the same bounded-concurrency reader the
+    // compaction job uses; unreadable objects are skipped, not fatal.
+    const offerBucket = async (day: string) => {
+      const bucket = await readDayBucket(board.store, board.name, day, this.now);
+      for (const post of bucket.posts) {
+        if (post !== null) offer(post);
+      }
+    };
+
+    if (from === null) {
+      // No usable snapshots: every existing bucket, oldest first.
+      for (const day of liveScanDays) {
+        await offerBucket(day);
+      }
+    } else {
+      // Snapshots first: O(days) objects regardless of how many posts the
+      // closed buckets hold. Corrupt lines are skipped with a warning.
+      for (const day of snapshotDays) {
+        const chunks = iterSnapshotChunks(board, day, { now: this.now, onWarning: opts.onWarning });
+        for (;;) {
+          const next = await chunks.next();
+          if (next.done) break;
+          for (let i = 0; i < next.value.posts.length; i++) offer(next.value.posts[i]!, next.value.lines[i]);
+        }
+      }
+      // Then live buckets the snapshots do not fully cover, up to today.
+      // The walk is bounded by the buckets that exist, not by calendar days.
+      for await (const day of iterLiveBucketDays(board.store, board.name, from, today)) {
+        await offerBucket(day);
+      }
     }
-    if (batch.length) count += this.ingestBatch(batch);
+    if (chunk.length) count += this.ingestChunk(chunk, chunkJsons);
+    this.recomputeThreads(board.name);
+
     this.saveState({
       board: board.name,
-      cursor,
+      cursor: maxId === null ? null : board.keyFor(maxId),
       changeToken,
       syncCount: 0,
       lastReconcileMs: this.now(),
@@ -442,6 +558,88 @@ export class BoardIndex {
     });
     transaction();
     return ingested;
+  }
+
+  /**
+   * Bulk path for rebuilds: inserts posts, FTS, and mentions but leaves
+   * thread summaries to a single `recomputeThreads` pass, so a million-post
+   * rebuild pays one aggregate pass instead of per-post thread maintenance.
+   * De-duplication by post id is the posts.id UNIQUE key. `jsons` may carry
+   * the canonical bytes each post was read from (snapshot lines); when absent
+   * the post is canonicalised here.
+   */
+  private ingestChunk(posts: Post[], jsons?: Array<string | null>): number {
+    let ingested = 0;
+    const { insertPost, insertFts, insertMention } = this.bulkStatements();
+    const transaction = this.db.transaction(() => {
+      for (let i = 0; i < posts.length; i++) {
+        const post = posts[i]!;
+        const result = insertPost.run(
+          post.id,
+          post.board,
+          post.thread,
+          post.replyTo ?? null,
+          post.author,
+          post.instance,
+          post.ts,
+          post.title ?? null,
+          post.body,
+          jsons?.[i] ?? canonicalize(post),
+        );
+        if (result.changes === 0) continue;
+        insertFts.run(result.lastInsertRowid, post.title ?? "", post.body);
+        if (post.mentions !== undefined) {
+          for (const agent of new Set(post.mentions)) {
+            insertMention.run(post.id, agent);
+          }
+        }
+        ingested++;
+      }
+    });
+    transaction();
+    return ingested;
+  }
+
+  private bulkStatements(): { insertPost: Statement; insertFts: Statement; insertMention: Statement } {
+    if (this.bulk === null) {
+      this.bulk = {
+        insertPost: this.db.query(`
+          INSERT OR IGNORE INTO posts
+            (id, board, thread, reply_to, author, instance, ts, title, body, post_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `),
+        insertFts: this.db.query("INSERT INTO posts_fts (rowid, title, body) VALUES (?, ?, ?)"),
+        insertMention: this.db.query("INSERT OR IGNORE INTO mentions (post_id, agent) VALUES (?, ?)"),
+      };
+    }
+    return this.bulk;
+  }
+
+  /**
+   * Rebuild thread summaries for one board from the posts table, producing
+   * exactly the rows incremental ingest would have produced: roots carry
+   * their title, the thread's max ts, and reply counts; replies whose root is
+   * missing (it may arrive later) keep a titleless summary row. One pass over
+   * the board's posts, so a million-post rebuild stays flat.
+   */
+  private recomputeThreads(board: string): void {
+    const transaction = this.db.transaction(() => {
+      this.db.query(`
+        INSERT INTO threads (root_id, board, title, last_activity, reply_count)
+        SELECT r.thread, r.board, p.title, r.mx, r.cnt
+        FROM (
+          SELECT thread, board, max(ts) AS mx, count(*) - sum(id = thread) AS cnt
+          FROM posts WHERE board = ?
+          GROUP BY thread
+        ) r
+        LEFT JOIN posts p ON p.id = r.thread AND p.board = r.board
+        ON CONFLICT(root_id) DO UPDATE SET
+          title = excluded.title,
+          last_activity = excluded.last_activity,
+          reply_count = excluded.reply_count
+      `).run(board);
+    });
+    transaction();
   }
 
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {

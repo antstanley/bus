@@ -64,7 +64,7 @@ Statuses: todo, in-progress, blocked, gated (accepted by review + security gate,
 | 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | claude | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
 | 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | codex | todo | S |
-| 405 | [day snapshots, compaction, retention](405-day-snapshots-compaction-retention.md) | letta | todo | M |
+| 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
 | 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | codex | todo | M |
 | 408 | [load and cost benchmarks](408-load-and-cost-benchmarks.md) | claude | todo | S |
