@@ -3,11 +3,18 @@ import { chmod, lstat, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } 
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { installRuntime, renderInstallDiff, type InstallOptions } from "../src/install.ts";
+import {
+  installRuntime,
+  PI_COLLISION_SCAN_TRUNCATED_NOTICE,
+  PI_COLLISION_SCAN_UNAVAILABLE_NOTICE,
+  piIdentityForHostname,
+  renderInstallDiff,
+  type InstallOptions,
+} from "../src/install.ts";
 import { openCodeSessionRegistryPath, runCli } from "../src/index.ts";
-import { Board } from "@board/core";
+import { Board, ulid } from "@board/core";
 import { FsStore } from "@board/store-fs";
-import { who } from "@board/presence";
+import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 
 const roots: string[] = [];
 const projectRoot = join(import.meta.dir, "../../..");
@@ -328,6 +335,147 @@ console.log("injected by fake hook");
     await installRuntime({ ...uninstallOptions(home, "pi"), cwd, projectLocal: true });
     expect(await Bun.file(globalPath).exists()).toBe(false);
     expect(await Bun.file(projectPath).exists()).toBe(false);
+  });
+
+  test("derives a normalized, bounded Pi identity while explicit --as remains authoritative", async () => {
+    expect(piIdentityForHostname("BUILD-HOST")).toBe("pi-build-host");
+    const lossy = ["build.host", "build-host", "build host"].map(piIdentityForHostname);
+    expect(new Set(lossy).size).toBe(3);
+    expect(lossy[0]).toMatch(/^pi-build-host-[a-f0-9]{16}$/);
+    expect(lossy[1]).toBe("pi-build-host");
+    expect(lossy[2]).toMatch(/^pi-build-host-[a-f0-9]{16}$/);
+    expect(lossy[0]).not.toBe(lossy[2]);
+    expect(piIdentityForHostname("Build.Host")).toBe(piIdentityForHostname("BUILD.HOST"));
+    expect(piIdentityForHostname("build--host")).not.toBe(piIdentityForHostname("build__host"));
+    expect(piIdentityForHostname("München.local")).toMatch(/^pi-munchen-loca-[a-f0-9]{16}$/);
+    const whitespace = ["build-host", " build-host ", "build-host\t"].map(piIdentityForHostname);
+    expect(new Set(whitespace).size).toBe(3);
+    expect(whitespace[0]).toBe("pi-build-host");
+    expect(whitespace[1]).toMatch(/^pi-build-host-[a-f0-9]{16}$/);
+    expect(whitespace[2]).toMatch(/^pi-build-host-[a-f0-9]{16}$/);
+    const compatibility = ["1", "①"].map(piIdentityForHostname);
+    expect(compatibility[0]).toBe("pi-1");
+    expect(compatibility[1]).toMatch(/^pi-1-[a-f0-9]{16}$/);
+    expect(compatibility[1]).not.toBe(compatibility[0]);
+    const combining = ["é-host", "e\u0301-host"].map(piIdentityForHostname);
+    expect(combining[0]).toMatch(/^pi-e-host-[a-f0-9]{16}$/);
+    expect(combining[1]).toMatch(/^pi-e-host-[a-f0-9]{16}$/);
+    expect(combining[0]).not.toBe(combining[1]);
+    const long = piIdentityForHostname("This-Is-A-Very-Long-Builder-Hostname-For-Team-Alpha.example.test");
+    expect(long).toMatch(/^pi-this-is-a-ve-[a-f0-9]{16}$/);
+    expect(long).toHaveLength(32);
+    expect(piIdentityForHostname("This-Is-A-Very-Long-Builder-Hostname-For-Team-Alpha.example.test")).toBe(long);
+    expect(() => piIdentityForHostname("")).toThrow("pass --as");
+    expect(() => piIdentityForHostname("---___...☃")).toThrow("pass --as");
+
+    const home = await fixture();
+    const { author: _defaultAuthor, ...derivedBase } = options(home, "pi");
+    const derivedOptions = {
+      ...derivedBase,
+      hostName: "Build.Host",
+    };
+    await installRuntime(derivedOptions);
+    const extension = await text(join(home, ".pi", "agent", "extensions", "board.ts"));
+    expect(extension).toContain(`"--as", ${JSON.stringify(piIdentityForHostname("Build.Host"))}`);
+    expect(extension).not.toContain('"--as", "pi"');
+
+    const explicitHome = await fixture();
+    await installRuntime({
+      ...options(explicitHome, "pi"),
+      author: "pi-explicit",
+      hostName: "Ignored.Host",
+    });
+    expect(await text(join(explicitHome, ".pi", "agent", "extensions", "board.ts")))
+      .toContain('"--as", "pi-explicit"');
+  });
+
+  test("warns when a derived Pi identity is registered and keeps dry-run/uninstall deterministic", async () => {
+    const home = await fixture();
+    const { author: _defaultAuthor, ...derivedBase } = options(home, "pi");
+    const derivedAuthor = piIdentityForHostname("Build.Host");
+    const base = {
+      ...derivedBase,
+      hostName: "Build.Host",
+      registeredAgents: ["claude", derivedAuthor],
+      dryRun: true,
+    };
+    const dryRun = await installRuntime(base);
+    expect(dryRun.notices).toEqual([expect.stringContaining("already registered")]);
+    expect(dryRun.notices[0]).toContain("--as <agent>");
+    expect(await Bun.file(join(home, ".pi", "agent", "extensions", "board.ts")).exists()).toBe(false);
+
+    const explicit = await installRuntime({ ...base, author: "pi-explicit" });
+    expect(explicit.notices).toEqual([]);
+
+    const { author: _uninstallAuthor, ...uninstallBase } = uninstallOptions(home, "pi");
+    await expect(installRuntime({
+      ...uninstallBase,
+      hostName: "---",
+    })).resolves.toMatchObject({ changes: [] });
+  });
+
+  test("CLI warns when its derived Pi identity collides with stored presence", async () => {
+    const home = await fixture();
+    const storePath = join(home, "store");
+    const store = new FsStore(storePath);
+    const derivedAuthor = piIdentityForHostname("Build.Host");
+    await heartbeat(store, {
+      name: derivedAuthor,
+      instance: "00000000000000000000000000",
+      status: "idle",
+      runtime: "pi",
+      tool: "pi",
+      sessionId: "existing-session",
+    });
+    const lines: string[] = [];
+    await runCli(["install", "pi", "--store", `fs:${storePath}`, "--dry-run"], {
+      installHome: home,
+      projectRoot,
+      hostname: () => "Build.Host",
+      stdout: (line) => lines.push(line),
+    });
+    expect(lines.join("\n")).toContain("already registered");
+    expect(lines.join("\n")).toContain(derivedAuthor);
+    expect(lines.join("\n")).toContain("--as <agent>");
+    expect(lines).not.toContain(PI_COLLISION_SCAN_TRUNCATED_NOTICE);
+  });
+
+  test("CLI reports a truncated collision scan when the derived identity is beyond the bounded page", async () => {
+    const home = await fixture();
+    const store = new FsStore(join(home, "store"));
+    for (let index = 0; index < MAX_WHO_LIMIT; index++) {
+      await heartbeat(store, { name: "aaa", instance: ulid(), status: "idle" });
+    }
+    await heartbeat(store, {
+      name: piIdentityForHostname("Build.Host"),
+      instance: ulid(),
+      status: "idle",
+    });
+    const lines: string[] = [];
+    await runCli(["install", "pi", "--store", "fs:/unused", "--dry-run"], {
+      installHome: home,
+      projectRoot,
+      hostname: () => "Build.Host",
+      createStore: async () => store,
+      stdout: (line) => lines.push(line),
+    });
+    expect(lines).toContain(PI_COLLISION_SCAN_TRUNCATED_NOTICE);
+    expect(lines.join("\n")).not.toContain("already registered");
+  });
+
+  test("CLI reports an unavailable collision scan without leaking store errors", async () => {
+    const home = await fixture();
+    const secret = "DO-NOT-LEAK-STORE-PATH-OR-SECRET";
+    const lines: string[] = [];
+    await runCli(["install", "pi", "--store", "fs:/unused", "--dry-run"], {
+      installHome: home,
+      projectRoot,
+      hostname: () => "Build.Host",
+      createStore: async () => { throw new Error(secret); },
+      stdout: (line) => lines.push(line),
+    });
+    expect(lines).toContain(PI_COLLISION_SCAN_UNAVAILABLE_NOTICE);
+    expect(lines.join("\n")).not.toContain(secret);
   });
 
   test("the generated Pi extension injects, polls, heartbeats, and exposes native tools", async () => {

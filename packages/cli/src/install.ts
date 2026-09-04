@@ -1,6 +1,8 @@
 import { chmod, lstat, mkdir, readFile, realpath, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { assertName } from "@board/core";
+import { createHash } from "node:crypto";
+import { hostname as systemHostname } from "node:os";
 
 export type InstallRuntime = "claude" | "codex" | "letta" | "gemini" | "cursor" | "opencode" | "pi";
 
@@ -16,6 +18,8 @@ export interface InstallOptions {
   dryRun?: boolean;
   uninstall?: boolean;
   projectLocal?: boolean;
+  hostName?: string;
+  registeredAgents?: Iterable<string>;
 }
 
 export interface InstallChange {
@@ -41,7 +45,12 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
   const notices: string[] = [];
   if (!options.uninstall && !options.store) throw new CliError("install requires --store");
 
-  const author = installName(options.author ?? runtime, "agent");
+  const derivedPiAuthor = runtime === "pi" && !options.uninstall && options.author === undefined;
+  const author = installName(options.author
+    ?? (derivedPiAuthor ? piIdentityForHostname(options.hostName ?? systemHostname()) : runtime), "agent");
+  if (derivedPiAuthor && [...options.registeredAgents ?? []].includes(author)) {
+    notices.push(piCollisionNotice(author));
+  }
   const board = installName(options.board ?? "general", "board");
   const cwd = options.cwd ?? process.cwd();
   const store = options.uninstall ? "" : normalizeStoreSpec(options.store ?? "", cwd);
@@ -134,6 +143,41 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
   }
   return { changes, notices };
 }
+
+export function piIdentityForHostname(hostName: string): string {
+  // ASCII hostname case is insignificant, but preserve every other original
+  // code point for loss detection and hashing. In particular, do not let
+  // trimming or Unicode compatibility normalization erase distinctions.
+  const foldedOriginal = hostName.replace(/[A-Z]/g, (char) => char.toLowerCase());
+  const canonical = foldedOriginal.trim().normalize("NFKD").toLowerCase();
+  let normalized = canonical
+    .replace(/\p{M}+/gu, "")
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/[-_]{2,}/g, "-")
+    .replace(/^[-_]+|[-_]+$/g, "");
+  if (!/[a-z0-9]/.test(normalized)) {
+    throw new CliError("cannot derive Pi identity from hostname; pass --as <agent>");
+  }
+  // Keep ordinary valid hostnames readable. Whenever normalization discards
+  // information (dots, spaces, Unicode marks, collapsed separators, etc.),
+  // retain a digest to make accidental collisions unlikely.
+  if (normalized !== foldedOriginal || normalized.length > 29) {
+    const digest = createHash("sha256").update(foldedOriginal, "utf8").digest("hex").slice(0, 16);
+    const prefix = normalized.slice(0, 12).replace(/[-_]+$/g, "");
+    normalized = `${prefix}-${digest}`;
+  }
+  return installName(`pi-${normalized}`, "agent");
+}
+
+export function piCollisionNotice(author: string): string {
+  return `Warning: derived Pi identity ${JSON.stringify(author)} is already registered; pass --as <agent> to choose a distinct identity.`;
+}
+
+export const PI_COLLISION_SCAN_TRUNCATED_NOTICE =
+  "Warning: Pi identity collision check is inconclusive because the bounded presence scan was truncated; pass --as <agent> to choose a distinct identity.";
+
+export const PI_COLLISION_SCAN_UNAVAILABLE_NOTICE =
+  "Warning: Pi identity collision check is unavailable because the board store is offline or unavailable; pass --as <agent> to choose an intentional identity.";
 
 function openCodeMcpDefinition(
   executable: string,

@@ -522,7 +522,7 @@ function fitQuotedSection(value: string, prefix: string, maxBytes: number): stri
 }
 
 function renderQuotedSection(value: string, prefix: string): string {
-  return prefix + value.split("\n").join("\n| ") + "\n";
+  return prefix + normalizeUntrustedLines(value).split("\n").join("\n| ") + "\n";
 }
 
 function renderPost(post: Post): string {
@@ -534,7 +534,11 @@ function renderPost(post: Post): string {
 // Prefix every author-controlled line so a body containing our closing marker
 // cannot visually escape the boundary at the framing indentation level.
 function quoteUntrusted(value: string): string {
-  return value.split("\n").map((line) => `| ${line}`).join("\n");
+  return normalizeUntrustedLines(value).split("\n").map((line) => `| ${line}`).join("\n");
+}
+
+function normalizeUntrustedLines(value: string): string {
+  return value.replace(/\r\n|[\r\u000b\u000c\u001c-\u001e\u0085\u2028\u2029]/g, "\n");
 }
 
 function overflowSuffix(count: number): string {

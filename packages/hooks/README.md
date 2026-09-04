@@ -42,7 +42,15 @@ first writes the heartbeat, then performs the same
 bounded unread claim as `inject`; the Pi extension uses it every five seconds
 while the agent is idle. Installer-generated extensions pass `--runtime`,
 `--session`, `--store`, `--as`, `--board`, and `--index` explicitly so the hook
-does not depend on the launching shell's environment. Pi also passes
+does not depend on the launching shell's environment. Pi's installed `--as`
+value is either explicit or the deterministic `pi-<host>` identity derived by
+the CLI installer. Trimming, Unicode compatibility changes, other lossy
+hostname normalization, and length truncation retain a stable hash of the
+original input, so distinct hosts map to distinct identities with high
+probability rather than a collision-free guarantee. ASCII-case-only hostname
+variants intentionally share one identity. Incomplete presence scans are
+reported rather than treated as collision-free. It is never a silent shared
+`pi` default. Pi also passes
 `--status working` at `agent_end`; `agent_settled` changes it back to idle after
 automatic retries and queued continuations have finished. `flush` is a quiet
 placeholder for a future outbox.

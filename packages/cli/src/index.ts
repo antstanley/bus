@@ -15,8 +15,17 @@ import {
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, MAX_WHO_LIMIT, who as listPresence, whoPage } from "@board/presence";
-import { CliError, installRuntime, renderInstallDiff, type InstallRuntime } from "./install.ts";
-import { homedir } from "node:os";
+import {
+  CliError,
+  installRuntime,
+  PI_COLLISION_SCAN_TRUNCATED_NOTICE,
+  PI_COLLISION_SCAN_UNAVAILABLE_NOTICE,
+  piCollisionNotice,
+  piIdentityForHostname,
+  renderInstallDiff,
+  type InstallRuntime,
+} from "./install.ts";
+import { homedir, hostname as systemHostname } from "node:os";
 import { join, resolve } from "node:path";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
@@ -46,6 +55,7 @@ export interface CliDependencies {
   now?: () => number;
   runCommand?: (command: string, args: string[]) => Promise<number>;
   sendClaudeSocket?: (path: string, token: string, message: string) => Promise<boolean>;
+  hostname?: () => string;
 }
 
 export class DegradedReplicationError extends Error {
@@ -74,18 +84,39 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
     const uninstall = parsed.flags.has("uninstall");
     const store = parsed.flags.get("store");
     if (!uninstall && !store) throw new CliError("install requires --store");
+    const explicitAuthor = parsed.flags.get("as");
+    const piHostName = runtime === "pi" && !uninstall && explicitAuthor === undefined
+      ? (deps.hostname ?? systemHostname)()
+      : undefined;
+    const derivedPiAuthor = piHostName === undefined ? undefined : piIdentityForHostname(piHostName);
     const result = await installRuntime({
       runtime,
       home: deps.installHome ?? homedir(),
       projectRoot: deps.projectRoot ?? resolve(import.meta.dir, "../../.."),
       ...(store === undefined ? {} : { store }),
-      ...(parsed.flags.get("as") === undefined ? {} : { author: parsed.flags.get("as")! }),
+      ...(explicitAuthor === undefined ? {} : { author: explicitAuthor }),
       ...(parsed.flags.get("board") === undefined ? {} : { board: parsed.flags.get("board")! }),
       ...(parsed.flags.get("index") === undefined ? {} : { indexPath: parsed.flags.get("index")! }),
       dryRun: parsed.flags.has("dry-run"),
       uninstall,
       projectLocal: parsed.flags.has("project"),
+      ...(piHostName === undefined ? {} : { hostName: piHostName }),
     });
+    if (derivedPiAuthor !== undefined && store !== undefined) {
+      try {
+        const presenceStore = await (deps.createStore ?? createStore)(parseStoreSpec(store));
+        const page = await whoPage(presenceStore, {
+          maxAgeMs: Number.MAX_SAFE_INTEGER,
+          limit: MAX_WHO_LIMIT,
+        });
+        if (page.records.some((record) => record.name === derivedPiAuthor)) {
+          result.notices.push(piCollisionNotice(derivedPiAuthor));
+        }
+        if (page.truncated) result.notices.push(PI_COLLISION_SCAN_TRUNCATED_NOTICE);
+      } catch {
+        result.notices.push(PI_COLLISION_SCAN_UNAVAILABLE_NOTICE);
+      }
+    }
     if (parsed.flags.has("dry-run")) output(result.changes.length ? renderInstallDiff(result.changes) : "no changes");
     else for (const change of result.changes) output(`${uninstall ? "removed" : "installed"} board integration: ${change.path}`);
     for (const notice of result.notices) output(notice);
@@ -383,7 +414,7 @@ Commands:
   read    [--after CURSOR] [--limit N]           read a page as JSON
   watch   [--after CURSOR] [--interval MS]       stream posts as JSON lines
   who     [--max-age MS]                         list agent presence
-  install <runtime> --store <spec>               merge runtime hooks/MCP config
+  install <runtime> --store <spec>               merge runtime hooks/MCP config (Pi defaults to pi-<host>)
 
 Common options:
   --store fs:<dir>
