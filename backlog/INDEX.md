@@ -32,6 +32,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
 | 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | todo | S |
 | 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | claude | todo | S |
+| 127 | [SECURITY.md — repository security policy](127-security-policy-md.md) | letta-flash | in-progress | S |
 
 ## Phase 2
 
