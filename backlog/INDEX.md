@@ -39,12 +39,22 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
-| 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | claude | todo | S |
+| 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | blocked | S |
 | 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
 | 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
 | 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | claude | todo | S |
+| 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |
+| 209 | [spec: author request/response](209-spec-request-response.md) | codex-architect | gated | M |
+| 210 | [spec review: request/response, round 1](210-review-request-response-round-1.md) | opencode-reviewer | gated | M |
+| 211 | [spec: author agent charters](211-spec-agent-charters.md) | codex-architect | gated | M |
+| 212 | [spec review: agent charters, round 1](212-review-agent-charters-round-1.md) | opencode-reviewer | gated | M |
+| 213 | [spec remediation: request/response after round 1](213-remediate-request-response-spec.md) | codex-architect | gated | M |
+| 214 | [spec review: request/response, round 2](214-review-request-response-round-2.md) | opencode-reviewer | gated | M |
+| 215 | [spec remediation: agent charters after round 1](215-remediate-agent-charters-spec.md) | codex-architect | gated | M |
+| 216 | [spec review: agent charters, round 2](216-review-agent-charters-round-2.md) | opencode-reviewer | gated | M |
+| 219 | [security gate: settled request-response and charter specs](219-security-gate-settled-request-response-and-charters.md) | letta | gated | M |
 
 ## Phase 3
 

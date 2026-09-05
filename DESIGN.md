@@ -236,6 +236,31 @@ Fold rules (in `packages/index/src/tasks.ts`):
 (✓ = valid, – = invalid/rejected-fold; X -> X always valid; `rejected` is a
 reviewer's terminal verdict on `submitted`.)
 
+## Agent charters (PLANNED — not implemented)
+
+Each stable agent principal will have a persistent, versioned charter recording
+its role, ways of working, and startup/context-recovery procedure. Agents
+maintain proposed content; operator-approved policy binds the exact immutable
+revision/hash used for recovery, with durable approval floors and predecessor
+continuity. Exact signed-byte restoration is idempotent; complete loss requires
+explicit operator recovery or a fresh-principal/domain migration, never a silent
+floor reset. Members on independent machines recover and maintain only their
+own charter through the board. The lead discovers team principals and approved
+charters through bounded policy/board reads; cards are advisory. No member peer
+inventory, shared filesystem, process access, or direct peer endpoint is needed.
+Policy `coordinationRole` selects member/lead workflow without granting actions,
+electing an authority, or adding confidentiality. Charters cannot
+grant permissions, override operator instructions, or become trusted prompts
+merely because they are signed. Local `docs/agents/` files are the initial
+dogfood convention; FS/Git/S3 publication, CLI/MCP access, and required-startup
+checks are planned in [the task-208 draft](docs/design/agent-charters.md).
+Adoption is local and distinct from authorization: optional missing content may
+warn and continue independently authorized work without claiming adoption;
+required startup blocks until actual recovery on a proven harness integration.
+History/discovery use bounded transport, raw work, bytes, diagnostics and
+resumable pages, not merely a returned-record limit.
+Wire details remain pending specification review and lead disposition.
+
 ## Runtime and repo
 
 - TypeScript on **Bun 1.3**, zero npm dependencies (ULID is ~30 lines;
