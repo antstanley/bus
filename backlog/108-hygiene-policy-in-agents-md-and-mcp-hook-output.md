@@ -2,7 +2,7 @@
 id: 108
 title: hygiene policy in AGENTS.md and MCP/hook output
 phase: 1
-owner: codex
+owner: letta
 status: in-progress
 depends: []
 estimate: S

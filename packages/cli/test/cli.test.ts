@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { Board, MemoryStore, ulid, type Store } from "@board/core";
+import { BoardIndex } from "@board/index";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -72,6 +73,141 @@ describe("board CLI", () => {
     const page = JSON.parse(lines.at(-1)!) as { posts: Array<{ body: string; replyTo?: string }> };
     expect(page.posts.map((post) => post.body)).toEqual(["body text", "reply text"]);
     expect(page.posts[1]?.replyTo).toBe(root.id);
+  });
+
+  it("folds A2A task state into the index for board tasks", async () => {
+    const store = new MemoryStore();
+    const root = await new Board(store, { board: "general", author: "letta" }).request(["codex"], {
+      title: "Ship it",
+      body: "please build",
+    });
+    const codex = new Board(store, { board: "general", author: "codex" });
+    await codex.reply(root, { body: "on it", act: "status", status: "working", task: root.id });
+    const second = await new Board(store, { board: "general", author: "claude" }).request(["codex"], {
+      title: "Other",
+      body: "second request",
+    });
+    await codex.reply(second, { body: "done", act: "status", status: "completed", task: second.id });
+    const rewind = await codex.reply(second, { body: "rewind", act: "status", status: "working" });
+
+    const dir = await mkdtemp(join(tmpdir(), "board-cli-tasks-"));
+    roots.push(dir);
+    const lines: string[] = [];
+    const deps = {
+      createStore: (): Store => store,
+      createIndex: () => new BoardIndex(join(dir, "index.sqlite")),
+      stdout: (line: string) => lines.push(line),
+    };
+
+    await runCli(["tasks", "--store", "fs:ignored", "--state", "working"], deps);
+    expect(lines.at(-1)).toContain(root.id);
+    expect(lines.at(-1)).toContain("working");
+    expect(lines.at(-1)).not.toContain(second.id);
+
+    await runCli(["tasks", "--store", "fs:ignored"], deps);
+    expect(lines.at(-1)).toContain(second.id);
+    expect(lines.at(-1)).toContain("completed");
+
+    await runCli(["tasks", second.id, "--store", "fs:ignored"], deps);
+    expect(lines.at(-4)).toContain(second.id);
+    expect(lines.at(-4)).toContain("Other");
+    expect(lines.filter((line) => line.includes("rejected working"))).toEqual([
+      expect.stringContaining(rewind.id), // surfaced as a warning, not a crash or a state change
+    ]);
+    expect(lines.at(-1)).toContain("completed");
+
+    await runCli(["tasks", "--store", "fs:ignored", "--json"], deps);
+    const listed = JSON.parse(lines.at(-1)!) as Array<{ rootId: string; state: string }>;
+    expect(listed.map((task) => task.state)).toEqual(["completed", "working"]);
+
+    await expect(runCli(["tasks", "--store", "fs:ignored", "--state", "running"], deps))
+      .rejects.toThrow("--state must be one of");
+  });
+
+  it("defaults a single-task lookup to the synced board while --board still overrides", async () => {
+    const store = new MemoryStore();
+    const root = await new Board(store, { board: "general", author: "letta" }).request(["codex"], {
+      title: "Shared id",
+      body: "task on general",
+    });
+    // The same root id is also named by a status post on another board; a
+    // fixed later clock keeps that fold's activity strictly after the root's
+    // (same-ms timestamps would fall back to the board-name tiebreak), so a
+    // bare lookup that crossed boards would answer from "wild".
+    const later = Date.now() + 5_000;
+    await new Board(store, { board: "wild", author: "mallory", now: () => later }).post({
+      body: "names the root from another board",
+      act: "status",
+      status: "working",
+      task: root.id,
+    });
+    // Another id folds only on "wild": a bare lookup must not cross-board
+    // resolve it either.
+    const foreign = ulid(later);
+    await new Board(store, { board: "wild", author: "mallory", now: () => later }).post({
+      body: "folds only on wild",
+      act: "status",
+      status: "working",
+      task: foreign,
+    });
+
+    const dir = await mkdtemp(join(tmpdir(), "board-cli-task-board-"));
+    roots.push(dir);
+    const lines: string[] = [];
+    const deps = {
+      createStore: (): Store => store,
+      createIndex: () => new BoardIndex(join(dir, "index.sqlite")),
+      stdout: (line: string) => lines.push(line),
+    };
+
+    await runCli(["tasks", root.id, "--store", "fs:ignored", "--board", "general", "--json"], deps);
+    expect(JSON.parse(lines.at(-1)!)).toMatchObject({ board: "general", state: "submitted" });
+
+    await runCli(["tasks", root.id, "--store", "fs:ignored", "--board", "wild", "--json"], deps);
+    expect(JSON.parse(lines.at(-1)!)).toMatchObject({ board: "wild", state: "working" });
+
+    // A bare lookup fails closed to the synced board ("general"): the wild
+    // fold's later activity must not decide the answer any more.
+    await runCli(["tasks", root.id, "--store", "fs:ignored", "--json"], deps);
+    expect(JSON.parse(lines.at(-1)!)).toMatchObject({ board: "general", state: "submitted" });
+
+    // And a task that only exists on another board is not silently resolved
+    // across boards either.
+    await runCli(["tasks", foreign, "--store", "fs:ignored"], deps);
+    expect(lines.at(-1)).toBe(`no such task: ${foreign}`);
+  });
+
+  it("rejects --state combined with a TASK_ID before touching the store or index", async () => {
+    let stores = 0;
+    let indexes = 0;
+    const deps = {
+      createStore: (): Store => {
+        stores++;
+        return new MemoryStore();
+      },
+      createIndex: () => {
+        indexes++;
+        return new BoardIndex(":memory:");
+      },
+      stdout: () => {},
+    };
+    await expect(runCli(["tasks", "some-task-id", "--store", "fs:ignored", "--state", "working"], deps))
+      .rejects.toThrow("--state cannot be combined with a TASK_ID");
+    // The usage error fires before any store or index I/O: the filter must
+    // never be silently ignored, and nothing is opened to answer it.
+    expect(stores).toBe(0);
+    expect(indexes).toBe(0);
+  });
+
+  it("exits non-zero when --state is combined with a TASK_ID", async () => {
+    const root = await mkdtemp(join(tmpdir(), "board-cli-task-state-"));
+    roots.push(root);
+    const usage = await command([
+      "bun", "packages/cli/src/index.ts", "tasks", "some-task-id",
+      "--store", `fs:${root}`, "--index", join(root, "index.sqlite"), "--state", "working",
+    ], join(import.meta.dir, "../../.."));
+    expect(usage.code).toBe(2); // CliError exit code, not a silent unfiltered view
+    expect(usage.stderr).toContain("--state cannot be combined with a TASK_ID");
   });
 
   it("prints derived presence for who", async () => {

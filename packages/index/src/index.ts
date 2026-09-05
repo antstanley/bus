@@ -4,11 +4,13 @@ import { dirname } from "node:path";
 import {
   canonicalize,
   dayBucket,
+  isStatus,
   keys,
   parsePost,
   validatePost,
   type Board,
   type Post,
+  type Status,
 } from "@board/core";
 import {
   discoverBucketDays,
@@ -19,6 +21,7 @@ import {
   readDayBucket,
   snapshotScanStart,
 } from "./compaction.ts";
+import { foldTask, taskFoldTargets, type FoldRow, type TaskTransition } from "./tasks.ts";
 
 export {
   DAY_MS,
@@ -46,7 +49,18 @@ export {
   type SnapshotVerification,
 } from "./compaction.ts";
 
-const SCHEMA_VERSION = 2;
+export {
+  TASK_TRANSITIONS,
+  foldTask,
+  isValidTransition,
+  taskFoldTarget,
+  taskFoldTargets,
+  type FoldRow,
+  type TaskFold,
+  type TaskTransition,
+} from "./tasks.ts";
+
+const SCHEMA_VERSION = 3;
 
 /** Posts per transaction while rebuilding from snapshots or live scans. */
 const REBUILD_CHUNK = 4000;
@@ -58,6 +72,12 @@ export interface BoardIndexOptions {
   lookbackDays?: number;
   /** Injectable clock for deterministic callers and tests. */
   now?: () => number;
+  /**
+   * Receives trust warnings — rejected task transitions, unreadable content —
+   * on every ingest path. A per-call callback (RebuildOptions.onWarning)
+   * takes precedence during a rebuild.
+   */
+  onWarning?: ((message: string) => void) | undefined;
 }
 
 export interface ThreadQueryOptions {
@@ -70,6 +90,13 @@ export interface QueryOptions {
   board?: string;
 }
 
+export interface TaskQueryOptions {
+  /** Filter by current A2A task state. */
+  state?: Status;
+  board?: string;
+  limit?: number;
+}
+
 export interface ThreadSummary {
   rootId: string;
   board: string;
@@ -80,6 +107,24 @@ export interface ThreadSummary {
 
 export interface ThreadView extends ThreadSummary {
   posts: Post[];
+}
+
+export interface TaskSummary {
+  /** The task root post id (A2A taskId). */
+  rootId: string;
+  board: string;
+  /** Current state after folding every status post. */
+  state: Status;
+  /** Title of the root post, when the root is indexed. */
+  title: string | null;
+  lastActivity: string;
+  /** Id of the last fold-relevant post (the ulid half of last activity). */
+  lastPostId: string;
+}
+
+export interface TaskView extends TaskSummary {
+  /** Every fold entry in post-id order, including rejected transitions. */
+  history: TaskTransition[];
 }
 
 export interface SearchResult extends Post {
@@ -128,6 +173,23 @@ interface ThreadRow {
   reply_count: number;
 }
 
+interface TaskRow {
+  root_id: string;
+  board: string;
+  state: string;
+  last_post_id: string;
+  last_activity: string;
+  title?: string | null;
+}
+
+interface HistoryRow {
+  post_id: string;
+  state: string;
+  valid: number;
+  ts: string;
+  from_state: string | null;
+}
+
 interface JsonRow {
   post_json: string;
 }
@@ -143,6 +205,7 @@ export class BoardIndex {
   private readonly reconcileEvery: number;
   private readonly lookbackDays: number;
   private readonly now: () => number;
+  private readonly onWarning: ((message: string) => void) | undefined;
   private readonly syncedBoards = new Set<string>();
   private operationChain: Promise<unknown> = Promise.resolve();
   /** Prepared statements for the bulk rebuild path, created lazily. */
@@ -152,6 +215,7 @@ export class BoardIndex {
     this.reconcileEvery = opts.reconcileEvery ?? 15;
     this.lookbackDays = opts.lookbackDays ?? 2;
     this.now = opts.now ?? Date.now;
+    this.onWarning = opts.onWarning;
     if (!Number.isInteger(this.reconcileEvery) || this.reconcileEvery < 1) throw new Error("reconcileEvery must be a positive integer");
     if (!Number.isInteger(this.lookbackDays) || this.lookbackDays < 0) throw new Error("lookbackDays must be a non-negative integer");
 
@@ -186,11 +250,19 @@ export class BoardIndex {
     return inserted;
   }
 
-  private ingestOne(post: Post): boolean {
+  /**
+   * Insert one post and maintain the derived rows. `pendingFolds` collects
+   * the task roots whose fold the post touched instead of recomputing them
+   * here: batched callers (sync pages, reconcile batches) pass a map and
+   * flush it once per transaction, so a long status stream rewrites each
+   * affected fold once, not once per post. Without it the recompute happens
+   * inline, which is right for single-post ingests.
+   */
+  private ingestOne(post: Post, pendingFolds?: Map<string, Set<string>>): boolean {
     const result = this.db.query(`
       INSERT OR IGNORE INTO posts
-        (id, board, thread, reply_to, author, instance, ts, title, body, post_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, board, thread, reply_to, author, instance, ts, title, body, post_json, act, status, task)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       post.id,
       post.board,
@@ -202,6 +274,9 @@ export class BoardIndex {
       post.title ?? null,
       post.body,
       canonicalize(post),
+      post.act ?? null,
+      post.status ?? null,
+      post.task ?? null,
     );
     if (result.changes === 0) return false;
 
@@ -243,7 +318,54 @@ export class BoardIndex {
       this.db.query("INSERT OR IGNORE INTO mentions (post_id, agent) VALUES (?, ?)").run(post.id, agent);
     }
     this.db.query("INSERT INTO posts_fts (rowid, title, body) VALUES (?, ?, ?)").run(result.lastInsertRowid, post.title ?? "", post.body);
+
+    // Task fold maintenance (task 203). The caller wraps ingestOne in a
+    // transaction; recomputing the whole fold for each affected task keeps
+    // the incremental rows identical to what a rebuild from these posts
+    // derives. `taskFoldTargetsFor` is the single rule for which folds a post
+    // touches — including a thread root that lands after parked status
+    // replies folded to it, and an id other posts already named as a task
+    // root landing as an ordinary post.
+    const targets = this.taskFoldTargetsFor(post);
+    if (pendingFolds === undefined) {
+      for (const target of targets) this.recomputeTaskFold(target, post.board);
+    } else {
+      let roots = pendingFolds.get(post.board);
+      if (roots === undefined) pendingFolds.set(post.board, (roots = new Set()));
+      for (const target of targets) roots.add(target);
+    }
     return true;
+  }
+
+  /**
+   * The folds a landing post touches: `taskFoldTargets` plus the post's own
+   * id when an already-ingested post on the same board names it as a task
+   * root. A status post may reference an id before the named post exists —
+   * the fold parks on the reference — and whenever that named post arrives
+   * (a request, or any ordinary post) its own row counts as that task's
+   * activity, so the fold must refresh to keep lastPostId/lastActivity on
+   * the newest post. The rebuild path needs no mirror check: its candidate
+   * scan already selects every referenced task id from the posts table.
+   */
+  private taskFoldTargetsFor(post: Post): string[] {
+    const targets = taskFoldTargets(post);
+    if (!targets.includes(post.id) && this.db
+      .query<unknown, [string, string]>("SELECT 1 FROM posts WHERE board = ? AND task = ? LIMIT 1")
+      .get(post.board, post.id)) {
+      targets.push(post.id);
+    }
+    return targets;
+  }
+
+  /**
+   * Recompute the folds collected by batched ingestOne calls. Runs inside the
+   * same transaction as the post loop, so rows and folds still commit
+   * atomically — one full fold pass per affected task per sync, not per post.
+   */
+  private flushTaskFolds(pendingFolds: Map<string, Set<string>>): void {
+    for (const [board, roots] of pendingFolds) {
+      for (const root of roots) this.recomputeTaskFold(root, board);
+    }
   }
 
   /**
@@ -282,7 +404,9 @@ export class BoardIndex {
           if (state.cursor === null || key > state.cursor) state.cursor = key;
         }
         const transaction = this.db.transaction(() => {
-          for (const post of posts) if (this.ingestOne(post)) ingested++;
+          const pendingFolds = new Map<string, Set<string>>();
+          for (const post of posts) if (this.ingestOne(post, pendingFolds)) ingested++;
+          this.flushTaskFolds(pendingFolds);
           this.saveState(state);
         });
         transaction();
@@ -390,6 +514,10 @@ export class BoardIndex {
     }
     if (chunk.length) count += this.ingestChunk(chunk, chunkJsons);
     this.recomputeThreads(board.name);
+    // Folds are derived from posts exactly like thread summaries: recompute
+    // every task on the board in one pass so a snapshot-aware rebuild lands
+    // on the same rows incremental sync would have produced.
+    this.recomputeTasks(board.name, opts.onWarning ?? this.onWarning);
 
     this.saveState({
       board: board.name,
@@ -436,6 +564,64 @@ export class BoardIndex {
     return { ...fromThreadRow(row), posts };
   }
 
+  /**
+   * Tasks ordered by last activity (newest first), filtered by current state
+   * and/or board. A task exists per (root id, board): the same root id named
+   * by status posts on two boards yields two independent folds.
+   */
+  tasks(opts: TaskQueryOptions = {}): TaskSummary[] {
+    if (opts.state !== undefined && !isStatus(opts.state)) throw new Error(`unknown status: ${String(opts.state)}`);
+    const limit = queryLimit(opts.limit);
+    const filters: string[] = [];
+    const params: Array<string | number> = [];
+    if (opts.state !== undefined) {
+      filters.push("t.state = ?");
+      params.push(opts.state);
+    }
+    if (opts.board !== undefined) {
+      filters.push("t.board = ?");
+      params.push(opts.board);
+    }
+    params.push(limit);
+    const rows = this.db.query<TaskRow, Array<string | number>>(`
+      SELECT t.root_id, t.board, t.state, t.last_post_id, t.last_activity, p.title AS title
+      FROM tasks t LEFT JOIN posts p ON p.id = t.root_id AND p.board = t.board
+      ${filters.length ? `WHERE ${filters.join(" AND ")}` : ""}
+      ORDER BY t.last_activity DESC, t.root_id DESC LIMIT ?
+    `).all(...params);
+    return rows.map(fromTaskRow);
+  }
+
+  /**
+   * One task with its full fold history (the request root's initial submitted
+   * stamp, every status post, and rejected invalid transitions). Post ids are
+   * unique across boards, so multiple rows for one root id can only come from
+   * hostile same-id content on two boards; the most recently active wins.
+   * `board` scopes the lookup to one board's fold — a status post on another
+   * board naming the same root id must not decide which fold is returned.
+   */
+  task(rootId: string, opts: { board?: string } = {}): TaskView | null {
+    const row = opts.board === undefined
+      ? this.db.query<TaskRow, [string]>(`
+          SELECT t.root_id, t.board, t.state, t.last_post_id, t.last_activity, p.title AS title
+          FROM tasks t LEFT JOIN posts p ON p.id = t.root_id AND p.board = t.board
+          WHERE t.root_id = ?
+          ORDER BY t.last_activity DESC, t.board ASC LIMIT 1
+        `).get(rootId)
+      : this.db.query<TaskRow, [string, string]>(`
+          SELECT t.root_id, t.board, t.state, t.last_post_id, t.last_activity, p.title AS title
+          FROM tasks t LEFT JOIN posts p ON p.id = t.root_id AND p.board = t.board
+          WHERE t.root_id = ? AND t.board = ?
+        `).get(rootId, opts.board);
+    if (!row) return null;
+    const history = this.db.query<HistoryRow, [string, string]>(`
+      SELECT post_id, state, valid, ts, from_state
+      FROM task_history WHERE root_id = ? AND board = ?
+      ORDER BY post_id
+    `).all(rootId, row.board).map(fromHistoryRow);
+    return { ...fromTaskRow(row), history };
+  }
+
   mentions(agent: string, opts: QueryOptions = {}): Post[] {
     const limit = queryLimit(opts.limit);
     const rows = opts.board === undefined
@@ -475,11 +661,15 @@ export class BoardIndex {
   private migrate(): void {
     const version = this.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version ?? 0;
     if (version !== 0 && version !== SCHEMA_VERSION) {
+      // The index is derived and rebuildable, so a version change drops every
+      // table and the next sync/rebuild reconstructs it from the store.
       this.db.exec(`
         DROP TABLE IF EXISTS posts_fts;
         DROP TABLE IF EXISTS mentions;
         DROP TABLE IF EXISTS posts;
         DROP TABLE IF EXISTS threads;
+        DROP TABLE IF EXISTS tasks;
+        DROP TABLE IF EXISTS task_history;
         DROP TABLE IF EXISTS sync_state;
       `);
     }
@@ -495,10 +685,14 @@ export class BoardIndex {
         ts TEXT NOT NULL,
         title TEXT,
         body TEXT NOT NULL,
-        post_json TEXT NOT NULL
+        post_json TEXT NOT NULL,
+        act TEXT,
+        status TEXT,
+        task TEXT
       );
       CREATE INDEX IF NOT EXISTS posts_board_id ON posts(board, id);
       CREATE INDEX IF NOT EXISTS posts_thread_id ON posts(thread, id);
+      CREATE INDEX IF NOT EXISTS posts_task_id ON posts(task, id);
 
       CREATE TABLE IF NOT EXISTS threads (
         root_id TEXT PRIMARY KEY,
@@ -508,6 +702,28 @@ export class BoardIndex {
         reply_count INTEGER NOT NULL DEFAULT 0
       );
       CREATE INDEX IF NOT EXISTS threads_board_activity ON threads(board, last_activity DESC);
+
+      CREATE TABLE IF NOT EXISTS tasks (
+        root_id TEXT NOT NULL,
+        board TEXT NOT NULL,
+        state TEXT NOT NULL,
+        last_post_id TEXT NOT NULL,
+        last_activity TEXT NOT NULL,
+        PRIMARY KEY (root_id, board)
+      );
+      CREATE INDEX IF NOT EXISTS tasks_board_activity ON tasks(board, last_activity DESC);
+      CREATE INDEX IF NOT EXISTS tasks_state_activity ON tasks(state, last_activity DESC);
+
+      CREATE TABLE IF NOT EXISTS task_history (
+        root_id TEXT NOT NULL,
+        board TEXT NOT NULL,
+        post_id TEXT NOT NULL,
+        state TEXT NOT NULL,
+        valid INTEGER NOT NULL,
+        ts TEXT NOT NULL,
+        from_state TEXT,
+        PRIMARY KEY (root_id, board, post_id)
+      );
 
       CREATE TABLE IF NOT EXISTS mentions (
         post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
@@ -538,9 +754,11 @@ export class BoardIndex {
     for (;;) {
       const result = await board.since(state.cursor ?? undefined);
       const transaction = this.db.transaction(() => {
+        const pendingFolds = new Map<string, Set<string>>();
         for (const post of result.posts) {
-          if (post.board === board.name && this.ingestOne(post)) ingested++;
+          if (post.board === board.name && this.ingestOne(post, pendingFolds)) ingested++;
         }
+        this.flushTaskFolds(pendingFolds);
         state.cursor = result.cursor ?? state.cursor;
         // Cursor and page contents commit together, so a crash retries either
         // the whole page or none of it.
@@ -554,7 +772,9 @@ export class BoardIndex {
   private ingestBatch(posts: Post[]): number {
     let ingested = 0;
     const transaction = this.db.transaction(() => {
-      for (const post of posts) if (this.ingestOne(post)) ingested++;
+      const pendingFolds = new Map<string, Set<string>>();
+      for (const post of posts) if (this.ingestOne(post, pendingFolds)) ingested++;
+      this.flushTaskFolds(pendingFolds);
     });
     transaction();
     return ingested;
@@ -585,6 +805,9 @@ export class BoardIndex {
           post.title ?? null,
           post.body,
           jsons?.[i] ?? canonicalize(post),
+          post.act ?? null,
+          post.status ?? null,
+          post.task ?? null,
         );
         if (result.changes === 0) continue;
         insertFts.run(result.lastInsertRowid, post.title ?? "", post.body);
@@ -605,8 +828,8 @@ export class BoardIndex {
       this.bulk = {
         insertPost: this.db.query(`
           INSERT OR IGNORE INTO posts
-            (id, board, thread, reply_to, author, instance, ts, title, body, post_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, board, thread, reply_to, author, instance, ts, title, body, post_json, act, status, task)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `),
         insertFts: this.db.query("INSERT INTO posts_fts (rowid, title, body) VALUES (?, ?, ?)"),
         insertMention: this.db.query("INSERT OR IGNORE INTO mentions (post_id, agent) VALUES (?, ?)"),
@@ -642,6 +865,88 @@ export class BoardIndex {
     transaction();
   }
 
+  /**
+   * Recompute every task fold on a board (rebuild path). The candidate roots
+   * mirror `taskFoldTargets` exactly: every request post — root or reply — is
+   * a candidate, because its own fold always gets the implicit submitted
+   * stamp even when an explicit `task` field names a different root; any
+   * post's `task` field names its root (which also covers a referenced id
+   * landing late, where the incremental path checks the reference in
+   * `taskFoldTargetsFor`); a status post without one folds to its thread
+   * root.
+   */
+  private recomputeTasks(board: string, onWarning?: ((message: string) => void) | undefined): void {
+    const candidates = this.db.query<{ root: string }, [string, string, string]>(`
+      SELECT id AS root FROM posts WHERE board = ? AND act = 'request'
+      UNION
+      SELECT task AS root FROM posts WHERE board = ? AND task IS NOT NULL
+      UNION
+      SELECT thread AS root FROM posts WHERE board = ? AND act = 'status' AND task IS NULL
+    `).all(board, board, board);
+    const transaction = this.db.transaction(() => {
+      for (const { root } of candidates) this.recomputeTaskFold(root, board, onWarning);
+    });
+    transaction();
+  }
+
+  /**
+   * Recompute one (task root, board) fold from the posts table and rewrite
+   * its rows: history is replaced wholesale, so the result depends only on
+   * the posts — the same property that makes rebuild and incremental ingest
+   * agree. Runs inside the caller's transaction (ingestOne's ambient one,
+   * flushTaskFolds', or recomputeTasks' wrap). Trust warnings fire for every
+   * NEWLY rejected transition — one absent from task_history before the
+   * rewrite — so an out-of-order arrival that flips an earlier-ingested post
+   * to invalid warns exactly when it happens, while later activity on the
+   * task never re-warns about a known rejection. On the rebuild path
+   * (recomputeTasks, after clearBoard) the before-set is always empty, so
+   * every rejected transition in the fold warns, as before.
+   */
+  private recomputeTaskFold(
+    rootId: string,
+    board: string,
+    onWarning?: ((message: string) => void) | undefined,
+  ): void {
+    const previouslyRejected = new Set(
+      this.db.query<{ post_id: string }, [string, string]>(`
+        SELECT post_id FROM task_history WHERE root_id = ? AND board = ? AND valid = 0
+      `).all(rootId, board).map((row) => row.post_id),
+    );
+    const rows = this.db.query<FoldRow, [string, string, string, string]>(`
+      SELECT id, ts, act, status, task, thread FROM posts
+      WHERE board = ? AND (id = ? OR task = ? OR (thread = ? AND act = 'status'))
+      ORDER BY id
+    `).all(board, rootId, rootId, rootId);
+    const fold = foldTask(rootId, rows);
+
+    this.db.query("DELETE FROM task_history WHERE root_id = ? AND board = ?").run(rootId, board);
+    const insertTransition = this.db.query(`
+      INSERT INTO task_history (root_id, board, post_id, state, valid, ts, from_state)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const t of fold.history) {
+      insertTransition.run(rootId, board, t.postId, t.state, t.valid ? 1 : 0, t.ts, t.from ?? null);
+    }
+    if (fold.state !== null && fold.lastPostId !== null && fold.lastActivity !== null) {
+      this.db.query(`
+        INSERT INTO tasks (root_id, board, state, last_post_id, last_activity)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(root_id, board) DO UPDATE SET
+          state = excluded.state,
+          last_post_id = excluded.last_post_id,
+          last_activity = excluded.last_activity
+      `).run(rootId, board, fold.state, fold.lastPostId, fold.lastActivity);
+    }
+
+    const warn = onWarning ?? this.onWarning;
+    if (warn === undefined) return;
+    for (const t of fold.history) {
+      if (t.valid || previouslyRejected.has(t.postId)) continue;
+      warn(`rejected invalid transition for task ${rootId} on ${board}: `
+        + `post ${t.postId} asserts "${t.state}" while the current state is ${t.from === null ? "unset" : `"${t.from}"`}`);
+    }
+  }
+
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
     const run = this.operationChain.then(operation, operation);
     this.operationChain = run.catch(() => {});
@@ -666,6 +971,8 @@ export class BoardIndex {
       this.db.query("DELETE FROM mentions WHERE post_id IN (SELECT id FROM posts WHERE board = ?)").run(board);
       this.db.query("DELETE FROM posts WHERE board = ?").run(board);
       this.db.query("DELETE FROM threads WHERE board = ?").run(board);
+      this.db.query("DELETE FROM tasks WHERE board = ?").run(board);
+      this.db.query("DELETE FROM task_history WHERE board = ?").run(board);
       this.db.query("DELETE FROM sync_state WHERE board = ?").run(board);
     });
     transaction();
@@ -696,6 +1003,27 @@ function fromThreadRow(row: ThreadRow): ThreadSummary {
     title: row.title,
     lastActivity: row.last_activity,
     replyCount: row.reply_count,
+  };
+}
+
+function fromTaskRow(row: TaskRow): TaskSummary {
+  return {
+    rootId: row.root_id,
+    board: row.board,
+    state: row.state as Status,
+    title: row.title ?? null,
+    lastActivity: row.last_activity,
+    lastPostId: row.last_post_id,
+  };
+}
+
+function fromHistoryRow(row: HistoryRow): TaskTransition {
+  return {
+    postId: row.post_id,
+    state: row.state as Status,
+    valid: row.valid === 1,
+    ts: row.ts,
+    from: (row.from_state ?? null) as Status | null,
   };
 }
 

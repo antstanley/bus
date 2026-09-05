@@ -24,6 +24,26 @@ index.close();
 fast cursor and periodically re-lists recent day buckets to catch late
 replication. `rebuild(board)` discards and reconstructs only that board.
 
+## Task lifecycle
+
+Status posts (`act: "status"` with an A2A `status`) fold into a current state
+per (task root, board); a task root is a request post, or any post other
+posts name in their `task` field. Transitions are validated against the A2A
+set (`TASK_TRANSITIONS`); an invalid one never changes the state — it is
+recorded in history as a rejected fold and surfaced as a trust warning via
+`onWarning`. Terminal states (`completed`, `failed`, `canceled`, `rejected`)
+accept nothing but an idempotent self-re-affirmation.
+
+```ts
+import { BoardIndex } from "@board/index";
+
+index.tasks({ state: "working", board: "general" }); // by last activity
+index.task(rootId); // full history, rejected transitions marked valid: false
+```
+
+The fold is a pure function of the board's posts in id order, so a
+snapshot-aware rebuild derives exactly the rows incremental sync produced.
+
 ## Day snapshots, compaction, retention
 
 `rebuild` reads day snapshots first (`boards/<board>/snapshots/<day>.jsonl`,

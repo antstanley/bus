@@ -14,7 +14,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 105 | [presence: delivery targets](done/105-presence-delivery-targets.md) | letta | done | S |
 | 106 | [wake daemon: deliver new posts to idle sessions](done/106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | done | M |
 | 107 | [letta mod: board tools and turn_start injection](done/107-letta-mod-board-tools-and-turn-start-injection.md) | letta | done | M |
-| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | codex | in-progress | S |
+| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | letta | in-progress | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
@@ -40,7 +40,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 |----|------|-------|--------|-----|
 | 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | claude | todo | S |
-| 203 | [task lifecycle folded from status posts](203-task-lifecycle-folded-from-status-posts.md) | letta | in-progress | M |
+| 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
 | 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
@@ -94,7 +94,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
-| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | in-progress | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | in-progress | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |

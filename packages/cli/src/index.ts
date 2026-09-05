@@ -7,11 +7,14 @@ import {
   isRuntimeSessionId,
   isSessionIdRuntime,
   keys,
+  STATUSES,
   type NewPost,
   type Post,
+  type Status,
   type Store,
   type WatchOptions,
 } from "@board/core";
+import { BoardIndex } from "@board/index";
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, MAX_WHO_LIMIT, who as listPresence, whoPage } from "@board/presence";
@@ -40,6 +43,8 @@ export type StoreSpec =
 
 export interface CliDependencies {
   createStore?: (spec: StoreSpec) => Promise<Store> | Store;
+  /** Open the local derived index (BoardIndex) at a path; tests inject this. */
+  createIndex?: (path: string) => Promise<BoardIndex> | BoardIndex;
   stdout?: (line: string) => void;
   stderr?: (line: string) => void;
   signal?: AbortSignal;
@@ -123,6 +128,14 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
     return;
   }
 
+  // `--state` filters the task listing; a TASK_ID positional prints one
+  // task's full history. The two are mutually exclusive: reject the
+  // combination here — before any store or index I/O — so a state filter is
+  // never silently ignored by a single-task lookup.
+  if (parsed.command === "tasks" && parsed.flags.has("state") && parsed.positionals.length > 0) {
+    throw new CliError("--state cannot be combined with a TASK_ID positional; pass either --state STATE or TASK_ID, not both");
+  }
+
   const storeText = parsed.flags.get("store");
   if (!storeText) throw new CliError("missing required --store");
   const spec = parseStoreSpec(storeText);
@@ -166,6 +179,62 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
       // match Store terminology while returning the next cursor explicitly.
       const result = await board.since(options.after, { limit: options.limit });
       output(JSON.stringify({ ...result, cursor: result.cursor ?? null }));
+      break;
+    }
+    case "tasks": {
+      // Fold A2A task state (task 203): sync the board into the local index,
+      // then list tasks or print one task with its full history.
+      const state = parsed.flags.get("state");
+      if (state !== undefined && !(STATUSES as readonly string[]).includes(state)) {
+        throw new CliError(`--state must be one of: ${STATUSES.join(", ")}`);
+      }
+      const index = await (deps.createIndex ?? (async (path: string) => new BoardIndex(path)))(
+        parsed.flags.get("index") ?? join(homedir(), ".board", "index.sqlite"),
+      );
+      try {
+        await index.sync(board);
+        const id = parsed.positionals[0];
+        if (id !== undefined) {
+          // A single-task lookup honors --board like the listing path: a
+          // same-id task fold on another board must not shadow this board's.
+          // Without --board the lookup fails closed to the synced board
+          // rather than letting a foreign fold's last activity decide.
+          const task = index.task(id, { board: parsed.flags.get("board") ?? board.name });
+          if (!task) {
+            output(`no such task: ${id}`);
+            break;
+          }
+          if (parsed.flags.has("json")) {
+            output(JSON.stringify(task));
+            break;
+          }
+          output(`${task.rootId}  ${task.board}  ${task.state}${task.title === null ? "" : `  ${task.title}`}`);
+          for (const t of task.history) {
+            output(`  ${t.ts}  ${t.valid ? t.state : `rejected ${t.state} (state stays ${t.from ?? "unset"})`}  ${t.postId}`);
+          }
+        } else {
+          const tasks = index.tasks({
+            ...(state === undefined ? {} : { state: state as Status }),
+            ...(parsed.flags.get("board") === undefined ? {} : { board: parsed.flags.get("board")! }),
+          });
+          if (parsed.flags.has("json")) {
+            output(JSON.stringify(tasks));
+            break;
+          }
+          if (tasks.length === 0) {
+            output("no tasks");
+            break;
+          }
+          const header = ["TASK ID", "BOARD", "STATE", "LAST ACTIVITY"];
+          const cells = tasks.map((t) => [t.rootId, t.board, t.state, t.lastActivity]);
+          const widths = header.map((h, i) => Math.max(h.length, ...cells.map((row) => row[i]!.length)));
+          output([header, ...cells]
+            .map((row) => row.map((cell, i) => cell.padEnd(widths[i]!)).join("  ").trimEnd())
+            .join("\n"));
+        }
+      } finally {
+        index.close();
+      }
       break;
     }
     case "watch": {
@@ -269,10 +338,10 @@ interface ParsedArgs {
 
 const VALUE_FLAGS = new Set([
   "store", "board", "as", "title", "body", "tags", "mentions",
-  "after", "limit", "interval", "max-age", "index", "runtime", "session",
+  "after", "limit", "interval", "max-age", "index", "runtime", "session", "state",
 ]);
 const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
-const COMMANDS = new Set(["init", "post", "reply", "read", "watch", "who", "install"]);
+const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "watch", "who", "install"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) return { command: "help", flags: new Map(), positionals: [] };
@@ -412,6 +481,7 @@ Commands:
   post    [--title TEXT] (--body TEXT | TEXT...) create a root post
   reply   <POST_ID> (--body TEXT | TEXT...)      reply to a post
   read    [--after CURSOR] [--limit N]           read a page as JSON
+  tasks   [--state STATE | TASK_ID]              fold A2A task state into the local index (--index <path>)
   watch   [--after CURSOR] [--interval MS]       stream posts as JSON lines
   who     [--max-age MS]                         list agent presence
   install <runtime> --store <spec>               merge runtime hooks/MCP config (Pi defaults to pi-<host>)

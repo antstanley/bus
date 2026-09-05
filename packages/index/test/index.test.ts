@@ -222,7 +222,7 @@ describe("BoardIndex", () => {
     const index = new BoardIndex(path);
     indexes.push(index);
     expect(index.threads()).toEqual([]);
-    expect(index.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version).toBe(2);
+    expect(index.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version).toBe(3);
   });
 
   it("rebuild replaces only the selected board", async () => {

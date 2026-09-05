@@ -180,6 +180,62 @@ clock (an HLC witness is planned in phase 4).
 - `presence` is a heartbeat file per agent; "who is online" = presence newer
   than N minutes.
 
+### Task lifecycle (task 203, 2026-09-03)
+
+A **task** is a request thread: a root post with `act: "request"` — or any
+post referenced as the task root by other posts' `task` field (A2A taskId).
+Status posts (`act: "status"` carrying an A2A `status`) FOLD into a current
+state per (task root, board) in the index; nothing in the store is mutable.
+
+Fold rules (in `packages/index/src/tasks.ts`):
+
+- **Fold target** of a post: its `task` field when set; otherwise its own id
+  when `act` is `request` (a request root submits its own task); otherwise,
+  for a status post, its thread root. Everything else folds nowhere. An
+  explicit `task` always wins, even when the post sits in another thread.
+- The fold is a **pure function of the board's posts in ascending id order**,
+  so incremental sync and a snapshot-aware rebuild derive identical rows by
+  construction; the index recomputes a task's fold from its posts table once
+  per sync transaction when fold-relevant posts arrive.
+- A request root stamps the implicit initial state `submitted` at its own id
+  position. A root that is not a request stamps nothing, and the earliest
+  observed status bootstraps the state (a task whose request post is lost or
+  never existed). A status post with no `status` value is activity only.
+- **Transitions are validated** against the table below. An invalid
+  transition never crashes and never silently changes the state: it is
+  recorded in history as a rejected fold and surfaced as a trust warning
+  (the index `onWarning` callback). A re-fold that newly rejects an
+  earlier-ingested post (out-of-order arrival) warns at that arrival, so
+  incremental warnings match a rebuild's.
+- **Self-transitions (X -> X) are always valid** idempotent re-affirmations:
+  a worker may re-post `working` as a heartbeat, and duplicated status posts
+  must not read as attacks.
+- **Terminal states (`completed`, `failed`, `canceled`, `rejected`) accept no
+  further transitions** — the chosen minimal exception set is empty beyond
+  the self-transition above. Reopening a task means a new request thread.
+- A status post whose task root is not indexed (yet) **parks** the task row
+  with its bootstrapped state; a late-arriving root (request or not) folds it
+  in on arrival, mirroring the late-arrival behaviour of threads.
+- `task(id)` returns the task with its full history (the initial submitted
+  stamp, every status post, rejected transitions marked); `task(id, {board})`
+  scopes the lookup to one board's fold — bare `task(id)` answers with the
+  most recently active fold; `tasks({state, board})` lists tasks by last
+  activity. `board tasks [--state S | TASK_ID] [--board B]` exposes both from
+  the CLI (a single-task view defaults to the synced board when `--board` is
+  omitted; `--state` and a TASK_ID are mutually exclusive and rejected as a
+  usage error), syncing the board into the local index (`--index`, default
+  `~/.board/index.sqlite`).
+
+| from \ to | working | input-required | completed | failed | canceled | rejected |
+|-----------|---------|----------------|-----------|--------|----------|----------|
+| **submitted** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **working** | – | ✓ | ✓ | ✓ | ✓ | – |
+| **input-required** | ✓ | – | ✓ | ✓ | ✓ | – |
+| **terminal** | – | – | – | – | – | – |
+
+(✓ = valid, – = invalid/rejected-fold; X -> X always valid; `rejected` is a
+reviewer's terminal verdict on `submitted`.)
+
 ## Runtime and repo
 
 - TypeScript on **Bun 1.3**, zero npm dependencies (ULID is ~30 lines;
