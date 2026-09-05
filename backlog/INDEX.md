@@ -33,7 +33,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | gated | S |
 | 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | opencode | blocked | S |
 | 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
-| 128 | [security gate: backlog role and dependency alignment](128-security-gate-backlog-role-alignment.md) | letta | gated | S |
+| 128 | [security gate: backlog role and dependency alignment](done/128-security-gate-backlog-role-alignment.md) | letta | done | S |
 
 ## Phase 2
 

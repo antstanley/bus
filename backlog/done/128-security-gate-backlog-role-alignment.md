@@ -3,7 +3,7 @@ id: 128
 title: "security gate: backlog role and dependency alignment"
 phase: 1
 owner: letta
-status: gated
+status: done
 kind: security-review
 depends: []
 estimate: S
@@ -77,8 +77,8 @@ cf96e93ec741dea4a218347ef5f9d0a2b9623f72e1e812d800471f3943294272  backlog/503-ad
 
 - [x] Fresh independent security gate returned for the original exact delta.
 - [x] Supplemental two-line README enum delta independently cleared.
-- [ ] Lead records disposition, integrates the planning metadata and pushes.
-- [ ] CI and cleanup confirmed; this gate record archived.
+- [x] Lead records disposition, integrates the planning metadata and pushes.
+- [x] CI and cleanup confirmed; this gate record archived.
 
 ## Original gate result and supplemental scope
 
@@ -110,3 +110,14 @@ independently reverified by lead. Both gates are clear for the exact metadata
 and two template lines. The temporary integration hold is lifted after
 CI33995381970 attempt2 passed on unchanged6cc2c8f; original test-failure
 diagnosis remains separately open under129. No metadata finding is open.
+
+Exact reviewed metadata and both reports integrated/pushed as
+f10bc8aaa5eeb9d54de6492312faa12fb6fbc95c (no runtime changes). Lead verified
+the staged fifteen-file diff, selected INDEX rows and two enum-line hashes
+against their gate pins; other pending backlog/governance/spec changes were
+excluded. Temporary staging patches and their empty directory were removed
+after push. Root CI33996029229 and packaging33996029199 both passed on exact
+f10bc8a. Gate-worker cleanup confirmed in `20260905T223138Z-letta-6a94`:
+only authorized audit reports/bundles retained, no scratch/processes/worktrees.
+Lead closes and archives this gate; it does not close separate125/129 or108
+validation/review work.
