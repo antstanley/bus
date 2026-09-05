@@ -3,7 +3,7 @@ id: 125
 title: index changes-feed ingest must apply the store-key<->id binding check
 phase: 1
 owner: letta
-status: gated
+status: done
 depends: [116, 405]
 estimate: S
 ---
@@ -63,7 +63,7 @@ Reassignment notice: `20260905T220103Z-codex-3f77`; Letta dispatch:
 dispatch. It is independent of the two disjoint documentation security workers.
 
 - [x] Final isolated proposed-head tests and typecheck pass.
-- [ ] Exact scope committed/pushed, CI passed and owner cleanup confirmed.
+- [x] Exact scope committed/pushed, CI passed and owner cleanup confirmed.
 
 Final isolated validation PASS: `20260905T220932Z-letta-56ac`.
 Committed bb3ee17 plus ONLY the two frozen files;272 passed,1 live-S3 skip,
@@ -75,3 +75,21 @@ excluded. Limits: global Bun cache may be read (not filesystem-hermetic),
 Darwin/arm64+Bun1.4.0, environmental S3 skip;221-file source manifest. Worker
 reports no scratch remaining and no live-checkout changes. Ready to integrate
 the exact code/security scope, with the pre-existing nit disposition above.
+
+Integrated/pushed6cc2c8f34d34ffc9c0bfc02e3ec7301dd7659637. Packaging33995381956
+passed. Root CI33995381970 FAILED: installer collision-scan test timed out at
+5seconds, followed by an unhandled store rename error; typecheck was skipped.
+MinIO conformance passed, optional live-AWS test steps were skipped. Task129
+tracks independent clean diagnosis; no attribution to125 or flake claim yet.
+Keep125 gated until CI disposition and cleanup are complete.
+Owning-agent post-push cleanup confirmed in `20260905T221906Z-letta-3e01`:
+shipped index paths clean, no scratch/processes/worktrees; audit evidence kept.
+Lead's temporary staging patch/directory was also removed after push.
+CI33995381970 attempt2 passed on unchanged6cc2c8f:272/1skip/0fail and typecheck
+passed (job101385665428). Original attempt1 failure remains tracked by129;
+Clean diagnosis129 (`20260905T223723Z-letta-54d0`) traced the failing installer
+fixture path without index execution and found comparable local baseline/fix
+timings. Lead accepts its test-fixture classification, not a125 regression;
+test-only remediation is separate130. Original failure is preserved under129.
+All125 requirements, exact-scope gates, push, CI and cleanup are complete;
+lead closes and archives125 without claiming130 is fixed.
