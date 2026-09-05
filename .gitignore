@@ -7,6 +7,7 @@ node_modules/
 *.sqlite-*
 .env
 .DS_Store
+packages/cli/dist/
 
 # credentials dropped in by the user; never commit
 agent-s3_accessKeys.csv

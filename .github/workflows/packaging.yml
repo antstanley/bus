@@ -1,0 +1,81 @@
+name: CLI packaging
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package and binary (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-x64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+          - runner: macos-15
+            target: darwin-arm64
+          - runner: macos-15-intel
+            target: darwin-x64
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build npm tarball
+        run: bun run build:cli
+      - name: Smoke test isolated npm tarball
+        shell: bash
+        run: |
+          shopt -s nullglob
+          packages=(packages/cli/dist/board-cli-*.tgz)
+          test "${#packages[@]}" -eq 1
+          bun run smoke:cli package "${packages[0]}"
+      - name: Compile native executable
+        run: bun run compile:cli bun-${{ matrix.target }}
+      - name: Smoke test executable without Bun on PATH
+        run: bun run smoke:cli binary packages/cli/dist/bin/board-${{ matrix.target }}
+      - name: Generate sha256 manifest
+        shell: bash
+        working-directory: packages/cli/dist
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tarballs=(board-cli-*.tgz)
+          test "${#tarballs[@]}" -eq 1
+          hash() {
+            if command -v sha256sum > /dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi
+          }
+          ( cd bin && hash "board-${{ matrix.target }}" ) > SHASUMS256.txt
+          hash "${tarballs[0]}" >> SHASUMS256.txt
+          cat SHASUMS256.txt
+      - name: Upload tested artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: board-${{ matrix.target }}
+          path: |
+            packages/cli/dist/bin/board-${{ matrix.target }}
+            packages/cli/dist/board-cli-*.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload sha256 manifest
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: board-${{ matrix.target }}-sha256
+          path: packages/cli/dist/SHASUMS256.txt
+          if-no-files-found: error
+          retention-days: 14

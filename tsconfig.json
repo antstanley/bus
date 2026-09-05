@@ -23,5 +23,5 @@
       "@board/cli": ["./packages/cli/src/index.ts"]
     }
   },
-  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"]
+  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts", "packages/cli/scripts/**/*.ts"]
 }

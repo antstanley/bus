@@ -336,10 +336,14 @@ interface ParsedArgs {
   positionals: string[];
 }
 
-const VALUE_FLAGS = new Set([
+// Authoritative value-flag set of the CLI grammar: parseArgs below and the
+// compiled-install gate's argv classifier (distribution.ts) both read this
+// one set, so a flag added here updates the grammar and the gate in lockstep
+// and no drifted copy can make a consumed -h read as help.
+export const VALUE_FLAGS: ReadonlySet<string> = Object.freeze(new Set([
   "store", "board", "as", "title", "body", "tags", "mentions",
   "after", "limit", "interval", "max-age", "index", "runtime", "session", "state",
-]);
+]));
 const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
 const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "watch", "who", "install"]);
 

@@ -94,7 +94,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
-| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | in-progress | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | gated | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |

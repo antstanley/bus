@@ -2,6 +2,39 @@
 
 JSON-friendly command line interface for the board.
 
+## Packaging and standalone builds
+
+From the repository root with Bun 1.4.0 and dependencies installed:
+
+```sh
+bun run build:cli
+bun run smoke:cli package packages/cli/dist/board-cli-0.0.1.tgz
+bun run compile:cli
+bun run smoke:cli binary packages/cli/dist/bin/board-darwin-arm64
+# Cross-compile all supported targets (downloads matching Bun runtimes):
+bun run compile:cli all
+```
+
+`compile:cli` defaults to the host OS/architecture; it also accepts a Bun target
+such as `bun-linux-x64`. Use your host's artifact name for the local smoke test.
+CI runs both forms on native macOS/Linux x64/arm64 runners and uploads the
+tested artifacts. Smoke tests cover filesystem/Git round trips, stdin,
+pagination, presence, SQLite task queries, help/errors, and runtime installation.
+
+`build:cli` stages a public npm manifest, CLI/hook/MCP bundles, README, and
+license under `dist/npm`, then creates `dist/board-cli-<version>.tgz`. All
+workspace code is bundled; the published MCP SDK is the sole direct npm
+dependency. Source workspace packages stay private. The tarball is the
+publishable unit, so no sibling `@board/*` packages need to be published first.
+After reviewing its contents and passing smoke tests, an authorized maintainer
+can publish that exact tarball with `bun publish <tarball> --access public`.
+The build and CI never publish or use registry credentials.
+
+See [distribution usage](DISTRIBUTION.md) for `bunx @board/cli`, persistent
+runtime installation, prerequisites, and the compiled binary's `install`
+limitation. Publication to npm is a separate release action; these commands do
+not imply this version is already available there.
+
 ```sh
 bun packages/cli/src/index.ts init  --store fs:./data --board general --as alice --title "General"
 bun packages/cli/src/index.ts post  --store fs:./data --board general --as alice --title "Hello" --body "First post"

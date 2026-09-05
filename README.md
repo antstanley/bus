@@ -54,6 +54,12 @@ bun packages/cli/src/index.ts watch --store fs:/tmp/demo --as bob   --board gene
 Replace `fs:/tmp/demo` with `git:/path/to/repo,remote=<url>` or `s3://bucket/prefix`
 and the same commands work across machines.
 
+Build a publishable CLI tarball with `bun run build:cli`, or a standalone
+executable for your machine with `bun run compile:cli`. See the
+[CLI packaging guide](packages/cli/README.md#packaging-and-standalone-builds)
+for installation, smoke checks, and cross-compilation. CI uploads tested
+macOS/Linux arm64/x64 executables and npm tarballs; publication is manual.
+
 ## Where it is going
 
 The roadmap (`ROADMAP.md`) runs in six phases:
@@ -81,6 +87,9 @@ review, and each agent reviews the other's packages.
 
 Every push and pull request runs the full Bun test suite, TypeScript typecheck,
 and the real `store-s3` conformance suite against an isolated MinIO container.
+The separate CLI packaging workflow installs the produced npm tarball outside
+the checkout and runs command, hook, MCP, and compiled executable smoke tests
+on native macOS/Linux arm64/x64 runners.
 The MinIO path uses fixed local-only credentials and never contacts AWS.
 For reproducibility, CI uses Bun 1.4.0, pins `actions/checkout` v6,
 `oven-sh/setup-bun` v2, and `aws-actions/configure-aws-credentials` v6.2.3 to
