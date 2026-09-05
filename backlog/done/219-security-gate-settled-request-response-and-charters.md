@@ -3,7 +3,7 @@ id: 219
 title: "security gate: settled request-response and charter specs"
 phase: 2
 owner: letta
-status: gated
+status: done
 kind: security-review
 depends: [214, 216]
 estimate: M
@@ -53,7 +53,7 @@ acceptance and exact-scope integration before closing this task.
 
 - [x] Fresh independent security gate returned for the exact frozen scope.
 - [x] Findings resolved or explicitly accepted by lead within authority.
-- [ ] Audit evidence integrated and cleanup confirmed.
+- [x] Audit evidence integrated and cleanup confirmed.
 
 ## Result and lead disposition
 
@@ -70,5 +70,10 @@ obligation with inert transport; optional screening is not a newly approved
 implementation requirement. O-3: preserve the authoring provenance disclaimer.
 All are consistent with the approved design; no remediation or third correctness
 round is needed. Specifications are settled for implementation planning, but
-202/208 retain their code/dependency blockers. Exact artifact integration and
-CI/cleanup closure remain pending.
+202/208 retain their code/dependency blockers. Exact artifact integration:
+`a020b7c9101814fc48fecb3658f09ba1b687e23d`, pushed to origin/main.
+Root CI33993185231 and CLI packaging33993185224 both completed successfully
+on that exact commit. Worker cleanup confirmed in
+`20260905T213136Z-letta-4384`: no scratch or disposable sessions, no repository
+writes beyond the preserved audit report; sealed scan evidence retained.
+Lead closes this gate and archives its sole task record.

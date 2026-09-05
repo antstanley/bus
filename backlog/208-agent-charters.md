@@ -25,7 +25,8 @@ Specification author: `codex-architect`, assigned
 Authoring is task 211; independent round-1 review is task 212 in this backlog. Implementation
 is planned for OpenCode after review216 READY. Shared verification, membership,
 policy/card and enrollment-spec dependencies must land first; the separate
-document security gate219 passed, with artifact integration pending. No product implementation is dispatched yet.
+document security gate219 passed; specs are integrated in a020b7c with green CI.
+No product implementation is dispatched yet.
 
 ## Definition of done
 

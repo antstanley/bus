@@ -12,7 +12,8 @@ Implement the settled additive request/response specification in
 `Board.request(...): Promise<Post>`; add `requestAndWait` and `respond` with
 the spec's typed outcomes, bounded observation and local deadline semantics.
 No code edits dispatched yet: task404 owns overlapping core files and the
-specification security gate219 passed, with artifact integration pending. Task108 MCP integration must
+specification security gate219 passed; specs are integrated in a020b7c with green
+CI. Task108 MCP integration must
 also be coordinated before shared adapter edits.
 
 ## Definition of done

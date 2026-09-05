@@ -35,7 +35,9 @@ READY — `20260905T200501Z-opencode-reviewer-7686`. Frozen spec, whole DESIGN,
 isolated section and unrelated bytes all stable. All four review212 findings
 resolved. No edits/tests/security scan/artifacts. Lead accepts for task208
 implementation planning; separate document security gate219 passed, with
-integration and enrollment dependencies remaining. No third correctness round needed. Nonblocking310
+enrollment dependencies remaining. Exact artifact integrated/pushed in a020b7c;
+root CI33993185231 and packaging33993185224 successful. Final reviewer cleanup/
+archive remains pending. No third correctness round needed. Nonblocking310
 alignment note: add agreed charter cursor kinds, requester/exact policy/
 generation bindings and mismatch/policy-change outcomes before its freeze;
 relayed in `20260905T200632Z-codex-664e`.

@@ -54,7 +54,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 214 | [spec review: request/response, round 2](214-review-request-response-round-2.md) | opencode-reviewer | gated | M |
 | 215 | [spec remediation: agent charters after round 1](215-remediate-agent-charters-spec.md) | codex-architect | gated | M |
 | 216 | [spec review: agent charters, round 2](216-review-agent-charters-round-2.md) | opencode-reviewer | gated | M |
-| 219 | [security gate: settled request-response and charter specs](219-security-gate-settled-request-response-and-charters.md) | letta | gated | M |
+| 219 | [security gate: settled request-response and charter specs](done/219-security-gate-settled-request-response-and-charters.md) | letta | done | M |
 
 ## Phase 3
 
