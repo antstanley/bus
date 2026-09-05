@@ -7,6 +7,7 @@ import {
   Board,
   MemoryStore,
   type Changes,
+  encodePost,
   type PutOptions,
 } from "@board/core";
 import { BoardIndex } from "../src/index.ts";
@@ -189,6 +190,47 @@ describe("BoardIndex", () => {
     expect(sync.reconciled).toBe(false);
     expect(index.search("exact")[0]?.id).toBe(old.id);
     expect(index.state("general")?.changeToken).toBe("3");
+  });
+
+  it("change-feed ingest rejects key/id-mismatched objects and still advances the feed", async () => {
+    const store = new ChangeStore();
+    const c = clock(Date.UTC(2026, 7, 1, 12));
+    const board = new Board(store, { board: "general", author: "letta", now: c.now });
+    const root = await board.request(["codex"], { title: "Task root", body: "please build" });
+    const index = memoryIndex({ reconcileEvery: 999 });
+    await index.sync(board); // history scan ingests the root; establishes the change token
+    expect(index.state("general")?.changeToken).toBe("1");
+
+    // A hostile co-writer plants valid post bytes under a key whose
+    // keyFor(id, board) differs (wrong day bucket): every live read rejects
+    // it, so the feed must reject it too.
+    const hostile = new Board(new MemoryStore(), { board: "general", author: "mallory", now: () => Date.UTC(2026, 7, 1, 13) });
+    const forged = await hostile.post({ body: "mis-keyed poison" });
+    const wrongKey = `boards/general/posts/2026-08-31/${forged.id}.json`;
+    expect(board.keyFor(forged.id)).not.toBe(wrongKey);
+    await store.put(wrongKey, encodePost(forged));
+
+    // A genuine late post on the same feed is still ingested; its key sorts
+    // before the planted one, so the rejected key is the batch's largest and
+    // the cursor can only end past it if rejected keys advance the cursor.
+    const late = new Board(store, { board: "general", author: "codex", now: () => Date.UTC(2026, 7, 1, 14) });
+    const working = await late.reply(root, { body: "status: working", act: "status", status: "working", task: root.id });
+
+    const sync = await index.sync(board);
+    expect(sync.ingested).toBe(1); // the status post, not the forged object
+    expect(sync.changeToken).toBe("3"); // the token advanced past the hostile revision
+    expect(sync.cursor).toBe(wrongKey); // the cursor advanced past the rejected key
+    expect(index.search("poison")).toEqual([]);
+    expect(index.search("poison", { board: "general" })).toEqual([]);
+    expect(index.thread(forged.id)).toBeNull();
+    expect(index.thread(root.id)?.posts.map((p) => p.id)).toEqual([root.id, working.id]);
+    expect(index.task(root.id)?.state).toBe("working");
+
+    // Fold ≡ rebuild: the rebuild's live scan rejects the mis-keyed object
+    // via the same key binding, so both paths derive identical rows.
+    const before = { threads: index.threads(), tasks: index.tasks(), view: index.task(root.id) };
+    expect(await index.rebuild(board)).toBe(2);
+    expect({ threads: index.threads(), tasks: index.tasks(), view: index.task(root.id) }).toEqual(before);
   });
 
   it("persists posts and per-board sync state at a local path", async () => {

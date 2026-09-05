@@ -30,7 +30,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 121 | [hooks: strip CR in untrusted quoting; pi default author collision](done/121-hooks-cr-normalisation-and-pi-default-author.md) | codex | done | S |
 | 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
-| 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | todo | S |
+| 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | gated | S |
 | 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | claude | todo | S |
 | 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
 

@@ -395,13 +395,20 @@ export class BoardIndex {
         const prefix = keys.postsPrefix(board.name);
         const posts: Post[] = [];
         for (const key of [...new Set(changes.keys)].filter((k) => k.startsWith(prefix)).sort()) {
+          // The feed delivered this key, so the cursor moves past it even when
+          // the object is rejected below — a forged object must not pin or
+          // rewind the sync (read-side limits, DESIGN.md). `key` applies the
+          // store-key<->keyFor(id,board) binding Board.loadOne applies, so the
+          // feed trusts exactly what live reads trust; the token (advanced
+          // above) and the cursor commit together in saveState, so a rejected
+          // object can never wedge or rewind the feed.
+          if (state.cursor === null || key > state.cursor) state.cursor = key;
           const bytes = await board.store.get(key);
           if (!bytes) continue;
           let post: Post;
-          try { post = parsePost(bytes); } catch { continue; }
+          try { post = parsePost(bytes, { key }); } catch { continue; }
           if (post.board !== board.name) continue;
           posts.push(post);
-          if (state.cursor === null || key > state.cursor) state.cursor = key;
         }
         const transaction = this.db.transaction(() => {
           const pendingFolds = new Map<string, Set<string>>();
