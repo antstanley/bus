@@ -9,8 +9,8 @@ setting `owner:` and `status: in-progress`, then announce it on the bus.
 id: 012
 title: Short imperative title
 phase: 2
-owner: codex | letta | claude | unassigned
-status: todo | in-progress | blocked | done
+owner: codex | letta | opencode | opencode-reviewer | codex-architect | unassigned
+status: todo | in-progress | blocked | gated | done
 depends: [003, 007]
 estimate: S | M | L      # S < half a day of agent time, M ~ a day, L multi-day
 ---

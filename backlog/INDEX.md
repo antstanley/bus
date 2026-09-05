@@ -31,8 +31,9 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 122 | [letta-mod: clean review fixes (bun entrypoint, content shape, multiline bodies)](done/122-letta-mod-review-fixes.md) | letta | done | S |
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
 | 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | gated | S |
-| 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | claude | todo | S |
+| 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | opencode | blocked | S |
 | 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
+| 128 | [security gate: backlog role and dependency alignment](128-security-gate-backlog-role-alignment.md) | letta | gated | S |
 
 ## Phase 2
 
@@ -44,7 +45,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
 | 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
-| 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | claude | todo | S |
+| 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | letta | todo | S |
 | 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |
 | 209 | [spec: author request/response](209-spec-request-response.md) | codex-architect | gated | M |
 | 210 | [spec review: request/response, round 1](210-review-request-response-round-1.md) | opencode-reviewer | gated | M |
@@ -60,27 +61,27 @@ Statuses: todo, in-progress, blocked, gated, done.
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
-| 301 | [identity: keys, did:key ids, keystore](301-identity-keys-did-key-ids-keystore.md) | claude | todo | M |
-| 302 | [sign and verify posts](302-sign-and-verify-posts.md) | claude | todo | M |
-| 303 | [key registry with pre-rotation and TOFU](303-key-registry-with-pre-rotation-and-tofu.md) | letta | todo | M |
-| 304 | [per-board requireSig policy](304-per-board-requiresig-policy.md) | claude | todo | S |
-| 305 | [rate limits and audit view](305-rate-limits-and-audit-view.md) | codex | todo | S |
+| 301 | [identity: keys, did:key ids, keystore](301-identity-keys-did-key-ids-keystore.md) | letta | blocked | M |
+| 302 | [sign and verify posts](302-sign-and-verify-posts.md) | opencode | blocked | M |
+| 303 | [key registry with pre-rotation and TOFU](303-key-registry-with-pre-rotation-and-tofu.md) | letta | blocked | M |
+| 304 | [per-board requireSig policy](304-per-board-requiresig-policy.md) | letta | blocked | S |
+| 305 | [rate limits and audit view](305-rate-limits-and-audit-view.md) | letta | blocked | S |
 | 306 | [private boards via HPKE-wrapped board keys](306-private-boards-via-hpke-wrapped-board-keys.md) | letta | todo | L |
-| 307 | [red-team fixture and injection test](307-red-team-fixture-and-injection-test.md) | codex | todo | S |
+| 307 | [red-team fixture and injection test](307-red-team-fixture-and-injection-test.md) | opencode | todo | S |
 
 ## Phase 4
 
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 124 | [letta-mod: in-process timer wake for open Letta sessions](124-letta-mod-in-process-timer-wake.md) | letta | blocked | M |
-| 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | claude | todo | L |
-| 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | claude | todo | S |
+| 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | letta | todo | L |
+| 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | opencode | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
 | 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | opencode | in-progress | S |
 | 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
-| 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | codex | todo | M |
-| 408 | [load and cost benchmarks](408-load-and-cost-benchmarks.md) | claude | todo | S |
+| 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | opencode | todo | M |
+| 408 | [load and cost benchmarks](408-load-and-cost-benchmarks.md) | opencode | todo | S |
 
 ## Phase 5
 
@@ -88,7 +89,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 |----|------|-------|--------|-----|
 | 501 | [A2A gateway](501-a2a-gateway.md) | unassigned | todo | L |
 | 502 | [MCP streamable-HTTP transport and subscriptions/listen](502-mcp-streamable-http-transport-and-subscriptions-.md) | letta | todo | M |
-| 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | codex | todo | M |
+| 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | letta | todo | M |
 | 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
 | 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
@@ -105,9 +106,9 @@ Statuses: todo, in-progress, blocked, gated, done.
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
 | 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | gated | S |
-| 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
+| 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | letta | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
-| 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |
+| 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | opencode | todo | S |
 | 606 | [third-party conformance kits](606-third-party-conformance-kits.md) | unassigned | todo | S |
 | 607 | [CI: AWS auth via GitHub OIDC + provisioning script](done/607-ci-aws-oidc-federation.md) | codex | done | M |
 | 608 | [OIDC setup --delete: re-inspect provider references immediately before deletion (TOCTOU)](done/608-oidc-delete-toctou-hardening.md) | codex | done | S |
