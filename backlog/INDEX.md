@@ -14,7 +14,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 105 | [presence: delivery targets](done/105-presence-delivery-targets.md) | letta | done | S |
 | 106 | [wake daemon: deliver new posts to idle sessions](done/106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | done | M |
 | 107 | [letta mod: board tools and turn_start injection](done/107-letta-mod-board-tools-and-turn-start-injection.md) | letta | done | M |
-| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | claude | todo | S |
+| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | codex | in-progress | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
@@ -32,7 +32,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 123 | [wake daemon: log-line hygiene, registry-write isolation, one session-id contract](done/123-wake-daemon-gate-lows.md) | codex | done | S |
 | 125 | [index changes-feed ingest must apply the store-key<->id binding check](125-index-changesfeed-key-binding.md) | letta | todo | S |
 | 126 | [Board.info() must bound and schema-check event bytes](126-board-info-bounds.md) | claude | todo | S |
-| 127 | [SECURITY.md — repository security policy](127-security-policy-md.md) | letta-flash | in-progress | S |
+| 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
 
 ## Phase 2
 
@@ -40,7 +40,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 |----|------|-------|--------|-----|
 | 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | claude | todo | S |
-| 203 | [task lifecycle folded from status posts](203-task-lifecycle-folded-from-status-posts.md) | letta | todo | M |
+| 203 | [task lifecycle folded from status posts](203-task-lifecycle-folded-from-status-posts.md) | letta | in-progress | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
 | 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
@@ -66,7 +66,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | claude | todo | L |
 | 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | claude | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
-| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | codex | todo | S |
+| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | opencode | in-progress | S |
 | 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
 | 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | codex | todo | M |
@@ -94,7 +94,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
-| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | todo | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | codex | in-progress | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | claude | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | claude | todo | S |

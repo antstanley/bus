@@ -3,7 +3,7 @@ id: 203
 title: task lifecycle folded from status posts
 phase: 2
 owner: letta
-status: todo
+status: in-progress
 depends: [201]
 estimate: M
 ---

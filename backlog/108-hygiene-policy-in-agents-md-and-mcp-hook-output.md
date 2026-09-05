@@ -2,8 +2,8 @@
 id: 108
 title: hygiene policy in AGENTS.md and MCP/hook output
 phase: 1
-owner: claude
-status: todo
+owner: codex
+status: in-progress
 depends: []
 estimate: S
 ---
