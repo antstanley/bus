@@ -12,7 +12,7 @@ import {
   type InstallOptions,
 } from "../src/install.ts";
 import { openCodeSessionRegistryPath, runCli } from "../src/index.ts";
-import { Board, ulid } from "@board/core";
+import { Board, MemoryStore, ulid } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 
@@ -442,12 +442,19 @@ console.log("injected by fake hook");
 
   test("CLI reports a truncated collision scan when the derived identity is beyond the bounded page", async () => {
     const home = await fixture();
-    const store = new FsStore(join(home, "store"));
+    // In-memory store via the createStore seam: keeps the 1,001 heartbeats off
+    // disk so the bounded-scan case never races the 5s CI budget or teardown.
+    const store = new MemoryStore();
+    const derivedAuthor = piIdentityForHostname("Build.Host");
+    expect(derivedAuthor).toMatch(/^pi-build-host-/);
+    // "aaa" sorts before "pi-…", so the derived identity is the 1,001st
+    // presence key: stored but beyond the bounded page of MAX_WHO_LIMIT.
+    expect("aaa" < derivedAuthor).toBe(true);
     for (let index = 0; index < MAX_WHO_LIMIT; index++) {
       await heartbeat(store, { name: "aaa", instance: ulid(), status: "idle" });
     }
     await heartbeat(store, {
-      name: piIdentityForHostname("Build.Host"),
+      name: derivedAuthor,
       instance: ulid(),
       status: "idle",
     });

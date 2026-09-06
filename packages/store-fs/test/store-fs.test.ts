@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { storeConformance } from "@board/core/test/store-conformance";
+import { EventEmitter } from "node:events";
+import type { FSWatcher } from "node:fs";
 import { chmod, mkdtemp, mkdir, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -108,4 +110,278 @@ describe("FsStore", () => {
     await store.put("a/one", "1");
     expect(await store.list("", { limit: Infinity })).toEqual({ keys: ["a/one"], truncated: false });
   });
+
+  it("shares one recursive watcher, debounces atomic activity, and cleans up all consumers", async () => {
+    const root = await tempRoot();
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    let starts = 0;
+    const store = new FsStore(root, {
+      hintDebounceMs: 2,
+      watchFactory: (_path, options, callback) => {
+        starts++;
+        expect(options).toEqual({ recursive: true });
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+    const aAbort = new AbortController();
+    const bAbort = new AbortController();
+    const a = store.hint(aAbort.signal)[Symbol.asyncIterator]();
+    const b = store.hint(bAbort.signal)[Symbol.asyncIterator]();
+    const aWake = a.next();
+    const bWake = b.next();
+    await until(() => listener !== undefined);
+
+    let wokeForMetadata = false;
+    void aWake.then(() => { wokeForMetadata = true; });
+    listener!("change", ".git/FETCH_HEAD");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(wokeForMetadata).toBe(false);
+
+    // A typical temp-create/rename/unlink burst is one hint. Filenames are
+    // untrusted data and are never interpreted as keys.
+    listener!("rename", Buffer.from("../../outside"));
+    listener!("change", ".board-tmp-object");
+    listener!("rename", "boards/g/object");
+    expect(await aWake).toEqual({ done: false, value: undefined });
+    expect(await bWake).toEqual({ done: false, value: undefined });
+    expect(starts).toBe(1);
+
+    const aDone = a.next();
+    const bDone = b.next();
+    aAbort.abort();
+    expect(await aDone).toEqual({ done: true, value: undefined });
+    expect(fake.closeCount).toBe(0);
+    bAbort.abort();
+    expect(await bDone).toEqual({ done: true, value: undefined });
+    expect(fake.closeCount).toBe(1);
+  });
+
+  it("ends hint iterators on watcher errors or unexpected closure", async () => {
+    for (const event of ["error", "close"] as const) {
+      const fake = new FakeWatcher();
+      const store = new FsStore(await tempRoot(), {
+        watchFactory: () => fake as unknown as FSWatcher,
+      });
+      const iterator = store.hint()[Symbol.asyncIterator]();
+      const pending = iterator.next();
+      await until(() => fake.listenerCount(event) > 0);
+      if (event === "error") fake.emit("error", new Error("watch failed"));
+      else fake.emit("close");
+      await expect(pending).rejects.toBeInstanceOf(Error);
+      expect(fake.closeCount).toBe(1);
+    }
+  });
+
+  it("closes a hint iterator promptly when return() lands while a next() is pending", async () => {
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    const store = new FsStore(await tempRoot(), {
+      watchFactory: (_path, _options, callback) => {
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+    const iterator = store.hint()[Symbol.asyncIterator]();
+    const pending = iterator.next();
+    await until(() => listener !== undefined);
+    const returned = iterator.return(undefined);
+    expect(await Promise.race([returned, rejectAfter(250, "return() hung while a next() was pending")])).toEqual({ done: true, value: undefined });
+    expect(await pending).toEqual({ done: true, value: undefined });
+    expect(fake.closeCount).toBe(1);
+  });
+
+  it("keeps other hint consumers and the shared watcher alive when one iterator closes mid-wait", async () => {
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    let starts = 0;
+    const store = new FsStore(await tempRoot(), {
+      hintDebounceMs: 2,
+      watchFactory: (_path, options, callback) => {
+        starts++;
+        expect(options).toEqual({ recursive: true });
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+    const a = store.hint()[Symbol.asyncIterator]();
+    const b = store.hint()[Symbol.asyncIterator]();
+    const aWake = a.next();
+    const bWake = b.next();
+    await until(() => listener !== undefined);
+
+    await a.return(undefined);
+    expect(await aWake).toEqual({ done: true, value: undefined });
+    expect(fake.closeCount).toBe(0);
+
+    listener!("rename", "boards/g/object");
+    expect(await bWake).toEqual({ done: false, value: undefined });
+    expect(starts).toBe(1);
+
+    const c = store.hint()[Symbol.asyncIterator]();
+    const cWake = c.next();
+    listener!("change", "boards/g/other");
+    expect(await cWake).toEqual({ done: false, value: undefined });
+    expect(starts).toBe(1);
+
+    await b.return(undefined);
+    await c.return(undefined);
+    expect(fake.closeCount).toBe(1);
+
+    listener!("rename", "boards/g/late");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(await b.next()).toEqual({ done: true, value: undefined });
+  });
+
+  it("releases the shared watcher immediately when an abort lands while the iterator sits at a yield", async () => {
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    let starts = 0;
+    const store = new FsStore(await tempRoot(), {
+      hintDebounceMs: 2,
+      watchFactory: (_path, options, callback) => {
+        starts++;
+        expect(options).toEqual({ recursive: true });
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+    const abort = new AbortController();
+    const abandoned = store.hint(abort.signal)[Symbol.asyncIterator]();
+    const first = abandoned.next();
+    await until(() => listener !== undefined);
+    listener!("rename", "boards/g/first");
+    expect(await first).toEqual({ done: false, value: undefined });
+
+    // The iterator is now parked at a yield. The abort must release the
+    // watcher (observable pin: watcher close and a fresh watchFactory start)
+    // without this iterator ever being resumed or returned again.
+    abort.abort();
+    await expect(Promise.race([
+      until(() => fake.closeCount === 1).then(() => "released"),
+      rejectAfter(250, "abort left the shared watcher attached"),
+    ])).resolves.toBe("released");
+    expect(starts).toBe(1);
+
+    const follow = store.hint()[Symbol.asyncIterator]();
+    const followWake = follow.next();
+    await until(() => starts === 2);
+    listener!("rename", "boards/g/second");
+    expect(await followWake).toEqual({ done: false, value: undefined });
+    await follow.return(undefined);
+    expect(fake.closeCount).toBe(2);
+  });
+
+  it("keeps a concurrent hint consumer and the shared watcher working after an abort lands at a yield", async () => {
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    const store = new FsStore(await tempRoot(), {
+      hintDebounceMs: 2,
+      watchFactory: (_path, _options, callback) => {
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+    const abort = new AbortController();
+    const abandoned = store.hint(abort.signal)[Symbol.asyncIterator]();
+    const survivor = store.hint()[Symbol.asyncIterator]();
+    const first = abandoned.next();
+    const survivorWake = survivor.next();
+    await until(() => listener !== undefined);
+    listener!("rename", "boards/g/first");
+    expect(await first).toEqual({ done: false, value: undefined });
+    expect(await survivorWake).toEqual({ done: false, value: undefined });
+    const survivorNext = survivor.next();
+
+    // Aborted while parked at a yield and never touched again; the survivor
+    // must still receive a subsequent filesystem-triggered hint.
+    abort.abort();
+    expect(fake.closeCount).toBe(0);
+    listener!("rename", "boards/g/second");
+    expect(await Promise.race([
+      survivorNext,
+      rejectAfter(250, "survivor missed its wake after a sibling abort"),
+    ])).toEqual({ done: false, value: undefined });
+
+    // The aborted registration was released at abort time, so closing the
+    // survivor is what shuts the shared watcher down.
+    await survivor.return(undefined);
+    await expect(Promise.race([
+      until(() => fake.closeCount === 1).then(() => "released"),
+      rejectAfter(250, "aborted consumer kept the watcher registered"),
+    ])).resolves.toBe("released");
+  });
+
+  it("releases the watcher when a consumer aborts before its first next()", async () => {
+    const fake = new FakeWatcher();
+    let listener: ((eventType: string, filename: string | Buffer | null) => void) | undefined;
+    let starts = 0;
+    const store = new FsStore(await tempRoot(), {
+      hintDebounceMs: 2,
+      watchFactory: (_path, options, callback) => {
+        starts++;
+        expect(options).toEqual({ recursive: true });
+        listener = callback;
+        return fake as unknown as FSWatcher;
+      },
+    });
+
+    // The abort lands after hint() returns but before the first next()
+    // starts the generator body. The body still runs when the caller
+    // iterates, and it must not leave the already-stopped consumer
+    // registered — otherwise its idempotent close would never fire onClose
+    // and the shared watcher would stay attached for the process lifetime.
+    const abort = new AbortController();
+    const abandoned = store.hint(abort.signal)[Symbol.asyncIterator]();
+    abort.abort();
+    expect(await abandoned.next()).toEqual({ done: true, value: undefined });
+    await expect(Promise.race([
+      until(() => fake.closeCount === 1).then(() => "released"),
+      rejectAfter(250, "pre-iteration abort left the shared watcher attached"),
+    ])).resolves.toBe("released");
+    expect(starts).toBe(1);
+
+    // A later consumer must still get hints from a fresh watcher start.
+    const survivor = store.hint()[Symbol.asyncIterator]();
+    const survivorWake = survivor.next();
+    await until(() => starts === 2);
+    listener!("rename", "boards/g/after");
+    expect(await Promise.race([
+      survivorWake,
+      rejectAfter(250, "survivor missed its wake after a pre-iteration abort"),
+    ])).toEqual({ done: false, value: undefined });
+    await survivor.return(undefined);
+    expect(fake.closeCount).toBe(2);
+  });
+
+  it("refuses to root a recursive hint watcher at a symlink", async () => {
+    const real = await tempRoot();
+    const parent = await tempRoot();
+    const linked = join(parent, "linked-root");
+    await symlink(real, linked);
+    let started = false;
+    const store = new FsStore(linked, {
+      watchFactory: () => { started = true; return new FakeWatcher() as unknown as FSWatcher; },
+    });
+    await expect(store.hint()[Symbol.asyncIterator]().next()).rejects.toBeInstanceOf(TypeError);
+    expect(started).toBe(false);
+  });
 });
+
+class FakeWatcher extends EventEmitter {
+  closeCount = 0;
+  close(): void {
+    this.closeCount++;
+    this.emit("close");
+  }
+}
+
+async function until(check: () => boolean): Promise<void> {
+  for (let i = 0; i < 100 && !check(); i++) await new Promise((resolve) => setTimeout(resolve, 1));
+  if (!check()) throw new Error("condition was not reached");
+}
+
+function rejectAfter(ms: number, message: string): Promise<never> {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
+}

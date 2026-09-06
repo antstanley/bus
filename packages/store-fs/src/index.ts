@@ -7,7 +7,7 @@ import {
   type PutOptions,
   type Store,
 } from "@board/core";
-import { constants } from "node:fs";
+import { constants, watch, type FSWatcher } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
 import { basename, dirname, join, resolve, sep } from "node:path";
 
@@ -21,13 +21,37 @@ interface PendingEntry {
   directory: boolean;
 }
 
+export interface FsStoreOptions {
+  /** Coalescing window for filesystem wake hints (default 100ms). */
+  hintDebounceMs?: number;
+  /** Test seam for deterministic watcher failure/closure tests. */
+  watchFactory?: WatchFactory;
+}
+
+export type WatchFactory = (
+  path: string,
+  options: { recursive: true },
+  listener: (eventType: string, filename: string | Buffer | null) => void,
+) => FSWatcher;
+
 /** A filesystem-backed Store. All paths are relative to `root`. */
 export class FsStore implements Store {
   readonly root: string;
+  private readonly hintDebounceMs: number;
+  private readonly watchFactory: WatchFactory;
+  private readonly hintConsumers = new Set<HintConsumer>();
+  private watcher: FSWatcher | undefined;
+  private watcherStarting: Promise<void> | undefined;
+  private hintTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(root: string) {
+  constructor(root: string, opts: FsStoreOptions = {}) {
     if (!root) throw new TypeError("FsStore root must not be empty");
     this.root = resolve(root);
+    this.hintDebounceMs = opts.hintDebounceMs ?? 100;
+    if (!Number.isSafeInteger(this.hintDebounceMs) || this.hintDebounceMs < 0) {
+      throw new RangeError("hintDebounceMs must be a non-negative safe integer");
+    }
+    this.watchFactory = opts.watchFactory ?? ((path, options, listener) => watch(path, options, listener));
   }
 
   async put(key: string, body: Uint8Array | string, opts: PutOptions = {}): Promise<void> {
@@ -128,6 +152,104 @@ export class FsStore implements Store {
     } catch (error) {
       if (!hasCode(error, "ENOENT")) throw error;
     }
+  }
+
+  /**
+   * Yield debounced filesystem activity as a latency hint. The root watcher is
+   * shared by all consumers and is released when the last iterator closes.
+   * Event filenames are deliberately ignored: they are untrusted and hints
+   * never identify authoritative store keys.
+   */
+  hint(signal?: AbortSignal): AsyncGenerator<void> {
+    if (signal?.aborted) return (async function* () {})();
+    const store = this;
+    const consumer = new HintConsumer(signal, () => {
+      store.hintConsumers.delete(consumer);
+      if (store.hintConsumers.size === 0) store.stopWatcher();
+    });
+    const iterator = (async function* () {
+      store.hintConsumers.add(consumer);
+      try {
+        await store.ensureWatcher();
+        while (await consumer.next()) yield;
+      } finally {
+        // Deregister before close(): an abort that landed before the first
+        // next() already spent this consumer's one-shot close(), and the
+        // idempotent repeat here would skip onClose — stranding the stopped
+        // registration and pinning the shared watcher open forever.
+        store.hintConsumers.delete(consumer);
+        if (store.hintConsumers.size === 0) store.stopWatcher();
+        consumer.close();
+      }
+    })();
+    const nativeReturn = iterator.return.bind(iterator);
+    // An async generator fulfils a queued return() only after its pending
+    // await settles, so a consumer breaking out mid-wait would hang until the
+    // next filesystem event. Closing the consumer resolves that await and
+    // releases its registration — and the shared watcher when it is the last
+    // one — immediately, without waiting for this generator to resume;
+    // other consumers are untouched and the watcher outlives them.
+    iterator.return = (value) => {
+      consumer.close();
+      return nativeReturn(value);
+    };
+    return iterator;
+  }
+
+  private async ensureWatcher(): Promise<void> {
+    if (this.watcher) return;
+    if (this.watcherStarting) return this.watcherStarting;
+    const starting = (async () => {
+      await mkdir(this.root, { recursive: true });
+      const stat = await lstat(this.root);
+      // Recursive watchers must never be rooted at a replaceable symlink. We
+      // also never create child watchers from untrusted event filenames.
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        throw new TypeError("FsStore hint root must be a non-symlink directory");
+      }
+
+      let watcher: FSWatcher;
+      watcher = this.watchFactory(this.root, { recursive: true }, (_eventType, filename) => {
+        // Git's internal fetch/commit bookkeeping is not store activity and
+        // can otherwise create a wake/read/wake feedback loop in GitStore.
+        // The name is classified only; it is never resolved or opened.
+        if (isGitMetadata(filename)) return;
+        if (this.watcher !== watcher || this.hintConsumers.size === 0) return;
+        if (this.hintTimer !== undefined) clearTimeout(this.hintTimer);
+        this.hintTimer = setTimeout(() => {
+          this.hintTimer = undefined;
+          if (this.watcher !== watcher) return;
+          for (const consumer of this.hintConsumers) consumer.notify();
+        }, this.hintDebounceMs);
+      });
+      this.watcher = watcher;
+      watcher.on("error", (error) => this.failWatcher(watcher, error));
+      watcher.on("close", () => this.failWatcher(watcher, new Error("filesystem hint watcher closed")));
+    })();
+    this.watcherStarting = starting;
+    try {
+      await starting;
+    } finally {
+      if (this.watcherStarting === starting) this.watcherStarting = undefined;
+      if (this.hintConsumers.size === 0) this.stopWatcher();
+    }
+  }
+
+  private failWatcher(watcher: FSWatcher, error: unknown): void {
+    if (this.watcher !== watcher) return;
+    this.watcher = undefined;
+    if (this.hintTimer !== undefined) clearTimeout(this.hintTimer);
+    this.hintTimer = undefined;
+    for (const consumer of this.hintConsumers) consumer.fail(error);
+    watcher.close();
+  }
+
+  private stopWatcher(): void {
+    if (this.hintTimer !== undefined) clearTimeout(this.hintTimer);
+    this.hintTimer = undefined;
+    const watcher = this.watcher;
+    this.watcher = undefined;
+    watcher?.close();
   }
 
   private pathFor(key: string): string {
@@ -242,6 +364,61 @@ export class FsStore implements Store {
   }
 }
 
+class HintConsumer {
+  private queued = false;
+  private stopped = false;
+  private failure: unknown;
+  private waiter: { resolve: (active: boolean) => void; reject: (error: unknown) => void } | undefined;
+  private readonly onAbort = () => this.close();
+
+  constructor(
+    private readonly signal?: AbortSignal,
+    private readonly onClose?: () => void,
+  ) {
+    signal?.addEventListener("abort", this.onAbort, { once: true });
+  }
+
+  next(): Promise<boolean> {
+    if (this.failure !== undefined) return Promise.reject(this.failure);
+    if (this.stopped || this.signal?.aborted) return Promise.resolve(false);
+    if (this.queued) { this.queued = false; return Promise.resolve(true); }
+    return new Promise<boolean>((resolve, reject) => { this.waiter = { resolve, reject }; });
+  }
+
+  notify(): void {
+    if (this.stopped) return;
+    if (this.waiter) {
+      const { resolve } = this.waiter;
+      this.waiter = undefined;
+      resolve(true);
+    } else {
+      this.queued = true;
+    }
+  }
+
+  fail(error: unknown): void {
+    if (this.stopped) return;
+    this.failure = error;
+    if (this.waiter) {
+      const { reject } = this.waiter;
+      this.waiter = undefined;
+      reject(error);
+    }
+  }
+
+  close(): void {
+    if (this.stopped) return;
+    this.stopped = true;
+    this.signal?.removeEventListener("abort", this.onAbort);
+    this.onClose?.();
+    if (this.waiter) {
+      const { resolve } = this.waiter;
+      this.waiter = undefined;
+      resolve(false);
+    }
+  }
+}
+
 function assertObjectKey(key: string): void {
   assertPrefix(key, "key");
   if (key.length === 0 || key.endsWith("/")) throw new TypeError(`invalid store key: ${JSON.stringify(key)}`);
@@ -250,6 +427,12 @@ function assertObjectKey(key: string): void {
       throw new TypeError(`invalid store key: ${JSON.stringify(key)}`);
     }
   }
+}
+
+function isGitMetadata(filename: string | Buffer | null): boolean {
+  if (filename === null) return false;
+  const name = typeof filename === "string" ? filename : filename.toString("utf8");
+  return name === ".git" || name.startsWith(".git/") || name.startsWith(".git\\");
 }
 
 function assertPrefix(value: string, name: string): void {

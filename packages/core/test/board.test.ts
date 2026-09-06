@@ -157,6 +157,125 @@ describe("Board", () => {
     expect(got).toEqual(["new"]);
   });
 
+  it("watch consumes a hint without waiting for its poll deadline", async () => {
+    const store = new HintMemoryStore();
+    const writer = new Board(store, { board: "g", author: "codex" });
+    const reader = new Board(store, { board: "g", author: "claude" });
+    const got: string[] = [];
+    const ac = new AbortController();
+    const done = reader.watch((post) => { got.push(post.body); ac.abort(); }, {
+      intervalMs: 1_000,
+      signal: ac.signal,
+    });
+    await store.waitForHintConsumer();
+    await writer.post({ body: "fast" });
+    store.wake();
+    await Promise.race([done, rejectAfter(200, "hint did not wake Board.watch")]);
+    expect(got).toEqual(["fast"]);
+    expect(store.hintCleanups).toBe(1);
+  });
+
+  it("watch keeps polling after missed, spurious, failed, and closed hints", async () => {
+    for (const mode of ["missed", "spurious", "failed", "closed"] as const) {
+      const store = new HintMemoryStore(mode);
+      const writer = new Board(store, { board: "g", author: "codex" });
+      const reader = new Board(store, { board: "g", author: "claude" });
+      const got: string[] = [];
+      const ac = new AbortController();
+      const done = reader.watch((post) => { got.push(post.body); ac.abort(); }, {
+        intervalMs: 5,
+        maxIntervalMs: 10,
+        reconcileEvery: 2,
+        signal: ac.signal,
+      });
+      await store.waitForHintConsumer();
+      if (mode === "spurious") store.wake();
+      if (mode === "failed") store.failHints();
+      if (mode === "closed") store.closeHints();
+      await writer.post({ body: mode }); // deliberately no corresponding hint
+      await Promise.race([done, rejectAfter(250, `${mode} hint stopped fallback polling`)]);
+      expect(got).toEqual([mode]);
+    }
+  });
+
+  it("continuous spurious hints cannot starve late-arrival reconciliation", async () => {
+    const store = new HintMemoryStore("spurious");
+    const now = Date.UTC(2026, 8, 2, 12, 0, 0);
+    const current = new Board(store, { board: "g", author: "codex", now: () => now });
+    const reader = new Board(store, { board: "g", author: "claude", now: () => now });
+    await current.post({ body: "history" });
+    const ac = new AbortController();
+    const got: string[] = [];
+    const done = reader.watch((post) => { got.push(post.body); ac.abort(); }, {
+      intervalMs: 5,
+      maxIntervalMs: 10,
+      reconcileEvery: 2,
+      signal: ac.signal,
+    });
+    await store.waitForHintConsumer();
+    const late = new Board(store, { board: "g", author: "letta", now: () => now - 86_400_000 });
+    await late.post({ body: "late" });
+    const noise = setInterval(() => store.wake(), 1);
+    try {
+      await Promise.race([done, rejectAfter(250, "spurious hints starved reconciliation")]);
+    } finally {
+      clearInterval(noise);
+      ac.abort();
+      await done;
+    }
+    expect(got).toEqual(["late"]);
+  });
+
+  it("continuous hint pressure still runs reconcile at its cadence", async () => {
+    const store = new HintMemoryStore();
+    const reader = new Board(store, { board: "g", author: "claude" });
+    let reconciles = 0;
+    const baseline = reader.reconcile.bind(reader);
+    reader.reconcile = (lookback?: number) => { reconciles++; return baseline(lookback); };
+    const ac = new AbortController();
+    const done = reader.watch(() => {}, { intervalMs: 1_000, reconcileEvery: 2, signal: ac.signal });
+    await store.waitForHintConsumer();
+    reconciles = 0; // the startup reconcile pass already ran
+    const noise = setInterval(() => store.wake(), 1);
+    try {
+      const deadline = Date.now() + 250;
+      while (reconciles === 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 5));
+    } finally {
+      clearInterval(noise);
+    }
+    expect(reconciles).toBeGreaterThanOrEqual(1);
+    ac.abort();
+    await done;
+  });
+
+  it("watch allows a large intervalMs when maxIntervalMs is omitted", async () => {
+    const b = new Board(new MemoryStore(), { board: "g", author: "claude" });
+    let polls = 0;
+    const baseline = b.since.bind(b);
+    b.since = (cursor, opts) => { polls++; return baseline(cursor, opts); };
+    const ac = new AbortController();
+    const done = b.watch(() => {}, { intervalMs: 60_000, signal: ac.signal });
+    await new Promise((r) => setTimeout(r, 30));
+    // Only the startup poll ran: the next one is one capped backoff interval
+    // (intervalMs itself) away, not one implicit-default cap away or sooner.
+    expect(polls).toBe(1);
+    ac.abort();
+    await expect(done).resolves.toBeUndefined();
+    await expect(b.watch(() => {}, { intervalMs: 60_000, maxIntervalMs: 1_000, signal: AbortSignal.abort() })).rejects.toBeInstanceOf(RangeError);
+  });
+
+  it("rejects invalid watch options", async () => {
+    const b = new Board(new MemoryStore(), { board: "g", author: "claude" });
+    await expect(b.watch(() => {}, { intervalMs: 0 })).rejects.toBeInstanceOf(RangeError);
+    await expect(b.watch(() => {}, { intervalMs: 5, maxIntervalMs: 4 })).rejects.toBeInstanceOf(RangeError);
+    for (const reconcileEvery of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      await expect(b.watch(() => {}, { reconcileEvery })).rejects.toBeInstanceOf(RangeError);
+      await expect(b.watch(() => {}, { reconcileEvery })).rejects.toThrow(/reconcileEvery must be a positive integer/);
+    }
+    // valid values keep working
+    await expect(b.watch(() => {}, { reconcileEvery: 1, signal: AbortSignal.abort() })).resolves.toBeUndefined();
+  });
+
   it("rejects forged objects: wrong key, future id, skewed ts, oversized, too deep", async () => {
     const store = new MemoryStore();
     const now = Date.UTC(2026, 8, 2, 12, 0, 0);
@@ -296,3 +415,59 @@ describe("Board", () => {
     await expect(b.post({ body: "x".repeat(LIMITS.maxBytes) })).rejects.toThrow(/larger than/);
   });
 });
+
+class HintMemoryStore extends MemoryStore {
+  private readonly consumers = new Set<{
+    notify: () => void;
+    fail: (error: Error) => void;
+    close: () => void;
+  }>();
+  private consumerReady: (() => void) | undefined;
+  hintCleanups = 0;
+
+  constructor(private readonly mode: "normal" | "missed" | "spurious" | "failed" | "closed" = "normal") {
+    super();
+  }
+
+  async *hint(signal?: AbortSignal): AsyncGenerator<void> {
+    let pending: { resolve: (active: boolean) => void; reject: (error: Error) => void } | undefined;
+    let queued = false;
+    let stopped = false;
+    const finish = () => { stopped = true; pending?.resolve(false); pending = undefined; };
+    const consumer = {
+      notify: () => { if (pending) { pending.resolve(true); pending = undefined; } else queued = true; },
+      fail: (error: Error) => { pending?.reject(error); pending = undefined; stopped = true; },
+      close: finish,
+    };
+    const onAbort = finish;
+    this.consumers.add(consumer);
+    this.consumerReady?.();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    try {
+      while (!stopped && !signal?.aborted) {
+        const active = queued
+          ? (queued = false, true)
+          : await new Promise<boolean>((resolve, reject) => { pending = { resolve, reject }; });
+        if (!active) return;
+        yield;
+      }
+    } finally {
+      signal?.removeEventListener("abort", onAbort);
+      this.consumers.delete(consumer);
+      this.hintCleanups++;
+    }
+  }
+
+  waitForHintConsumer(): Promise<void> {
+    if (this.consumers.size > 0) return Promise.resolve();
+    return new Promise((resolve) => { this.consumerReady = resolve; });
+  }
+
+  wake(): void { for (const consumer of this.consumers) consumer.notify(); }
+  failHints(): void { for (const consumer of this.consumers) consumer.fail(new Error(`${this.mode} hint`)); }
+  closeHints(): void { for (const consumer of this.consumers) consumer.close(); }
+}
+
+function rejectAfter(ms: number, message: string): Promise<never> {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
+}

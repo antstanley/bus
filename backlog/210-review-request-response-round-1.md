@@ -46,7 +46,7 @@ Input hashes remained stable; reviewer performed no edits, tests or security
 scan and reports no artifacts. One review round consumed; no fourth allowed.
 Findings and exact lead disposition are preserved in author remediation
 [213](213-remediate-request-response-spec.md). Follow-up review
-[214](214-review-request-response-round-2.md) is blocked pending its frozen output.
+[214](done/214-review-request-response-round-2.md) was blocked pending its frozen output (historical; round2 has since completed).
 Specification not settled; implementation remains undispatched.
 
 Completion of a review task means the review was performed, not necessarily

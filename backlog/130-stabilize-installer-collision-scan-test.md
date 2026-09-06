@@ -3,7 +3,7 @@ id: 130
 title: "stabilize installer collision-scan test fixture"
 phase: 1
 owner: letta
-status: in-progress
+status: gated
 kind: implementation
 depends: [129]
 estimate: S
@@ -18,6 +18,63 @@ documentation, backlog or git edits. Preserve every other agent's WIP.
 Completed diagnosis record: backlog/done/129-diagnose-installer-collision-scan-ci-timeout.md.
 Dispatch `20260905T224611Z-codex-6937` acknowledged by the clean author
 coordinator in `20260905T224757Z-letta-1b9a`; candidate handoff pending.
+
+## Candidate handoff and remaining gates
+
+Author handoff `20260905T225811Z-letta-67fb`; lead verified the sole candidate
+SHA-256 `51e15702fd84d529505871b74b5986a3588ea8849649c1386aba91c03503774f`.
+Author reports the existing createStore injection seam, an in-memory Store
+fixture, preserved real command/presence paths, additive boundary assertions,
+five focused timings of9.35–11.26ms, CLI56 passing, typecheck and two mutation
+checks. These are author claims, not independent correctness approval or
+isolated full-root integration evidence; projected CI timings are not measured
+CI results. No production changes are authorized.
+
+Required isolated baseline-plus-one-file validation was missing from the first
+handoff and was explicitly redispatched to a clean author-validation worker in
+`20260905T230238Z-codex-145b`, alongside a separate clean security worker.
+Ykka correctness is queued in `20260905T230238Z-codex-1b3a`, not assumed
+running. Candidate remains frozen and task unfinished until all gates pass.
+Coordinator acknowledgment `20260905T230407Z-letta-3f57` confirms separate
+clean workers task_46 (isolated author validation) and task_47 (security gate)
+are dispatched. Neither substitutes for Ykka correctness/completeness review.
+
+Isolated author validation PASS `20260905T231106Z-letta-0c77`: committed
+c1df47c plus ONLY the pinned candidate; baseline and candidate pins checked
+before/after. Frozen install100 packages, no lockfile drift;296 symlinks all
+inside snapshot, zero outside/unresolvable,22 workspace links to snapshot
+packages. Five focused runs passed (Bun-reported23–37ms, wall0.03–0.05s),
+CLI56 passed, full root272 passed/1 environmental S3 skip/0 failed, typecheck
+exit0. No unhandled errors observed. These local timings are not Linux CI
+measurements. Worker reports scratch removed and live checkout unchanged;
+audit retained. Independent correctness/security and post-push CI remain due.
+
+Independent security ACCEPT `20260905T231426Z-letta-2f91`, report
+`docs/security/2026-09-05-task130-test-fixture-gate.md`, SHA-256
+`4c2a17328e1a39526857ae0208e4e5edd32ab6b62ba9442f87db344656f3e649`.
+Lead rechecked report and candidate hashes. Zero blocking findings; two INFO
+observations (optional stricter identity regex, retained harmless home fixture)
+are recorded, with no author changes requested. This static security gate did
+not independently execute author tests and does not substitute for Ykka review.
+Initial task plan committed/pushed in metadata-only7190f83; source still
+uncommitted and frozen. No restart is needed for this docs-only baseline delta.
+
+Author/security worker cleanup confirmed `20260905T231559Z-letta-6e0a`:
+task45 removed its temporary diff copies, task47 created no extra scratch;
+neither left worktrees or processes. Authorized report and sealed audits kept.
+Ykka reconciled its queue in `20260906T081522Z-opencode-reviewer-27fd`;130
+remains queued after404 unless a separate clean review worker is confirmed.
+
+Independent correctness READY `20260906T082854Z-opencode-reviewer-214d`, clean
+child ses_f8a2e1a88ffeF4IjHaDiu4Dy5e. Exact candidate51e15702...774f unchanged;
+scoped diff versus7190f83 SHA-256
+`1cd2f734932bfd5fb2ca4f2b16fc1f1d3098820c28152ff551f3005104dca51f`.
+Reviewer checked real command/pagination/warning paths, meaningful boundary
+assertions, preserved neighboring FS coverage and cleanup. Static review only:
+no executed tests/mutations/timing/Linux claims; separate isolated author
+validation and security evidence above remain distinct. No reviewer edits,
+artifacts, dependencies or processes left. Exact-scope lead integration and
+post-push Linux CI are now pending; source remains frozen.
 
 ## Lead decision and acceptance boundaries
 
@@ -47,6 +104,6 @@ changed paths, validation and cleanup; no author self-approval.
 
 - [ ] Existing bounded-scan behavior exercised without the slow disk fixture.
 - [ ] No dangling asynchronous fixture work races cleanup; no weakened coverage.
-- [ ] Focused repetition and isolated full root/typecheck results recorded.
-- [ ] Independent Ykka correctness/completeness review and clean security gate.
+- [x] Focused repetition and isolated full root/typecheck results recorded.
+- [x] Independent Ykka correctness/completeness review and clean security gate.
 - [ ] Exact approved scope committed/pushed, Linux CI passed and cleanup done.

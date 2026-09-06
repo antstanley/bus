@@ -1,10 +1,12 @@
 import type { Changes, ListOptions, ListResult, PutOptions, Store } from "@board/core";
 import { FsStore } from "@board/store-fs";
-import { access, appendFile, mkdir, readFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { access, appendFile, chmod, lstat, mkdir, open, readFile, realpath, rename, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
 
 const EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 const TOKEN = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
+const WAKE_FILE = ".board-wake";
+const HOOK_MARKER = "# board-store-git owned wake hook v1";
 
 export interface GitStoreOptions {
   dir: string;
@@ -160,6 +162,31 @@ export class GitStore implements Store {
     });
   }
 
+  /** Best-effort local worktree activity, including repository wake hooks. */
+  hint(signal?: AbortSignal): AsyncGenerator<void> {
+    const store = this;
+    let inner: AsyncGenerator<void> | undefined;
+    let cancelled = false;
+    const iterator = (async function* () {
+      await store.ready;
+      if (cancelled) return;
+      inner = store.fs.hint(signal);
+      yield* inner;
+    })();
+    const nativeReturn = iterator.return.bind(iterator);
+    // Delegation queues a return() behind a pending next() on `inner`, which
+    // idles until the next wake. Cancellation is therefore forwarded to the
+    // underlying iterator immediately, ending the pending next() as done; a
+    // later resume of this generator observes the closed inner iterator and
+    // simply finishes.
+    iterator.return = (value) => {
+      cancelled = true;
+      void inner?.return(undefined).catch(() => {});
+      return nativeReturn(value);
+    };
+    return iterator;
+  }
+
   private scheduleAutoSync(): Promise<void> {
     if (this.autoSyncPromise) return this.autoSyncPromise;
     const scheduled = new Promise<void>((resolvePromise, rejectPromise) => {
@@ -193,6 +220,7 @@ export class GitStore implements Store {
     // Store instance. Managed repos are dedicated, so aborting is safe.
     await this.git(["rebase", "--abort"], [0, 128]);
     await this.ensureTempExclude();
+    await this.ensureWakeHooks();
 
     // Ensure commits work in clean CI/user environments without changing
     // global Git configuration.
@@ -314,9 +342,109 @@ export class GitStore implements Store {
     try { contents = await readFile(excludePath, "utf8"); } catch (error) {
       if (!hasCode(error, "ENOENT")) throw error;
     }
-    if (contents.split(/\r?\n/).includes(".board-tmp-*")) return;
+    const lines = new Set(contents.split(/\r?\n/));
+    const missing = [".board-tmp-*", WAKE_FILE].filter((line) => !lines.has(line));
+    if (missing.length === 0) return;
     await mkdir(dirname(excludePath), { recursive: true });
-    await appendFile(excludePath, `${contents && !contents.endsWith("\n") ? "\n" : ""}.board-tmp-*\n`);
+    await appendFile(excludePath, `${contents && !contents.endsWith("\n") ? "\n" : ""}${missing.join("\n")}\n`);
+  }
+
+  private async ensureWakeHooks(): Promise<void> {
+    const result = await this.git(["rev-parse", "--git-path", "hooks"]);
+    const rawPath = result.stdout.trim();
+    const hooksDir = isAbsolute(rawPath) ? rawPath : resolve(this.dir, rawPath);
+    // Hooks are managed only inside this repository: the absolute git dir
+    // (default layout) or the worktree (custom in-repo core.hooksPath like
+    // .githooks). Lexical containment is not enough — a symlinked ancestor
+    // can make an in-repo path land somewhere else entirely — so the hooks
+    // dir is resolved through the filesystem before anything is created or
+    // written. An external or unresolvable hooks directory is never created,
+    // inspected, or modified; users wire wake hooks there manually if they
+    // want them.
+    const gitDir = (await this.git(["rev-parse", "--absolute-git-dir"])).stdout.trim();
+    const realGitDir = await resolveExisting(gitDir);
+    const realWorktree = await resolveExisting(this.dir);
+    if (realGitDir === undefined || realWorktree === undefined) return;
+    const resolvedHooks = await resolveExisting(hooksDir);
+    if (resolvedHooks === undefined) return;
+    if (!isInside(realGitDir, resolvedHooks) && !isInside(realWorktree, resolvedHooks)) return;
+    try {
+      await mkdir(resolvedHooks, { recursive: true });
+    } catch {
+      // A hooks path that cannot host a directory (a file in the way, no
+      // permission) is skipped like an external one; initialize must not fail
+      // over optional wake hints.
+      return;
+    }
+    // A non-bare repository receiving a push runs receive hooks with cwd at
+    // the git dir; some git versions then report that dir as --show-toplevel
+    // instead of failing. When the reported root equals the git dir, derive
+    // the worktree root by stripping the trailing /.git so the wake file is
+    // never written under .git, where FsStore suppresses it. A bare remote
+    // (no /.git suffix) keeps writing beside its own objects.
+    const contents = [
+      "#!/bin/sh",
+      HOOK_MARKER,
+      "wake_root=$(git rev-parse --show-toplevel 2>/dev/null) || wake_root=",
+      "wake_git=$(git rev-parse --absolute-git-dir 2>/dev/null) || exit 0",
+      "if [ -z \"$wake_root\" ] || [ \"$wake_root\" = \"$wake_git\" ]; then",
+      "  case \"$wake_git\" in",
+      "    */.git) wake_root=${wake_git%/.git} ;;",
+      "    *) wake_root=$wake_git ;;",
+      "  esac",
+      "fi",
+      `(umask 077 && : > "$wake_root/${WAKE_FILE}") 2>/dev/null || :`,
+      "",
+    ].join("\n");
+    for (const name of ["post-merge", "post-receive"]) {
+      const hook = join(resolvedHooks, name);
+      let existing: string | undefined;
+      try {
+        const stat = await lstat(hook);
+        // Never inspect through, replace, or chmod a foreign symlink.
+        if (stat.isSymbolicLink() || !stat.isFile()) continue;
+        existing = await readFile(hook, "utf8");
+      } catch (error) {
+        if (!hasCode(error, "ENOENT")) throw error;
+      }
+      if (existing !== undefined) {
+        // Existing hooks are foreign unless they have our stable header.
+        // Foreign hooks are never replaced, chained, executed, or chmod.
+        if (!existing.startsWith(`#!/bin/sh\n${HOOK_MARKER}\n`)) continue;
+        // An owned hook that drifted (local edit, older version) is refreshed
+        // to the current body, and always made executable; installation stays
+        // idempotent otherwise.
+        if (existing !== contents) await this.refreshOwnedHook(hook, contents);
+        await chmod(hook, 0o755);
+        continue;
+      }
+      try {
+        await writeFile(hook, contents, { flag: "wx", mode: 0o755 });
+      } catch (error) {
+        // Another GitStore may have initialized the same repository. Its hook
+        // (or a concurrently installed foreign hook) wins without replacement.
+        if (!hasCode(error, "EEXIST")) throw error;
+      }
+    }
+  }
+
+  // A drifted hook may be executing while it is refreshed; publishing the new
+  // body through a same-directory fsync + rename never exposes a torn script.
+  private async refreshOwnedHook(hook: string, contents: string): Promise<void> {
+    const temp = `${hook}.board-tmp-${process.pid}-${crypto.randomUUID()}`;
+    try {
+      const file = await open(temp, "wx", 0o755);
+      try {
+        await file.writeFile(contents);
+        await file.sync();
+      } finally {
+        await file.close();
+      }
+      await chmod(temp, 0o755);
+      await rename(temp, hook);
+    } finally {
+      try { await unlink(temp); } catch {}
+    }
   }
 
   private async remoteBranchExists(): Promise<boolean> {
@@ -373,6 +501,32 @@ interface GitResult {
 
 function isStoreKey(key: string): boolean {
   return key.length > 0 && !key.split("/").some((part) => !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(part));
+}
+
+/** Strict lexical containment: child is strictly below parent. */
+function isInside(parent: string, child: string): boolean {
+  return child.startsWith(parent.endsWith(sep) ? parent : `${parent}${sep}`);
+}
+
+/**
+ * realpath of the deepest existing ancestor of `path`, with the missing tail
+ * re-joined lexically. Undefined when resolution fails for any reason other
+ * than missing components, so unreadable or looped paths fail closed.
+ */
+async function resolveExisting(path: string): Promise<string | undefined> {
+  let current = path;
+  const tail: string[] = [];
+  for (;;) {
+    try {
+      return tail.reduce((real, part) => join(real, part), await realpath(current));
+    } catch (error) {
+      if (!hasCode(error, "ENOENT") && !hasCode(error, "ENOTDIR")) return undefined;
+    }
+    const parent = dirname(current);
+    if (parent === current) return undefined;
+    tail.unshift(basename(current));
+    current = parent;
+  }
 }
 
 function isNonFastForward(stderr: string): boolean {

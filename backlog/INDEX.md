@@ -35,7 +35,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
 | 128 | [security gate: backlog role and dependency alignment](done/128-security-gate-backlog-role-alignment.md) | letta | done | S |
 | 129 | [diagnose CI installer collision-scan timeout](done/129-diagnose-installer-collision-scan-ci-timeout.md) | letta | done | S |
-| 130 | [stabilize installer collision-scan test fixture](130-stabilize-installer-collision-scan-test.md) | letta | in-progress | S |
+| 130 | [stabilize installer collision-scan test fixture](130-stabilize-installer-collision-scan-test.md) | letta | gated | S |
 
 ## Phase 2
 
@@ -54,9 +54,9 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 211 | [spec: author agent charters](211-spec-agent-charters.md) | codex-architect | gated | M |
 | 212 | [spec review: agent charters, round 1](212-review-agent-charters-round-1.md) | opencode-reviewer | gated | M |
 | 213 | [spec remediation: request/response after round 1](213-remediate-request-response-spec.md) | codex-architect | gated | M |
-| 214 | [spec review: request/response, round 2](214-review-request-response-round-2.md) | opencode-reviewer | gated | M |
+| 214 | [spec review: request/response, round 2](done/214-review-request-response-round-2.md) | opencode-reviewer | done | M |
 | 215 | [spec remediation: agent charters after round 1](215-remediate-agent-charters-spec.md) | codex-architect | gated | M |
-| 216 | [spec review: agent charters, round 2](216-review-agent-charters-round-2.md) | opencode-reviewer | gated | M |
+| 216 | [spec review: agent charters, round 2](done/216-review-agent-charters-round-2.md) | opencode-reviewer | done | M |
 | 219 | [security gate: settled request-response and charter specs](done/219-security-gate-settled-request-response-and-charters.md) | letta | done | M |
 
 ## Phase 3
@@ -79,7 +79,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | letta | todo | L |
 | 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | opencode | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
-| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | opencode | in-progress | S |
+| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | opencode | gated | S |
 | 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
 | 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | opencode | todo | M |
@@ -107,7 +107,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 601 | [CI: GitHub Actions with live S3](done/601-ci-github-actions-with-live-s3.md) | codex | done | S |
-| 602 | [packaging: bunx @board/cli and compiled binary](602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | gated | S |
+| 602 | [packaging: bunx @board/cli and compiled binary](done/602-packaging-bunx-board-cli-and-compiled-binary.md) | opencode | done | S |
 | 603 | [observability: trace ids end to end](603-observability-trace-ids-end-to-end.md) | letta | todo | S |
 | 604 | [admin CLI: gc, retention, backup/restore](604-admin-cli-gc-retention-backup-restore.md) | letta | todo | M |
 | 605 | [docs site, semver, changelog](605-docs-site-semver-changelog.md) | opencode | todo | S |

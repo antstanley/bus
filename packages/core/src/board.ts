@@ -30,9 +30,16 @@ export interface SinceResult {
 }
 
 export interface WatchOptions {
-  /** Poll interval in ms (default 2000). */
+  /** Initial poll interval in ms (default 1000). */
   intervalMs?: number;
-  /** Run a reconcile pass every N polls when the store has no change feed (default 15). */
+  /**
+   * Maximum backed-off poll interval in ms. When omitted the cap is
+   * max(30000, intervalMs), so an implicit cap never sits below the initial
+   * interval and backoff stops growing at intervalMs once it passes 30000.
+   * An explicit value below intervalMs is still rejected.
+   */
+  maxIntervalMs?: number;
+  /** Run a reconcile pass every N polls, hinted or not, when the store has no change feed (default 15). */
   reconcileEvery?: number;
   /** Days of history to re-list during reconcile (default 2). */
   lookbackDays?: number;
@@ -228,8 +235,12 @@ export class Board {
    * otherwise cursor polling plus periodic reconcile. Resolves when aborted.
    */
   async watch(onPost: (post: Post) => void | Promise<void>, opts: WatchOptions = {}): Promise<void> {
-    const interval = opts.intervalMs ?? 2000;
+    const interval = opts.intervalMs ?? 1_000;
+    const maxInterval = opts.maxIntervalMs ?? Math.max(30_000, interval);
     const reconcileEvery = opts.reconcileEvery ?? 15;
+    if (!Number.isFinite(interval) || interval <= 0) throw new RangeError("watch intervalMs must be positive");
+    if (!Number.isFinite(maxInterval) || maxInterval < interval) throw new RangeError("watch maxIntervalMs must be at least intervalMs");
+    if (!Number.isInteger(reconcileEvery) || reconcileEvery < 1) throw new RangeError("watch reconcileEvery must be a positive integer");
     const lookback = opts.lookbackDays ?? 2;
     const seen = new Set<string>();
     const prefix = keys.postsPrefix(this.name);
@@ -256,27 +267,81 @@ export class Board {
     let token: string | undefined;
     if (this.store.changes) token = (await this.store.changes()).token;
 
-    for (let i = 1; !opts.signal?.aborted; i++) {
-      if (this.store.changes && token !== undefined) {
-        const ch = await this.store.changes(token);
-        token = ch.token;
-        for (const k of ch.keys.filter((k) => k.startsWith(prefix)).sort()) {
-          const p = await this.loadOne(k);
-          if (p) await emit(p);
+    // Hints have their own pump so a pending iterator read is never abandoned
+    // when a poll wins a race. Poll deadlines are independent, so missed or
+    // continuously spurious hints cannot postpone correctness work.
+    const hintAbort = new AbortController();
+    const stopHintForwarding = forwardAbort(opts.signal, hintAbort);
+    const wake = new WakeSignal(opts.signal);
+    let hintPump: Promise<void> | undefined;
+    if (this.store.hint) {
+      hintPump = (async () => {
+        try {
+          for await (const _ of this.store.hint!(hintAbort.signal)) wake.notify();
+        } catch {
+          // A hint source may be unsupported, fail, or close. Polling remains
+          // active and authoritative, so hint failures are intentionally soft.
         }
-      } else {
+      })();
+    }
+
+    let pollInterval = interval;
+    let nextPollAt = Date.now() + pollInterval;
+    let polls = 0;
+    try {
+      while (!opts.signal?.aborted) {
+        // Once the deadline has arrived, polling wins over any queued hint,
+        // so a hint can move the next poll earlier but never postpone it.
+        const remaining = nextPollAt - Date.now();
+        const hinted = remaining > 0 ? await wake.wait(remaining) : false;
+        if (opts.signal?.aborted) break;
+        let emitted = 0;
+        const emitCounted = async (p: Post) => {
+          if (seen.has(p.id)) return;
+          emitted++;
+          await emit(p);
+        };
+
+        // Every hint is followed by since(); this is still only a hint because
+        // changes/reconcile remain responsible for late-arriving older keys.
         for (;;) {
           const r = await this.since(cursor);
           cursor = r.cursor;
-          for (const p of r.posts) await emit(p);
+          for (const p of r.posts) await emitCounted(p);
           if (!r.truncated) break;
         }
-        if (i % reconcileEvery === 0) {
-          for await (const p of this.reconcile(lookback)) await emit(p);
+
+        if (this.store.changes && token !== undefined) {
+          const ch = await this.store.changes(token);
+          token = ch.token;
+          for (const k of ch.keys.filter((k) => k.startsWith(prefix)).sort()) {
+            const p = await this.loadOne(k);
+            if (p) await emitCounted(p);
+          }
+        } else if (++polls % reconcileEvery === 0) {
+          // Hinted iterations count toward the cadence too: hint pressure
+          // must not be able to defer the completeness reconcile.
+          for await (const p of this.reconcile(lookback)) await emitCounted(p);
           prune();
         }
+
+        if (hinted) {
+          pollInterval = interval;
+          // A hint can move the next poll closer, never postpone it.
+          nextPollAt = Math.min(nextPollAt, Date.now() + pollInterval);
+        } else if (emitted > 0) {
+          pollInterval = interval;
+          nextPollAt = Date.now() + pollInterval;
+        } else {
+          pollInterval = Math.min(maxInterval, pollInterval * 2);
+          nextPollAt = Date.now() + pollInterval;
+        }
       }
-      await sleep(interval, opts.signal);
+    } finally {
+      hintAbort.abort();
+      wake.close();
+      stopHintForwarding();
+      await hintPump;
     }
   }
 
@@ -346,13 +411,52 @@ function names(values: string[], what: string): string[] {
   try { return values.map((n) => assertName(n, what)); } catch (e) { return invalidKey(e); }
 }
 
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve) => {
-    if (signal?.aborted) return resolve();
-    const t = setTimeout(done, ms);
-    function done() { signal?.removeEventListener("abort", done); clearTimeout(t); resolve(); }
-    signal?.addEventListener("abort", done, { once: true });
-  });
+class WakeSignal {
+  private queued = false;
+  private waiter: ((hinted: boolean) => void) | undefined;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private readonly onAbort = () => this.finish(false);
+
+  constructor(private readonly signal?: AbortSignal) {
+    signal?.addEventListener("abort", this.onAbort, { once: true });
+  }
+
+  notify(): void {
+    if (this.signal?.aborted) return;
+    if (this.waiter) this.finish(true);
+    else this.queued = true;
+  }
+
+  wait(ms: number): Promise<boolean> {
+    if (this.queued) { this.queued = false; return Promise.resolve(true); }
+    if (this.signal?.aborted) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      this.waiter = resolve;
+      this.timer = setTimeout(() => this.finish(false), ms);
+    });
+  }
+
+  close(): void {
+    this.signal?.removeEventListener("abort", this.onAbort);
+    this.finish(false);
+  }
+
+  private finish(hinted: boolean): void {
+    if (!this.waiter) return;
+    const resolve = this.waiter;
+    this.waiter = undefined;
+    if (this.timer !== undefined) clearTimeout(this.timer);
+    this.timer = undefined;
+    resolve(hinted);
+  }
+}
+
+function forwardAbort(source: AbortSignal | undefined, target: AbortController): () => void {
+  if (!source) return () => {};
+  const abort = () => target.abort();
+  if (source.aborted) abort();
+  else source.addEventListener("abort", abort, { once: true });
+  return () => source.removeEventListener("abort", abort);
 }
 
 export { encoder };

@@ -49,6 +49,13 @@ export interface Store {
    * an empty key list (or everything, at the backend's discretion).
    */
   changes?(token?: string): Promise<Changes>;
+  /**
+   * Optional best-effort wake-up stream. A yielded value only means that the
+   * store may have changed: callers must still use list/changes to discover
+   * objects. Implementations should stop and release resources when `signal`
+   * is aborted or the iterator is closed.
+   */
+  hint?(signal?: AbortSignal): AsyncIterable<void>;
 }
 
 export const DEFAULT_LIST_LIMIT = 1000;

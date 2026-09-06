@@ -3,7 +3,7 @@ id: 216
 title: "spec review: agent-charters, round 2"
 phase: 2
 owner: opencode-reviewer
-status: gated
+status: done
 kind: spec-review
 spec_task: 215
 review_round: 2
@@ -27,7 +27,7 @@ Author response, preservation evidence and settled decisions are in task215.
 - [x] Report READY or CHANGES REQUIRED, actionable findings and remaining decisions.
 - [x] Lead records disposition and, only if necessary, creates linked remediation
   and a third review task. No automatic fourth round or implementation approval.
-- [ ] Review record integrated and cleanup confirmed.
+- [x] Review record integrated and cleanup confirmed.
 
 ## Result
 
@@ -41,3 +41,12 @@ archive remains pending. No third correctness round needed. Nonblocking310
 alignment note: add agreed charter cursor kinds, requester/exact policy/
 generation bindings and mismatch/policy-change outcomes before its freeze;
 relayed in `20260905T200632Z-codex-664e`.
+
+Final reviewer cleanup confirmed `20260906T081522Z-opencode-reviewer-27fd`:
+clean child created no files, artifacts, worktrees or processes. No repeat
+review needed. Administrative closure/archive is pending; preserve frozen
+spec bytes and inbound task links during that bookkeeping package.
+
+Closure: previously integrated/pushed spec and review record, green CI and
+final cleanup are complete. Lead archives this review record; no spec bytes
+changed, no new approval or implementation dispatch is implied.
