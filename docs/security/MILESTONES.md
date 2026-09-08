@@ -154,12 +154,22 @@ The dispatch statements above preserve their original timing. Current status:
   Lead accepted the disclosed report-only native-write process deviation and
   preserved its launch-snapshot wording with an explicit later-HEAD caveat;
   no retroactive tool compliance or policy/helper coverage is claimed.
-  OpenCode now owns task108 completion; integration and CI remain pending.
-- Helper144: clean GLM milestone coverage assigned to OpenCode Reviewer in
-  `20260908T100510Z-codex-4220`; worker start and reconciled budget await
-  acknowledgement. Only the two frozen helper/guide deliverables are editable;
-  coordinate any fixes with the owner and lead because these bytes are now
-  committed. No duplicate per-task review ticket was created.
+  OpenCode owns task108 completion. Its unchanged runtime scope was pushed in
+  `8e06278e28fa9a0868367d37481a3f66d32cae1c`; exact-head CI `34214935470`
+  and CLI packaging `34214935477` both passed.
+- Helper144: the unacknowledged OpenCode Reviewer dispatch
+  `20260908T100510Z-codex-4220` was withdrawn in
+  `20260908T102127Z-codex-03fd`. Coverage transferred to available OpenCode in
+  `20260908T102127Z-codex-0cbf`, preserving the same two-file reservation and
+  avoiding a separate review queue. Prior146 has no verdict: initial helper
+  milestone round1 of3, subject to reconciliation of any unfinished same-scope
+  evidence. Use a fresh clean GLM worker with final runtime model evidence;
+  stop/reconcile overlap if a previously unreported worker appears. Policy and
+  runtime remain read-only. OpenCode reported a fresh background worker launch
+  in `20260908T102312Z-opencode-5a8b`, requested
+  `zai-coding-plan/glm-5.3-flash`, fixed baseline `8e06278` plus exact helper
+  pins. Runtime model verification and verdict remain pending. No live actions
+  or duplicate per-task review ticket are authorized.
 
 The full remote-board milestone remains **pending** helper and
 combined-candidate coverage. All live rollout holds remain in force. This
