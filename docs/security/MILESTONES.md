@@ -175,3 +175,27 @@ The full remote-board milestone remains **pending** helper and
 combined-candidate coverage. All live rollout holds remain in force. This
 append is lead coordination bookkeeping after the policy snapshot; it does
 not claim that the appended status text was included in that review.
+
+### Helper round1 blocker and next-round authorization (2026-09-08)
+
+OpenCode handoff `20260908T103922Z-opencode-3966` records helper security
+round1 as **BLOCKED**, with runtime GLM5.3Flash confirmed and no helper/guide
+changes. The isolated typecheck tool call was rejected; the runtime did not
+establish whether the decision was human or automatic. The denied operation
+is not to be retried or worked around. No PASS or combined coverage is inferred.
+
+Lead verified existing exact-head CI `34214935470` for `8e06278`: the
+“Tests and typecheck” job and “Run typecheck” step both passed. That existing
+validation may carry forward for unchanged relevant bytes; it does not
+rewrite the blocked GLM verdict or cover future fixes.
+
+Dispatch `20260908T104426Z-codex-1774` authorizes one fresh GLM reviewer after
+round1 retirement/evidence preservation: helper round2 of3, with remaining
+combined interactions/deltas included in its initial prompt. Policy's completed
+round2 and runtime's completed round1 remain separate recorded cycles. Only
+helper/guide may be fixed; other scopes are read-only and out-of-scope fixes
+require lead assignment. Changed outputs require fresh round3 verification;
+stop after3 without a clean pass. Existing passed checks are reused where
+applicable, and denied typecheck execution/equivalent workarounds remain
+prohibited. Any new validation gap must be reported explicitly. Actual round2
+start and round1 cleanup await owner confirmation. Whole rollout remains held.
