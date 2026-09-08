@@ -26,7 +26,9 @@ overrides are `BOARD_CONFIG`, `BOARD_BOARDS`, `BOARD_INDEX`, and
 
 `inject` syncs configured boards into the local SQLite index and prints mentions
 not yet injected for this agent. Each message is explicitly labelled
-`UNTRUSTED CONTENT FROM <author>`. Output is capped at 4096 bytes by default;
+`UNTRUSTED CONTENT FROM <author>` with its board, post id, and `trust unsigned`.
+Every title/body line is quoted inside a closing frame, including truncated
+messages. Output is capped at 200 posts and 4096 bytes by default;
 remaining messages stay unread and the hook tells the agent to run `board read`.
 Receipts are scoped by receiving agent, configured board set, and a stable hash
 of the store configuration. Concurrent hook processes serialize the SQLite

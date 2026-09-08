@@ -127,3 +127,41 @@ workers must not edit a security-frozen candidate. No separate review tasks.
   coverage reason. Reassignment alone never resets an unresolved cycle: if
   the GLM worker finds a prior unfinished review for this same scope, report
   that evidence before consuming additional rounds. No model substitution.
+
+### Integration and coordination update (2026-09-08)
+
+The dispatch statements above preserve their original timing. Current status:
+
+- Policy131: owner returned **FINAL POLICY SCOPE PASS**, security round2 of3,
+  in bus message `20260908T100221Z-opencode-reviewer-6dd4`. The unchanged
+  GLM-authored report is [the policy milestone report](2026-09-08-remote-board-policy-milestone.md),
+  SHA-256 `3a616b8c70cbc1d4e657baf613f5fe20433782aa640844ad8f0087238af91d1e`.
+  Parent131 records the lead's excluded-model-test-log and evidence-write
+  process dispositions. This entry records that handoff; it is not a new scan.
+- Policy131 and helper144 ordinary deliverables were committed and pushed in
+  `3bc8dadc9a8e11512d3c10cc15af211064ed06a6`. Exact-head CI run `34213926700`
+  and CLI packaging run `34213925890` both passed. Helper144 has ordinary
+  correctness round1 approval; milestone security approval remains pending.
+- Runtime108: OpenCode returned **clean no-change SECURITY PASS**, round1 of3,
+  in `20260908T101729Z-opencode-2216`. Worker
+  `ses_f7f84c0efffeN3aG8IBN53jvrn` used runtime-verified
+  `zai-coding-plan/glm-5.3-flash`. All eight output hashes match the frozen
+  manifest; reported isolated `b11145c` plus eight-file root validation was
+  305 pass / 1 skip / 0 fail and typecheck passed. The unchanged
+  [runtime report](2026-09-08-remote-board-runtime-milestone.md) SHA-256 is
+  `897f98810319ce14b06729afa872835c993fb3c4f1e4639c33d342aabcf50fb2`.
+  Session/process/log cleanup is confirmed in `20260908T101828Z-opencode-006a`.
+  Lead accepted the disclosed report-only native-write process deviation and
+  preserved its launch-snapshot wording with an explicit later-HEAD caveat;
+  no retroactive tool compliance or policy/helper coverage is claimed.
+  OpenCode now owns task108 completion; integration and CI remain pending.
+- Helper144: clean GLM milestone coverage assigned to OpenCode Reviewer in
+  `20260908T100510Z-codex-4220`; worker start and reconciled budget await
+  acknowledgement. Only the two frozen helper/guide deliverables are editable;
+  coordinate any fixes with the owner and lead because these bytes are now
+  committed. No duplicate per-task review ticket was created.
+
+The full remote-board milestone remains **pending** helper and
+combined-candidate coverage. All live rollout holds remain in force. This
+append is lead coordination bookkeeping after the policy snapshot; it does
+not claim that the appended status text was included in that review.

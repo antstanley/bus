@@ -29,6 +29,7 @@ export interface HookDependencies {
 }
 
 const CLAUDE_REGISTRY_WRITE_WARNING = "board-hook: Claude session registry write failed";
+const MAX_DELIVERED_POSTS = 200;
 
 interface JsonRow { id: string; board: string; post_json: string }
 interface BoardRow { board: string }
@@ -257,6 +258,9 @@ export async function injectUnread(
         // rendered, so rows indexed from another store cannot cross scopes.
         const current = await boardReaders.get(row.board)?.get(row.id);
         if (current?.mentions?.includes(identity)) posts.push(current);
+        // One lookahead preserves the unread notice without delivering more
+        // than the policy permits, even with a very large configured byte cap.
+        if (posts.length > MAX_DELIVERED_POSTS) break;
       }
       if (posts.length === 0) {
         index.db.exec("COMMIT");
@@ -438,7 +442,7 @@ function renderPosts(posts: Post[], cap: number): { output: string; consumed: nu
   let consumed = 0;
   let truncatedFirst = false;
 
-  for (let i = 0; i < posts.length; i++) {
+  for (let i = 0; i < Math.min(posts.length, MAX_DELIVERED_POSTS); i++) {
     const block = renderPost(posts[i]!);
     const remaining = posts.length - (i + 1);
     const suffix = remaining > 0 ? overflowSuffix(remaining) : "";
@@ -468,11 +472,11 @@ function renderPosts(posts: Post[], cap: number): { output: string; consumed: nu
 }
 
 function renderTruncatedPost(post: Post, budget: number, remaining: number): string {
-  const header = `[UNTRUSTED CONTENT FROM ${post.author} | board ${post.board} | post ${post.id}]\n`;
+  const header = `[UNTRUSTED CONTENT FROM ${post.author} | board ${post.board} | post ${post.id} | trust unsigned]\n`;
   const bodyLabel = "| body:\n";
   const innerClose = "[/UNTRUSTED CONTENT]\n";
   const detailedNotice = remaining > 0
-    ? `[content truncated; ${remaining} more unread; run board read]\n`
+    ? `[content truncated; at least ${remaining} more unread; run board read]\n`
     : "[content truncated; run board read for full content]\n";
   const compactNotice = "[truncated; run board read]\n";
   const notice = byteLength(header + bodyLabel + detailedNotice + innerClose) <= budget
@@ -528,7 +532,7 @@ function renderQuotedSection(value: string, prefix: string): string {
 function renderPost(post: Post): string {
   const label = `UNTRUSTED CONTENT FROM ${post.author}`;
   const title = post.title === undefined ? "" : `${quoteUntrusted(`title: ${post.title}`)}\n`;
-  return `[${label} | board ${post.board} | post ${post.id}]\n${title}| body:\n${quoteUntrusted(post.body)}\n[/UNTRUSTED CONTENT]\n`;
+  return `[${label} | board ${post.board} | post ${post.id} | trust unsigned]\n${title}| body:\n${quoteUntrusted(post.body)}\n[/UNTRUSTED CONTENT]\n`;
 }
 
 // Prefix every author-controlled line so a body containing our closing marker
@@ -542,7 +546,7 @@ function normalizeUntrustedLines(value: string): string {
 }
 
 function overflowSuffix(count: number): string {
-  return count > 0 ? `[${count} more unread; run board read]\n` : "";
+  return count > 0 ? `[at least ${count} more unread; run board read]\n` : "";
 }
 
 function byteLength(value: string): number {

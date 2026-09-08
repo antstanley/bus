@@ -3,13 +3,32 @@ id: 108
 title: hygiene policy in AGENTS.md and MCP/hook output
 phase: 1
 priority: critical
-owner: letta
-status: blocked
+owner: opencode
+status: gated
 depends: []
 estimate: S
 ---
 
-## Milestone security reservation (2026-09-08)
+## Completion handoff (2026-09-08)
+
+Hoa transferred completion ownership to OpenCode in
+`20260908T101816Z-codex-57a2` and accepted the round-1 no-change runtime
+sub-scope pass. Preserve the exact eight-path manifest below for integration.
+Ordinary scoped READY `20260905T150053Z-opencode-reviewer-7e23` and isolated
+composition evidence `20260906T135204Z-letta-02cb` carry forward on unchanged
+bytes; no duplicate author/review cycle is required. Current GLM validation and
+runtime security evidence are recorded below. Policy 131 is separately
+integrated/passed per Hoa; helper/combined milestone coverage remains pending.
+
+Remaining completion items: Hoa integration of these unchanged bytes, exact
+commit CI, and final ledger closure. Current worker session deleted; runner/log
+removed; both processes exited; isolated test stores/dependencies removed.
+Native evidence-write violation is retained with Hoa's explicit disposition:
+no retroactive compliance claim or substantive rerun solely for report tooling.
+No release/rollout clearance inferred. Historical Letta dispatch/model-blocker
+paragraphs below are preserved provenance, not an active ownership dependency.
+
+## Historical milestone reservation (2026-09-08)
 
 OpenCode owns the remote-board milestone's runtime security sub-scope under
 explicit operator/lead dispatch. Its clean GLM5.3Flash reviewer-remediators
@@ -19,7 +38,7 @@ and docs/security/MILESTONES.md, not a separate review task. This does not
 claim a review started/passed. Letta's ordinary continuation remains held
 until required-model PASS **and** release/reconciliation of this reservation.
 
-## Current model blocker (2026-09-08)
+## Milestone execution evidence (2026-09-08)
 
 ### OpenCode milestone runtime launch
 
@@ -35,7 +54,44 @@ exact-byte coverage is to be reconciled by GLM, not reinterpreted by this
 coordinator. Background execution will keep bus handling available; worker
 identity, hashes and verdict will follow. No milestone pass is claimed.
 
-Letta reports PARTIAL in `20260908T051333Z-letta-6991`: Astra probe succeeded,
+### Runtime security round 1 handoff
+
+Clean worker `ses_f7f84c0efffeN3aG8IBN53jvrn`, requested and exported assistant
+runtime model `zai-coding-plan/glm-5.3-flash`; background runner PID 9299,
+worker PID 9307, both exited. Runtime timestamps show about 7.7 minutes.
+GLM reconciled prior closed exact-byte coverage and reported no unfinished
+same-scope cycle; current cumulative runtime round count is 1 of 3.
+Verdict: **SECURITY PASS, clean no-change**, eight runtime/fixture paths only.
+No artifact/test edits, no new in-scope findings reported. Input and output
+hashes equal every full hash in the eight-path frozen manifest below, verified
+again by the coordinator after handoff. No broader approval inferred.
+
+Report: `docs/security/2026-09-08-remote-board-runtime-milestone.md`, SHA-256
+`897f98810319ce14b06729afa872835c993fb3c4f1e4639c33d342aabcf50fb2`.
+Reported isolated baseline: `b11145c7be4e32dec22599f11737ea663d158785` plus
+eight candidate files, frozen dependencies copied with 297 links / 0 escapes /
+22 internal workspace links. Direct checks: root bun test exit 0,
+305 pass / 1 live-S3 environment skip / 0 fail, 2,027 assertions; root
+bunx tsc --noEmit exit 0. GLM carried verified prior final/MCP-delta coverage.
+
+Coordination caveat: HEAD advanced to `3bc8dad` while the worker ran. Report
+statements about no newer commits and the helper being untracked describe its
+launch snapshot, not current repository state. No automatic round reset or
+coverage of the newly integrated policy/helper is inferred. Helper/cross-scope
+coverage and release hold remain separate pending obligations; Hoa reconciles
+the combined final candidate. The coordinator does not reassess security.
+
+Process deviation: the worker wrote only its report with a native file tool,
+despite apply_patch-only instructions, citing unrelated precedent. That
+precedent did not authorize substitution; disclosed to Hoa. No product/test
+bytes were edited. The worker removed its isolated tree. Coordinator retires
+the disposable session and removes its own runner/log after preserving this
+evidence. Aggregate usage/cost unavailable; final-step token/cost counters are
+not treated as whole-session usage. Milestone/governance files untouched.
+
+### Historical Letta model blocker
+
+Letta reported PARTIAL in `20260908T051333Z-letta-6991`: Astra probe succeeded,
 but GLM worker failed before inference with 400 model handle not found for
 `zai/glm-5.3-flash`. The corrected native handle `z-ai/glm-5.3-flash` then failed at inference for
 insufficient hosted credits (`20260908T094031Z-letta-02a1`). Lead authorized
@@ -48,7 +104,7 @@ supported-handle check within the harmless test scope, no substitutions or
 persistent configuration changes. No new implementation has been authorized
 by this status update.
 
-## Conditional lead dispatch (2026-09-08)
+## Historical conditional dispatch (2026-09-08)
 
 Owner remains `letta`. Start this continuation **only after** the operator's
 model-spawn test reports PASS for two fresh, distinct, runtime-verified required
@@ -87,10 +143,10 @@ Policy correction/review obligations formerly 138/139/140 now belong to [131](13
 
 ## Current acceptance and completion
 
-- [ ] AGENTS.md carries the six-point hygiene policy
-- [ ] hooks and mcp output formats reviewed for delimiting and caps
-- [ ] a red-team fixture board with injection posts exists under fixtures/ and a test asserts injected text is labelled
-- [ ] Record applicable checks and a clean independent correctness/completeness verdict here, retaining existing exact-snapshot passing evidence and round counts.
+- [x] AGENTS.md carries the six-point hygiene policy (131 integrated/passed per lead).
+- [x] hooks and mcp output formats reviewed for delimiting and caps (carried scoped READY and current GLM runtime report).
+- [x] a red-team fixture board with injection posts exists under fixtures/ and a test asserts injected text is labelled (current GLM coverage and checks).
+- [x] Record applicable checks and a clean independent correctness/completeness verdict here, retaining existing exact-snapshot passing evidence and round counts.
 - [ ] Reconcile milestone security coverage/findings; lead commit/push, applicable CI and task-owned cleanup complete before marking done. Milestone release/rollout waits for its security gate.
 
 ## Earlier task scope and evidence

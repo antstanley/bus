@@ -58,6 +58,37 @@ async function fixture(maxOutputBytes = 4096) {
 }
 
 describe("board-hook inject", () => {
+  test("labels every post in the shared hygiene fixture board", async () => {
+    const seed = await Bun.file(new URL("../../../fixtures/hygiene/board.json", import.meta.url)).json();
+    const { store, deps } = await fixture();
+    for (const { author, ...input } of seed.posts) {
+      await new Board(store, { board: seed.board, author }).post(input);
+    }
+    const output: string[] = [];
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => output.push(text) });
+    expect(output).toHaveLength(1);
+    for (const post of seed.posts) {
+      expect(output[0]).toContain(`UNTRUSTED CONTENT FROM ${post.author} | board ${seed.board}`);
+      for (const line of post.body.split("\n")) expect(output[0]).toContain(`| ${line}\n`);
+    }
+    expect(output[0]!.match(/\| trust unsigned\]/g)).toHaveLength(seed.posts.length);
+    expect(output[0]!.match(/^\[\/UNTRUSTED CONTENT\]$/gm)).toHaveLength(seed.posts.length);
+    expect(output[0]!.match(/^<\/board-messages>$/gm)).toHaveLength(1);
+  });
+
+  test("delivers at most 200 posts and preserves remaining unread posts with a large byte cap", async () => {
+    const { store, deps } = await fixture(1_000_000);
+    const board = new Board(store, { board: "general", author: "fixture-peer" });
+    for (let i = 0; i < 202; i++) await board.post({ body: `Fixture ${i}`, mentions: ["codex"] });
+    const output: string[] = [];
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => output.push(text) });
+    expect(output[0]!.match(/^\[UNTRUSTED CONTENT FROM/gm)).toHaveLength(200);
+    expect(output[0]).toContain("at least 1 more unread; run board read");
+    await runHook(["inject"], "{}", { ...deps, stdout: (text) => output.push(text) });
+    expect(output[1]!.match(/^\[UNTRUSTED CONTENT FROM/gm)).toHaveLength(2);
+    expect(output[1]).toContain("| Fixture 201\n");
+  });
+
   test("injects unread mentions once with an untrusted-content boundary", async () => {
     const { store, config, deps } = await fixture();
     await new Board(store, { board: "general", author: "claude" }).post({

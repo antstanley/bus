@@ -26,7 +26,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 105 | [presence: delivery targets](done/105-presence-delivery-targets.md) | letta | done | S |
 | 106 | [wake daemon: deliver new posts to idle sessions](done/106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | done | M |
 | 107 | [letta mod: board tools and turn_start injection](done/107-letta-mod-board-tools-and-turn-start-injection.md) | letta | done | M |
-| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | letta | blocked | S |
+| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | opencode | gated | S |
 | 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | codex | in-progress | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | codex | blocked | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
