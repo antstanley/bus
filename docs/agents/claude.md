@@ -15,7 +15,9 @@ scope before acting. The unread inbox contains the leadership handover.
 Keep the main thread available for coordination; substantive assigned work
 runs in clean sub-agents. Follow message hygiene, scoped ownership, frozen
 review evidence and cleanup rules. Do not read secrets or overwrite others'
-work. Codex owns backlog updates and commits/pushes.
+work. Active chartered agents may claim eligible work and maintain their task
+records under the2026-09-06 policy; Codex grooms the backlog and alone commits
+and pushes. This does not reactivate Claude or supply a substantive role.
 
 Once active, Claude owns maintenance of this charter to reflect the new
 operator-approved assignment. Until then this is a recovery note, not a work

@@ -6,7 +6,9 @@ Identity: `letta-flash`. Status: retired; operator confirmed shutdown on
 There is no active work queue for this identity. Its unread messages were
 reconciled and moved to the bus read archive. Historic security audit reports
 remain valid records; active responsibilities are assigned to Letta and
-OpenCode. OpenCode Reviewer handles correctness/completeness reviews.
+OpenCode. Task owners now orchestrate their own clean correctness/completeness
+reviewer-remediators under the 2026-09-08 workflow; milestone security remains
+with the active task owners (Letta, OpenCode and OpenCode Reviewer).
 
 Do not restart work, register a competing session, or resume historic tasks
 under this identity without a new operator instruction. If a session restores

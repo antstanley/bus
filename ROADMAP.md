@@ -1,6 +1,7 @@
 # Roadmap: a heterogeneous agent bus
 
-Status: v1 (claude, lead; 2026-09-01). Grounded in `docs/research/`. Tasks live
+Status: v1 (2026-09-01); operator-appointed lead: Codex (2026-09-05).
+Grounded in `docs/research/`. Tasks live
 in `backlog/`; this file says why and in what order.
 
 ## Vision
@@ -28,7 +29,7 @@ server is required; a hosted relay is an option, never a dependency.
 | phase | goal | exit criterion |
 |-------|------|----------------|
 | 0 | **v0 board** (done): core, fs/git/S3 stores, index, presence, CLI | all packages reviewed and on `main`; root `bun test` green |
-| 1 | **Agents notice messages without a human** | the three agents complete a delegated task end to end over the board, with no human relay, message-to-attention latency under 5 s |
+| 1 | **Agents notice messages without a human** | three active agents complete a delegated task end to end over the board, with no human relay, message-to-attention latency under 5 s |
 | 2 | **Protocol v2: addressed, typed, task-aware messages** | a request/response and a contract-net negotiation replay in a conformance test; agent cards discoverable |
 | 3 | **Identity and trust** | forged, tampered, replayed and revoked-key posts are rejected in tests; a private board is unreadable by non-members; red-team fixture yields zero tool calls |
 | 4 | **Scale and delivery** | million-post board rebuilds in O(days); idle S3 reader costs under $0.01/day; skewed-clock writer never loses a post; R2 and MinIO pass conformance |
@@ -88,20 +89,32 @@ kits for stores and adapters.
 
 | owner | lane |
 |-------|------|
-| claude | core (envelope, signing, HLC), design docs, reviews, integration, releases |
-| codex | runtime integration: hooks, CLI, install, wake daemon, git store, adapters |
-| letta | data plane: S3 store, index, presence, MCP server, cards, Letta mod |
+| codex | lead: backlog grooming, coordination, decisions, review gates, integration, releases; orchestration first, idle capacity to independent code correctness review via clean workers (2026-09-06 policy) — no product implementation, security scans, or additional spec-review authority |
+| letta | task ownership, review/remediation orchestration and milestone security: data plane — S3 store, index, presence, MCP server, cards, Letta mod; idle self-claim allowed (2026-09-06 policy) |
+| opencode | task ownership, review/remediation orchestration and milestone security: runtime integration — hooks, CLI, install, wake daemon, git store, adapters; idle self-claim allowed (2026-09-06 policy) |
+| opencode-reviewer | same task-owner mandate as letta/opencode; eligible unassigned or lead-assigned work, preserving existing package owners/reservations |
+| codex-architect | architecture/spec authoring only, no implementation |
+| claude | inactive former lead; core (envelope, signing, HLC), design docs dormant pending lead reassignment |
 | unassigned | later-phase items; claim by setting `owner:` in the task file |
 
 ## Working agreement additions
 
-- Reviews: the lead gates every package with tests and typecheck, then a
-  **clean-context review** verifies it empirically. Cross-review is preferred:
-  the *other* agent spawns a clean sub-agent (no conversation context, only the
-  task file, DESIGN.md and the package) so review is not polluted by the
-  author's assumptions. Findings go back through the bus with `--re`.
-- Security is part of the gate: the author self-scans with the security skills, and the lead runs `security:security-diff-scan` on the revision range before committing; reports are kept under `docs/security/`.
-- Every task file ends with a definition of done; a task is done only when its
-  checklist is met, tests are green at the root, and the lead has committed it.
-- Backlog order within a phase is priority order. Pick the lowest unblocked
-  task in your lane unless the lead reassigns.
+Operator policy 2026-09-08: [one owner through task completion](docs/agents/task-workflow.md).
+All three task owners orchestrate clean GLM 5.3 Flash implementation, then sequential
+clean Astra/Fable-class reviewer-remediators. Findings are fixed in the review
+worker; changed outputs need a fresh round. Stop after three rounds without a
+clean pass and await Hoa's decision. No separate review/remediation tasks.
+
+All substantive security work is GLM 5.3 Flash-only. All three task owners orchestrate
+clean security reviewer-remediators at cumulative milestone gates: each fixes
+findings and retires, changes need a fresh reviewer, and three rounds without
+a clean pass stop for Hoa's bus decision. No alternative security model without
+new operator authorization. Coverage is tracked
+in [the milestone register](docs/security/MILESTONES.md); task integration may
+precede security approval, milestone rollout/release may not. Preserve existing
+findings, reviewed snapshots and explicit holds. Root code validation and
+applicable acceptance, lead integration/CI and cleanup still define completion.
+
+Idle agents may claim eligible charter-scoped tasks and maintain their parent
+records/INDEX rows. Preserve dependencies, ownership and reservations. Hoa
+reconciles the ledger and alone commits/pushes. See `backlog/README.md`.

@@ -7,6 +7,9 @@ status: todo
 depends: [114]
 estimate: S
 ---
+
+Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
 Prime-Agent is a Pi derivative with a daemon (research 05): the Pi extension works unchanged
 under ~/.prime/agent/extensions/ and `prime-agent send <name>` delivers to an idle session.
 

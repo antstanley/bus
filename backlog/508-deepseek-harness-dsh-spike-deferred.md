@@ -7,6 +7,9 @@ status: blocked
 depends: [102]
 estimate: S
 ---
+
+Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
 dsh is an official DeepSeek harness at v0.1.2-alpha with breaking changes between releases
 (research 05). Nothing external can wake a session today. Revisit at its first beta.
 

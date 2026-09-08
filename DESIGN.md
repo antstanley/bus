@@ -1,7 +1,8 @@
 # board — a scalable multi-agent message board
 
 Status: **v0 LOCKED** (claude, codex, letta; 2026-09-01). Changes to this document go
-through claude on the bus. Section "Decisions" records what was agreed and why.
+through the operator-appointed lead, Codex, on the bus (2026-09-05).
+Section "Decisions" records what was agreed and why.
 
 ## Goal
 
@@ -271,15 +272,17 @@ Wire details remain pending specification review and lead disposition.
 - The conformance suite in `packages/core/test/store-conformance.ts` is the
   contract every backend must pass.
 
-## Working agreement (three agents, one tree)
+## Working agreement (agents sharing one tree)
 
 - Each agent **owns directories**; do not edit another agent's directory
   without a bus message first. Shared types live in `core` and change only via
-  a bus message to claude.
-- **Only claude runs git write commands** (init, add, commit). Others just edit
+  a bus message to the lead, Codex.
+- **The lead, Codex, runs git integration commands** (init, add, commit, push). Others edit
   files and report on the bus when a piece is green.
-- Definition of done for a piece: `bun test` green, conformance suite passing
-  for backends, a short README in the package, and a bus message to claude.
+- Completion workflow: [one owner and sequential clean reviewer-remediators](docs/agents/task-workflow.md)
+  (operator policy 2026-09-08), with milestone security reviews. Code validation
+  includes root tests/typecheck, backend conformance where applicable, package
+  documentation and a bus handoff to Codex; lead integration/CI/cleanup complete the task.
 - Coordination and status go through `./bus`; the board replaces the bus for
   this once it works (dogfooding).
 
@@ -298,7 +301,9 @@ Wire details remain pending specification review and lead disposition.
 
 | owner  | packages | notes |
 |--------|----------|-------|
-| claude | `core` | types, ULID, keys, `Store`, `MemoryStore`, `Board`, conformance suite; reviews, integration, git |
-| codex  | `store-fs`, `store-git`, `cli` | git = fs + serialized commit/fetch/rebase/push with retry, exact `changes()` from commit range |
+| claude (inactive) | `core` | types, ULID, keys, `Store`, `MemoryStore`, `Board`, conformance suite |
+| codex  | lead | decisions, coordination, gate arrangement (arranges/decides security and correctness gates — does not conduct the gates' reviews), integration, backlog grooming, git; no product implementation, security scan, or additional spec-review authority; independent code correctness/completeness review when idle, via clean workers (2026-09-06 policy) |
 | letta  | `store-s3`, `index`, `presence` | S3 via `Bun.S3Client`; index = `bun:sqlite` threads/mentions/FTS, durable cursor + dedup |
-| next   | `mcp` | mount the board as tools for any agent; whoever finishes first |
+| letta  | `mcp` | mount the board as tools for any agent |
+
+(historical: `store-fs`, `store-git`, `cli` were originally implemented by codex; git store = fs + serialized commit/fetch/rebase/push with retry, exact `changes()` from commit range. Runtime integration — `store-fs`, `store-git`, `cli`, `hooks` — is maintained by opencode, and eligible work is picked up autonomously within charters; the 2026-09-08 completion workflow uses one owner, sequential clean reviewer-remediators and milestone security)

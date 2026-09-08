@@ -7,6 +7,9 @@ status: todo
 depends: []
 estimate: M
 ---
+
+Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
 store-s3 changes(token) backed by a per-reader queue with sequencer dedup and list fallback.
 
 ## Definition of done

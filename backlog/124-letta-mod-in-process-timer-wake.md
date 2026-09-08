@@ -7,6 +7,9 @@ status: blocked
 depends: [122]
 estimate: M
 ---
+
+Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
 Experiment (docs/research/06, 2026-09-02) proved a captured ctx.conversation handle called
 from a setInterval while idle starts a full model turn on the main conversation (Letta Code
 0.31.8; bidirectional sessions; 409 on run overlap). So open-session Letta wake can live in

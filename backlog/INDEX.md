@@ -2,6 +2,18 @@
 
 Statuses: todo, in-progress, blocked, gated, done.
 
+Current operator priority: **108 → 109 → 110 (remote-board migration)**.
+Critical enablers: 131 policy corrections and 144 live-role helper.
+Prioritize these over unrelated new implementation/spec work; preserve all
+active ownership, frozen scopes, unresolved findings and rollout holds.
+
+Current execution follows [the owner-managed task workflow](../docs/agents/task-workflow.md).
+Review/correction rounds live in the substantive parent task; milestone security
+obligations live with the task and [milestone register](../docs/security/MILESTONES.md).
+[The 2026-09-08 archive](archive/workflow-2026-09-08/README.md) preserves former
+active review/remediation evidence with link-only path adjustments, mappings and round counts.
+Archival is neither approval nor completion. Done/historical rows are unchanged.
+
 
 ## Phase 1
 
@@ -14,9 +26,9 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 105 | [presence: delivery targets](done/105-presence-delivery-targets.md) | letta | done | S |
 | 106 | [wake daemon: deliver new posts to idle sessions](done/106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | done | M |
 | 107 | [letta mod: board tools and turn_start injection](done/107-letta-mod-board-tools-and-turn-start-injection.md) | letta | done | M |
-| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | letta | in-progress | S |
-| 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | claude | todo | M |
-| 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | claude | todo | S |
+| 108 | [hygiene policy in AGENTS.md and MCP/hook output](108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | letta | blocked | S |
+| 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | codex | in-progress | M |
+| 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | codex | blocked | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
 | 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](done/112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | done | M |
 | 113 | [OpenCode adapter: plugin, install, wake via prompt_async](done/113-opencode-adapter-plugin-install-and-wake.md) | codex | done | M |
@@ -36,6 +48,9 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 128 | [security gate: backlog role and dependency alignment](done/128-security-gate-backlog-role-alignment.md) | letta | done | S |
 | 129 | [diagnose CI installer collision-scan timeout](done/129-diagnose-installer-collision-scan-ci-timeout.md) | letta | done | S |
 | 130 | [stabilize installer collision-scan test fixture](130-stabilize-installer-collision-scan-test.md) | letta | gated | S |
+| 131 | [adopt autonomous charter-scoped coordination](131-autonomous-coordination-guidelines.md) | opencode-reviewer | gated | S |
+| 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
+| 144 | [align phase1 acceptance helper with live team roles](144-align-phase1-helper-live-roles.md) | opencode | gated | S |
 
 ## Phase 2
 
@@ -44,19 +59,16 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | blocked | S |
 | 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
-| 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | codex | todo | M |
-| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | todo | S |
+| 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | opencode | blocked | M |
+| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | in-progress | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
 | 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | letta | todo | S |
 | 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |
 | 209 | [spec: author request/response](209-spec-request-response.md) | codex-architect | gated | M |
-| 210 | [spec review: request/response, round 1](210-review-request-response-round-1.md) | opencode-reviewer | gated | M |
 | 211 | [spec: author agent charters](211-spec-agent-charters.md) | codex-architect | gated | M |
-| 212 | [spec review: agent charters, round 1](212-review-agent-charters-round-1.md) | opencode-reviewer | gated | M |
-| 213 | [spec remediation: request/response after round 1](213-remediate-request-response-spec.md) | codex-architect | gated | M |
 | 214 | [spec review: request/response, round 2](done/214-review-request-response-round-2.md) | opencode-reviewer | done | M |
-| 215 | [spec remediation: agent charters after round 1](215-remediate-agent-charters-spec.md) | codex-architect | gated | M |
 | 216 | [spec review: agent charters, round 2](done/216-review-agent-charters-round-2.md) | opencode-reviewer | done | M |
+| 217 | [spec: author contract-net work allocation](217-spec-contract-net.md) | opencode | blocked | M |
 | 219 | [security gate: settled request-response and charter specs](done/219-security-gate-settled-request-response-and-charters.md) | letta | done | M |
 
 ## Phase 3
@@ -70,6 +82,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 305 | [rate limits and audit view](305-rate-limits-and-audit-view.md) | letta | blocked | S |
 | 306 | [private boards via HPKE-wrapped board keys](306-private-boards-via-hpke-wrapped-board-keys.md) | letta | todo | L |
 | 307 | [red-team fixture and injection test](307-red-team-fixture-and-injection-test.md) | opencode | todo | S |
+| 308 | [spec: author agent enrollment](308-spec-agent-enrollment.md) | letta | blocked | M |
 
 ## Phase 4
 
@@ -79,7 +92,7 @@ Statuses: todo, in-progress, blocked, gated, done.
 | 401 | [per-writer seq and presence heads; gap-driven reconcile](401-per-writer-seq-and-presence-heads-gap-driven-rec.md) | letta | todo | L |
 | 402 | [HLC-witnessed ULIDs](402-hlc-witnessed-ulids.md) | opencode | todo | S |
 | 403 | [S3 change feed via SNS to SQS](403-s3-change-feed-via-sns-to-sqs.md) | letta | todo | M |
-| 404 | [fs.watch and git-hook wake hints](404-fs-watch-and-git-hook-wake-hints.md) | opencode | gated | S |
+| 404 | [fs.watch and git-hook wake hints](done/404-fs-watch-and-git-hook-wake-hints.md) | opencode | done | S |
 | 405 | [day snapshots, compaction, retention](done/405-day-snapshots-compaction-retention.md) | letta | done | M |
 | 406 | [R2 and MinIO conformance](406-r2-and-minio-conformance.md) | letta | todo | S |
 | 407 | [store bridge: replicate a board between stores](407-store-bridge-replicate-a-board-between-stores.md) | opencode | todo | M |

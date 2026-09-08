@@ -9,6 +9,9 @@ depends: [129]
 estimate: S
 ---
 
+Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
+
 Implement the test-only remediation selected after clean diagnosis129. Source
 baseline c1df47ceae6ce7c190fd6cbd4cc3ee9959fa7258 (runtime unchanged from6cc2c8f).
 Editable repository path ONLY packages/cli/test/install.test.ts, starting

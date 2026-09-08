@@ -3,16 +3,31 @@ id: 404
 title: fs.watch and git-hook wake hints
 phase: 4
 owner: opencode
-status: gated
+status: done
 depends: []
 estimate: S
 ---
+
+Use the [owner-managed task workflow](../../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
+
 Hints trigger an immediate since(); polling backs off 1s to 30s otherwise.
 
 ## Definition of done
 - [x] FsStore.hint() via fs.watch recursive, debounced
 - [x] GitStore post-merge/post-receive hook touches a wake file
 - [x] Board.watch consumes hints
+
+## Completion (2026-09-08)
+
+Integrated and pushed in `b11145c7be4e32dec22599f11737ea663d158785`.
+Lead verified exact-head GitHub Actions CI run `34036751246` and CLI packaging
+run `34036751263` both completed successfully. OpenCode confirmed owner cleanup
+in bus message `20260908T100632Z-opencode-48b6`: owned package paths clean, no
+404 worktree, scratch or active process known; prior final reviewer cleanup
+is recorded below. Historical author-local sessions were not independently
+inventoried by the current owner session. Task126 remains blocked by the
+separate migration-priority/core-scope hold. Earlier pending statements below
+are historical and superseded by this completion entry.
 
 ## Verification
 
@@ -83,7 +98,7 @@ so no attribution or inherited delta-only approval is claimed. Evidence is in
 - [x] Abort-before-first-next regression fixed and independently rechecked.
 - [x] Final exact-scope security and correctness gates clear.
 - [x] Full proposed-head root tests/typecheck pass in an isolated snapshot.
-- [ ] Commit/push, CI and owner cleanup complete; only then unblock task126.
+- [x] Commit/push, CI and owner cleanup complete. Task126 retains its separate current-priority/core-scope hold.
 
 Author/focused commands used during development:
 
