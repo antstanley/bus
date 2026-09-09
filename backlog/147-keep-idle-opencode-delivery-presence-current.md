@@ -4,7 +4,7 @@ title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
 owner: opencode
-status: in-progress
+status: blocked
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -91,3 +91,34 @@ post `01M22Z7NNMQ93BE5EQVDEHBFQB` replying to request
 Hoa confirmed they fit the reservation. The owner explicitly reported no
 implementation start yet and distinguished administrative recovery from
 automatic delivery. Worker/model/start evidence remains pending.
+
+### Isolated implementation launch
+
+Owner verified clean isolated HEAD
+`1973076f8ec07a29c8aea09f9bab7b934fab2d20`. Fresh pure GLM implementation
+launches on the two approved paths alongside disjoint guide109 ordinary3.
+No duplicate147 worker; ordinary147 rounds consumed0/3. Main and installed
+plugin remain frozen. Denied typecheck/equivalents stay prohibited; any
+missing applicable check is a concrete validation blocker, not bypassed or
+reported green. Milestone coverage awaits its explicit later assignment.
+
+### Implementation blocked before canonical task read
+
+Actual clean pure GLM session `ses_f79f227d2ffeNRPe272k5bEY9p`, requested and
+exported runtime `zai-coding-plan/glm-5.3-flash`, runner11326/worker11340.
+The session verified isolated1973076 baseline and clean tree, then a native
+Read call for the main-root canonical147 task path was denied. Exact runtime:
+`The user rejected permission to use this specific tool call.` Denial origin
+is unverified, not assumed to be a deliberate human decision. No retry or
+equivalent attempted. apply_patch was also unavailable in that GLM worker.
+
+After initial CLI exit without final handoff, the same unfinished session
+returned a text-only BLOCKED evidence handoff, with tools explicitly forbidden.
+No source/test/config/scratch edits, no completed implementation or tests;
+canonical task/governance reading and all implementation/validation remain
+incomplete. Owner independently observed isolated git status clean afterward.
+Ordinary147 rounds consumed0/3; no model substitution or duplicate worker.
+No new implementation begins until a permitted canonical-read/edit-tool route
+is settled; typecheck prohibition remains separate and in force. Reported to
+Hoa via fallback `20260909T121038Z-opencode-164a`. Isolated checkout preserved,
+worker reported no scratch; disposable session retired after handoff.

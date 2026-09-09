@@ -4,7 +4,7 @@ title: end-to-end phase 1 acceptance
 phase: 1
 priority: critical
 owner: codex
-status: in-progress
+status: blocked
 depends: [104, 106, 109]
 estimate: S
 ---
@@ -157,3 +157,80 @@ predates this role change; final independent evidence needs a fresh observer.
 Any MCP/hook processes still sharing the original checkout remain a known
 source of possible contention. All live operational replicas retain the same
 explicit private remote and data branch; none belongs in source commits.
+
+Root independently observed ordinary reviewer
+`ses_f7a0d0c3cffeSNirqHPlrHJ9W0` using `openai/gpt-6-astra`, final finish=stop
+at11:38:37.432Z; sanitized metadata exposed no verdict, so none was inferred.
+A third administrative recovery prompt returnedHTTP204 while the owner's
+current turn remained busy. Subsequent read-only session/tool inspection
+identified two pending legacy `external_directory` requests for the
+lead-created task147 worktree: a directory read and `git status --short`,
+pending since approximately11:36:54Z. No rejection or security check was
+involved. Hoa verified the exact session/path/read-only command and approved
+each once (HTTP200), without a persistent permission change. This accounts
+for the observed stall; accepted async prompts alone did not prove the owner
+had processed them. Future work should avoid leaving external-worktree
+access prompts unattended.
+
+Checkpoint `1b0d964659db41e794b2e24ab04bd231e075ee36` is pushed, with
+CI34347042795 and CLI-packaging34347042793 passing.
+
+### Review cap and exact-post recovery
+
+Ordinary round2 remediated guide hash
+`2df74c1f9f818f8d787f7f50bd99b11e5822cb81e183f76f12baa1d24e3dae50`;
+round3 remediated it again to
+`78491cd294661bf6230de0125bd97f60c24cc4b91dcfab3e66b385f3c8a460d5`.
+Root matched both actual files at handoff. The owner stopped at the cap.
+Hoa authorized exactly one additional clean ordinary round4 in bus
+`20260909T120704Z-codex-1139`, because the newly observed replica and
+publication facts still require independent verification after remediation.
+Any further edit at4 requires another explicit lead decision; no round reset.
+The helper cannot represent4, so its round3 may record changes and the
+actual4 verdict must be separate thread/parent evidence. No false round3
+pass or helper accept is authorized. Guide integration is separate from
+this failed live-acceptance trial.
+
+The dedicated owner's30-second ready timeout did create local post
+`01M230FRH68JVEYVSXYNMED0FM` at11:57:38.726Z. Root initially sent an incorrect
+prewritten absence statement before inspecting its own read result, then
+immediately corrected it in `20260909T115947Z-codex-6ba0` and prohibited
+reposting. Inspection found the same ready file untracked; a subsequent
+owner read committed it locally without confirming publication. The owner
+stopped retries. Root found no matching helper/CLI process or rebase/lock,
+verified the managed replica/remote/branch, clean state and exact file hash,
+then used existing `GitStore.sync()` to publish the original object.
+
+At12:09:48.564Z the separate lead-control replica report found3 stages and9
+thread messages. It retrieved the identical ready file SHA256
+`00598b779ed8731652c261d34cbb466026bc4e482e72cdab64154d2cc9ce4c64`;
+owner replica commit was `667808963ad696c972ca66873de534ab7c7bc512`.
+Claim-to-ready2384185 ms includes review, stalled permissions, coordination
+and publication recovery, not delivery latency. The replica was released
+back to the owner. This was explicit lead transport recovery of an actual
+owner-authored stage, not normal helper success, a newly fabricated stage,
+or a passing zero-human cycle.
+
+Task147's first clean GLM worker was blocked by a rejected native read of its
+canonical task file. The owner preserved the exact runtime rejection, made
+no source changes, recovered only a text handoff and deleted the session.
+Hoa asked the operator asynchronously for fresh authorization of that exact
+read; approval is pending. No retry or equivalent-content workaround is
+authorized meanwhile. The guide's independent ordinary4 continues in fresh
+session `ses_f79eaef50ffe61EWwr1MJ7zVcZ`, requested pure `openai/gpt-6-astra`.
+
+### Current disposition
+
+Ordinary4 returned clean CORRECT/COMPLETE on78491cd, and fresh GLM security2
+returned clean no-change SECURITY PASS on that same guide. Final handoff is
+board post `01M232H234Q8N0SS7XJMXY7QRF`; root matched guide/report hashes and
+accepted the scoped guide disposition in the milestone register. This
+supports integrating the completed guide package, not passing this trial.
+
+Task110 is blocked pending repair/read authorization and a subsequent real
+acceptance attempt. The attempted helper round3 changes post also failed
+with its own internal subprocess137 at30 seconds despite an asynchronous
+outer wrapper; it was not retried or claimed successful. Current helper
+round limits and timeout behavior remain unchanged. Ordinary4 and the GLM
+pass are preserved as actual manual-thread evidence, without a fabricated
+helper pass/accept. Keep the bus fallback and live operational replicas.

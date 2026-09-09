@@ -318,3 +318,35 @@ new guide and relevant remaining live-cycle deltas, carrying unchanged runtime
 coverage. Count that as the next adoption/final-cycle security round2 of3,
 with round3 available for changed outputs; do not reset the open final-cycle
 budget. No new review task or repeated unchanged-runtime scan is required.
+
+### Setup-guide disposition (2026-09-09)
+
+OpenCode's final board handoff `01M232H234Q8N0SS7XJMXY7QRF` reports fresh
+GLM session `ses_f79e5f099ffeb2xFG2wM77uhzb`, exported
+`zai-coding-plan/glm-5.3-flash`, adoption/final-cycle security round2 of3:
+**SECURITY PASS, clean no-change** for the setup guide and assigned delta.
+Root independently observed that worker's model/completion metadata and
+matched the unchanged guide SHA256
+`78491cd294661bf6230de0125bd97f60c24cc4b91dcfab3e66b385f3c8a460d5`.
+The [verbatim report](2026-09-09-team-board-guide-final-cycle.md) SHA256 is
+`e74c94243e69fa6609e3176d507bd9c69da26a4c29f788ea6192bdc097342bfb`, also
+matched by root. Owner confirms session retirement/deletion; remaining
+runner/log cleanup still needs final confirmation. Root retains live
+operational replicas/watcher separately.
+
+Hoa accepts the GLM assessment for this exact guide, carrying prior unchanged
+runtime coverage. No new security analysis or broader approval is implied.
+Historical collective wording in the report does not establish identical
+ordinary-review inputs: ordinary2 and3 remediated distinct snapshots; only
+the explicit lead-authorized ordinary4 returned a clean no-change pass on
+the final78491cd guide. Those exact snapshots and checks remain in task109.
+
+This clears guide integration, not full migration, task110 acceptance,
+task147, or unreviewed future runtime/helper changes. The real trial required
+human/admin recovery and remains failed/incomplete. Task147's canonical-read
+rejection awaits fresh operator authorization; the helper's reported internal
+30-second subprocess limit also remains an operational blocker. Runtime and
+installed configuration bytes stay fixed. The next applicable changed-delta
+security review is cumulative round3, subject to explicit scope assignment;
+after3 without a clean pass, stop for Hoa. No budget reset or per-task scan
+queue is created.

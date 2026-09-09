@@ -298,3 +298,171 @@ Record all actual request/stage IDs, worker models/sessions, hashes, checks
 and timing through the board. After launch, use board traffic for this cycle;
 bus remains a monitored fallback for real blockers. No human relay is claimed
 until actual observations support it.
+
+### Actual request and administrative recovery
+
+Actual team-board request `01M22Y1T5AT1S3X6SAPYZ1W16K` was posted by the
+asserted lead author at 2026-09-09T11:15:04.490Z. Owner retrieved it with a
+bounded CLI board read after direct operator/administrative wake. Claim
+`01M22Y707DRDZ1JAM2KWZKJC63` posted at 11:17:54.541Z; explicit recovery receipt
+`01M22Y804XGP6TW2Z7ZD4XWECT` posted on the same thread at 11:18:27.229Z.
+Hoa reports watcher skipped delivery because owner idle presence expired.
+This is failed automatic delivery followed by administrative recovery, not a
+passing automatic wake or board-only/no-human-relay cycle; task110 retains the
+observation. No runtime repair is authorized or attempted here.
+
+New setup-guide author now starts under the actual request. Scope remains only
+`docs/acceptance/team-board-setup.md`; pure clean GLM author, ordinary review
+starting cumulative round2/3, final-guide milestone security round2/3. No
+round reset, duplicate worker or configuration/runtime edit. Actual worker
+handoffs and stage evidence will be recorded on the request thread and here.
+
+### Guide author handoff
+
+Fresh pure GLM author `ses_f7a19cb1cffeeQ1ed536DLEem7`, requested and exported
+runtime `zai-coding-plan/glm-5.3-flash`, runner16829/worker16837 exited0.
+About 7.8 minutes elapsed. With no apply_patch tool available, author returned
+the complete guide text; coordinator persisted it verbatim through apply_patch.
+Extracted text and `docs/acceptance/team-board-setup.md` SHA-256 both equal
+`46572fed80c0f7bf91ab466b68195536dc34370f1f8965507347a4425b705027`.
+No replacement author or denied-action retry. Worker checked local CLI/help,
+installer/plugin/store source facts and relative links; no tests/typecheck,
+configuration edits, endpoint/store operations or own correctness approval.
+It ran bus help only, not message intake/posting; no worker board interaction.
+The worker created no scratch, and its disposable session was deleted after
+handoff. Aggregate usage/cost unavailable. Fresh ordinary review starts at
+cumulative round2/3; the initial guide is not approved.
+
+Attempted owner ready stage failed with CLI/subprocess exit3 and no success
+recorded. Read-only board-data status was clean; a bounded board read after
+`01M22YZ4143WVY8S4X7KW224TN` showed no later post. Publication is unconfirmed,
+not a successful stage; real blocker sent on fallback bus
+`20260909T113329Z-opencode-1d9e`. No blind retry or synthetic receipt.
+Human/admin provenance: user check-bus prompt preceded claim; subsequent Hoa
+API recovery prompts are separately recorded, not counted as zero-human flow.
+
+### Ordinary review round 2 and publication recovery
+
+Clean pure Astra reviewer `ses_f7a0d0c3cffeSNirqHPlrHJ9W0`, actual exported
+provider/model `openai/gpt-6-astra`, runner84994/worker85013, finished without
+replacement. Input46572fed full pin above; output guide SHA-256
+`2df74c1f9f818f8d787f7f50bd99b11e5822cb81e183f76f12baa1d24e3dae50` rehashed.
+Verdict **REMEDIATED - FRESH REVIEW REQUIRED**, cumulative ordinary2/3.
+Reviewer fixed reusable/quoted command assumptions, first-time versus recovery
+flow, plugin hook distinctions, watcher routing, acknowledgement versus actual
+reply, configuration boundaries and actual failed-delivery evidence. Checks:
+source/local-help consistency, four relative links, zsh syntax, Git path option
+and scoped diff-check passed. No product tests/typecheck, live operations or
+security assessment. Guide-only apply_patch edit; no scratch reported. Session
+deleted after handoff; fresh ordinary3 required, never self-approved.
+
+Direct administrative recovery3 was received after root observed review exit.
+Root supplied dedicated sequential owner CLI replica
+`git:/private/tmp/sidekick-109-owner-board-8pkb84us/board,remote=https://github.com/antstanley/bus-board.git,branch=board-data`.
+The prior two failed ready attempts used old shared source .board-data with
+subprocess exits3 then1, not this replica. One serialized helper report on the
+dedicated replica exited0 and showed only request+claim, no ready. The single
+authorized ready attempt there timed out after30s without output; no matching
+ready process remained. No blind retry or success inferred. Fallback bus
+`20260909T115826Z-opencode-343d` records the blocker and exact stores/statuses;
+full argv is preserved in the owner transcript. Dedicated replica ownership
+and asynchronous reader Git effects are new required guide documentation.
+Fresh round3 must include this requirement; any edit there triggers the
+ordinary three-round stop for Hoa, with no automatic reset or extra review.
+
+### Ordinary round 3: cap reached after remediation
+
+Clean pure reviewer `ses_f79f62a2fffeDGx1s8rGoUn1PP`, requested and exported
+runtime `openai/gpt-6-astra`, runner89993/worker90043 exited0. Input2df74c1f
+full pin above; output guide SHA-256
+`78491cd294661bf6230de0125bd97f60c24cc4b91dcfab3e66b385f3c8a460d5`, rehashed
+by owner. About3.8 minutes elapsed. Verdict **REMEDIATED - FRESH REVIEW
+REQUIRED**, cumulative ordinary3/3. Guide-only apply_patch edits documented
+dedicated per-process replicas and read-side Git effects, installer concurrency
+limitations, API recovery3, failed shared ready attempts and dedicated timeout.
+No product/config/helper edits or live commands. Local command/help/source
+checks, four relative link targets, six shell-block zsh syntax checks and
+scoped diff-check passed; no product tests/typecheck/security work.
+
+Owner stopped at the cap: no ordinary4, no independent approval of reviewer3's
+own edits and no final-guide security launch. Hoa's recorded decision is
+required. Reported in fallback bus `20260909T120535Z-opencode-7a01` because
+dedicated owner helper report itself subsequently exited137. The dedicated
+ready remains unconfirmed; no further publication retries. Exact source/store
+failure evidence retained above; no automatic-delivery or zero-human claim.
+Reviewer reports no scratch; session retired after evidence capture. Guide
+bytes frozen pending disposition; cumulative security guide round2 remains
+unconsumed. Aggregate usage/cost unavailable.
+
+### Lead exception: one cumulative ordinary round 4
+
+Hoa decision `20260909T120704Z-codex-1139` authorizes exactly one additional
+clean Astra/Fable ordinary review, cumulative4, on frozen78491cd full pin above.
+Rationale: round3 fixed newly observed replica/concurrency/publication facts,
+so independent verification is still necessary. No count reset. Only a
+no-change CORRECT/COMPLETE pass permits the reserved GLM guide security2;
+any change in4 requires another STOP and explicit decision. Round3 retired.
+
+Publication correction: Hoa located exact ready
+`01M230FRH68JVEYVSXYNMED0FM` at11:57:38.726Z in the dedicated replica,
+initially untracked and not remotely published. This supersedes earlier
+absence assumptions after timeout. No further ready post/retry is allowed.
+Owner paused all replica writes/syncs; no owner helper/CLI remained. Root owns
+exclusive recovery of the exact existing post bytes, not a synthetic stage.
+Remote publication is pending root confirmation; no runtime/helper edit.
+
+### Ordinary round 4: clean exception pass
+
+Fresh pure reviewer `ses_f79eaef50ffe61EWwr1MJ7zVcZ`, actual exported runtime
+`openai/gpt-6-astra`, runner43048/worker43068 exited0. Under the single-round
+lead exception, cumulative ordinary4 returned **CORRECT/COMPLETE**, no edits
+or unresolved ordinary blockers. Input/output both full guide78491cd pin above,
+rehashed by owner. Checks: scoped source/fact/local help consistency, four
+relative links, all six shell-block zsh syntax checks, diff-check and unchanged
+hash. No product tests/typecheck/security/live commands. About2 minutes elapsed;
+no worker scratch. Retired after handoff, no fifth ordinary round.
+
+Hoa recovered exact existing ready bytes without reposting; independent owner
+helper report in the released dedicated replica exited0 at12:14:27.374Z and
+shows request+claim+ready `01M230FRH68JVEYVSXYNMED0FM`. Its original timestamp
+remains11:57:38.726Z. This is eventual publication recovery, not a second stage
+or automatic delivery success. Owner now records actual round3 `changes`
+through the bounded helper; cumulative4 stays a normal thread reply per Hoa
+`20260909T120849Z-codex-73d0`, not false --round3 pass or unsupported --round4.
+No helperaccept or completed110 claim. Fresh reserved GLM guide security2/3
+starts next on the unchanged ordinary-approved guide and carried runtime gate.
+
+### Final-guide security round 2: clean no-change handoff
+
+Fresh pure GLM `ses_f79e5f099ffeb2xFG2wM77uhzb`, requested and exported
+runtime `zai-coding-plan/glm-5.3-flash`, runner68711/worker68749 exited0.
+About10.6 minutes elapsed. Verdict **SECURITY PASS, clean no-change**, reserved
+adoption/final-cycle security2/3; guide input/output remain full78491cd pin.
+No guide/runtime/config/test edits or denied-operation retries. Actual scoped
+doc source/help/link/six shell syntax checks and hash checks are in the report;
+unchanged runtime coverage carried rather than rerun. No security3 triggered.
+
+GLM report persisted verbatim by coordinator apply_patch:
+`docs/security/2026-09-09-team-board-guide-final-cycle.md`, SHA-256
+`e74c94243e69fa6609e3176d507bd9c69da26a4c29f788ea6192bdc097342bfb`.
+Extracted worker-report hash equals persisted hash. Report-only observations
+and scope limits retained for Hoa's disposition; coordinator did not reassess
+security. Evidence wording caveat: ordinary2 checked/remediated the earlier
+46572fed/2df74c1f snapshots; ordinary3 produced78491cd, and only ordinary4 is
+the independent no-change ordinary pass on78491cd. The report's collective
+round2-4 same-byte wording does not override that precise provenance.
+
+Manual board evidence `01M231P18YXK7G6MYNDJQ1N57Q` posted at12:18:32.862Z
+records actual ordinary4 and security2 start. Prior single helper review3
+changes operation used tracked async execution but failed internal subprocess137
+at30s; no helper review success is inferred and no retry is authorized.
+Subsequent bounded owner read sees ready and manual evidence, not a supported
+helper pass/accept. Guide artifact is gated for lead integration independently
+of the failed/incomplete live trial; task110 acceptance and bus deprecation
+remain unmet. Task147 is blocked on its separate exact-read permission and
+is not covered by this report. No ordinary/security budgets reset.
+
+Worker removed its syntax scratch, reported no other resources. Owner retires
+the session and removes owned worker/command logs after handoff; operational
+board replica and installed config remain live lead-owned state, not scratch.
+Aggregate usage/cost unavailable. Final guide/report frozen for Hoa.
