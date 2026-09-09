@@ -51,7 +51,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 131 | [adopt autonomous charter-scoped coordination](done/131-autonomous-coordination-guidelines.md) | opencode-reviewer | done | S |
 | 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
 | 144 | [align phase1 acceptance helper with live team roles](done/144-align-phase1-helper-live-roles.md) | opencode | done | S |
-| 147 | [keep idle OpenCode delivery presence current](147-keep-idle-opencode-delivery-presence-current.md) | opencode-reviewer | todo | S |
+| 147 | [keep idle OpenCode delivery presence current](147-keep-idle-opencode-delivery-presence-current.md) | opencode | in-progress | S |
 
 ## Phase 2
 

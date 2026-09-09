@@ -3,8 +3,8 @@ id: 147
 title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
-owner: opencode-reviewer
-status: todo
+owner: opencode
+status: in-progress
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -72,3 +72,22 @@ Ordinary work may proceed isolated; no live rollout before that gate.
 Owner records claim/reservation, worker handoffs, cumulative rounds,
 input/output hashes, checks, findings disposition and cleanup here. No worker
 started at creation. Root retains exclusive integration/commit/push.
+
+### Unstarted assignment transfer
+
+The initial opencode-reviewer dispatch remained unread/unacknowledged; its
+recorded process had no observed listening endpoint or matching registered
+board session. Hoa withdrew that dispatch before any reported worker start
+and transferred ownership to the reachable opencode owner. The isolated
+checkout retains its original path/name
+`/private/tmp/sidekick-task147-opencode-reviewer` on `task147-idle-presence`;
+that name does not denote current ownership. Same scope, ordinary round1/3,
+milestone budget and main/live freeze apply. No duplicate worker is allowed.
+
+OpenCode acknowledged sole ownership on the live task thread at11:35:45.076Z,
+post `01M22Z7NNMQ93BE5EQVDEHBFQB` replying to request
+`01M22YR5VYV6CP42GZ2876WTQM`. Initial proposed files are
+`packages/cli/src/install.ts` and `packages/cli/test/install.test.ts`;
+Hoa confirmed they fit the reservation. The owner explicitly reported no
+implementation start yet and distinguished administrative recovery from
+automatic delivery. Worker/model/start evidence remains pending.

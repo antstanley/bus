@@ -115,3 +115,45 @@ opencode-reviewer in an isolated checkout. Main/live integrations stay
 frozen; the task109 guide proceeds with the observed limitation. Actual
 automatic-delivery acceptance remains open pending a reviewed, gated repair
 and a subsequent real observation.
+
+The task147 assignment was subsequently withdrawn unread from the original
+owner and transferred to reachable opencode on board thread
+`01M22YR5VYV6CP42GZ2876WTQM` (11:27:17.374Z), keeping the same isolated
+checkout and scope. Its automatic notification was skipped too. After the
+guide worker/runner exited without a visible artifact or handoff, Hoa sent
+a second administrative coordination prompt to reconcile that existing
+result and retrieve147; HTTP204 was returned. These two direct lead prompts
+are recorded fallbacks, not automatic board delivery. Owner reports described
+the earlier wake as operator/administrative; whether any additional human
+prompt occurred in the owner's separate UI remains unverified.
+
+Coordination commit `7f76329d5caebcdb78037aa1d7e11f4f9581e8cf` was pushed;
+CI34345222600 and CLI-packaging34345222700 both passed. This does not change
+the frozen product runtime or establish live acceptance.
+
+The owner subsequently clarified in task109 that a human check-bus prompt
+preceded its claim. Therefore this attempt includes at least one reported
+human relay as well as Hoa's two API recoveries; zero-human acceptance failed.
+The GLM author returned the complete guide text after about7.8 minutes and
+exited0. Owner persisted those bytes verbatim; root matched the file SHA256
+`46572fed80c0f7bf91ab466b68195536dc34370f1f8965507347a4425b705027` and
+independently observed exported assistant model `zai-coding-plan/glm-5.3-flash`
+with final finish=stop before the disposable session was deleted. This is
+author handoff evidence, not independent correctness approval.
+
+A later lead reply returned its ID `01M22YZ4143WVY8S4X7KW224TN` followed by
+exit3 and `invalid upstream 'FETCH_HEAD'`; an independent remote read then
+confirmed that same ID, without reposting. Owner ready publication also
+failed and remained unconfirmed. A clean Astra operational diagnosis found
+GitStore serialization is per instance and separate managed replicas are
+supported. Shared-checkout interference is consistent with these errors,
+but the historical cause is not proven by source inspection alone.
+
+Hoa prepared a dedicated owner CLI replica, moved its watcher to a separate
+replica from the known prior cursor, and repurposed the original temporary
+observer as a sequential lead-control replica. Product and persistent
+integration configuration bytes were unchanged. The prior observer evidence
+predates this role change; final independent evidence needs a fresh observer.
+Any MCP/hook processes still sharing the original checkout remain a known
+source of possible contention. All live operational replicas retain the same
+explicit private remote and data branch; none belongs in source commits.
