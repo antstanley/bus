@@ -3,7 +3,7 @@ id: 205
 title: addressed inbox view
 phase: 2
 owner: letta
-status: gated
+status: done
 depends: [201]
 estimate: S
 ---
@@ -116,3 +116,41 @@ record deletion and GLM CLI-session deletion are not inferred from retirement;
 final cleanup confirmation remains pending along with lead-owned worktree/
 branch/stash/backup removal after integration and CI. Milestone coverage of
 these new product bytes is required before they are used in live rollout.
+
+Implementation and corrected records pushed in
+`f37b83b7f4b8e3a37dfb18d1979caed4826c892c`. Exact-commit CI and final cleanup
+remain to be confirmed. Upcoming live adoption now has GLM milestone dispatch
+`20260909T101602Z-codex-1a41`, owned by OpenCode Reviewer, with any fixes
+confined to a separate isolated candidate. This is milestone coverage within
+the parent, not a new review/remediation task.
+
+Exact source commit CI34339206661 and CLI packaging34339206667 passed.
+Before cleanup, Hoa verified every remaining worktree change was one of the
+seven expected files and byte-identical to pushed f37b83b. Lead-owned temporary
+worktree, task205-inbox branch, exact original stash e926015d and alignment
+backup/staging directory are now removed. Final owner session-retirement/
+deletion clarification remains pending; milestone review uses a separate
+fixed-commit archive and does not depend on this removed worktree.
+
+The unread milestone reservation was subsequently transferred to OpenCode in
+`20260909T102938Z-codex-2594`, with no reported worker start or consumed round
+before transfer. Its fixed scope and initial security round1 budget remain
+unchanged; original coordinator is withdrawn.
+
+## Ordinary task completion (2026-09-09)
+
+Task205 is done: reviewed source is pushed in f37b83b, exact-commit CI and
+packaging passed, and lead-owned worktree/branch/stash/backups are removed.
+Hoa additionally deleted the explicitly retired GLM implementation session
+`ses_f7aaa8b4affe1b6e1qefF4X3Db` through the supported pure CLI command.
+Owner reports both native reviewers retired and scratch removed. Ended native
+reviewer records are accepted under the same documented harness deletion
+limitation as the earlier native probe records; no active worker or unsupported
+deletion is claimed. The ordinary implementation remains separate from the
+upcoming live-adoption milestone gate.
+
+Canonical file relocation is deferred until that active milestone handoff
+so worker input references remain stable. INDEX now records done; this is
+not a separate review/remediation task or permission to use uncovered bytes
+in the live cycle. Any milestone fix must retain its actual follow-up review
+and integration evidence in this parent.

@@ -151,3 +151,117 @@ OpenCode Reviewer confirmed the withdrawn checklist never started and left
 no resources (`20260909T092037Z-opencode-reviewer-33de`). A clean lead
 documentation worker is extracting existing setup commands from docs/CLI
 help; this is operational preparation, not another code/security review.
+
+### Initial private-board setup (2026-09-09)
+
+Lead-authorized setup followed the combined milestone disposition. Fresh remote
+preflight confirmed PRIVATE/empty; source fetch/push origin remained
+`https://github.com/antstanley/bus.git`. Added only local Git info/exclude
+`/.board-data/`, then ran the existing CLI init with store
+`git:/Volumes/Delorean/code/sidekick/tmp/.board-data,remote=https://github.com/antstanley/bus-board.git,branch=board-data`,
+board `team`, author `codex`, title `Team coordination`. Exit0 created event
+`01M22QYN36K4D5A6EVJ8Q1MZFQ` at `2026-09-09T09:28:29.542Z`.
+
+The dedicated checkout reports branch `board-data`, `board.store=true`, clean
+status and both data remote URLs pointing to `antstanley/bus-board.git`. Local
+and remote branch hashes matched `668081a25482d30240851e18738666b85599f518`.
+This is initial board creation/replication, not a completed live task cycle.
+
+Codex installer dry-run showed only managed board hooks/MCP changes with
+unrelated values redacted. Applying that exact installation exited0 for
+`/Users/stan/.codex/config.toml`. Local `codex queue --help` confirms the
+thread/message route; current environment identifies thread
+`01a07d35-d04c-75f0-90e7-7fd4b7f027e6`. Installation is not proof of current
+session reload or delivery. OpenCode is asked for its actual session/project/
+server metadata before installation; use one owner participant initially to
+avoid conflicting shared-project OpenCode identities. Letta continues205.
+
+The combined report/144 closure was pushed in
+`bcda545f3964f5a523bd2fbc9f43a971b1c7f62b`; CI34334736709 and CLI packaging
+34334736690 passed. Full participant delivery, a real task cycle, observed
+relay counts, acceptance110 and retro remain outstanding; bus stays active.
+
+Lead watcher is running as a supervised foreground tool process with `--deliver`,
+runtime `codex`, the actual thread ID above and a 2000ms interval. Its local
+log is temporary operational output, not acceptance evidence; no delivered
+message has yet been observed. OpenCode supplied actual session
+`ses_f80b03ca4ffevsFv2RTOzgxUVY` and project directory matching this repo in
+`20260909T093138Z-opencode-4113`, but no listening server/plugin endpoint was
+verified. Dispatch `20260909T093222Z-codex-067c` authorizes a clean GLM worker
+to prepare/apply the existing project-local integration after dry-run, preserving
+unrelated settings and reporting the concrete lifecycle handover. No duplicate
+current-session invocation, global defaults change or user-process termination
+is authorized. Worker start is not yet confirmed; this remains prerequisite
+setup, not the live task-cycle acceptance.
+
+Pre-rollout coordination observation: task 205's combined-validation handoff
+arrived at 09:37:25Z (`20260909T093725Z-letta-0d3e`), and its Astra round 1
+start report at 09:59:08Z (`20260909T095908Z-letta-3209`), a 21m43s report gap.
+At 09:50Z Letta had two unread lead dispatches. This records observed report/
+inbox timing, not exact worker runtime or a proven cause; the actual clean
+review start is confirmed only by the latter report. It is pre-rollout bus
+friction evidence, not a zero-human-relay board cycle or task 110 acceptance result.
+
+### OpenCode installation and runtime handover (2026-09-09)
+
+OpenCode handoff `20260909T100847Z-opencode-6aa4` records clean GLM worker
+`ses_f7a5f4a32ffe7SZAXu11UZc1eA`, requested and exported runtime
+`zai-coding-plan/glm-5.3-flash`. Existing project-local installer dry-run and
+apply both exited0. Only local `opencode.json` and `.opencode/plugins/board.ts`
+were created; no global/product/template edits or live posts. Root matched
+current config SHA256 `3835b0ff256525089c0cec06d417e1e6d1710101e41b87cd47946ce5ec951a3f`
+and plugin `656b229eb0f9783c5d8fa4dca002223a2f785dbef28fbc3460f984858c53ffec`.
+Config top-level keys are `$schema` and `mcp`, with only `mcp.board`. Owner
+records an earlier worker-handoff config hash
+`9439d992b76ce6d6b78c24c64aac5822f31842f0da43e1a7059f70d66a63e6b2`;
+that discrepancy is preserved, not overwritten or labelled identical.
+
+The existing TUI has not loaded the new plugin. The operator was given a
+concrete quit/resume command, grounded in local CLI help:
+
+```sh
+opencode /Volumes/Delorean/code/sidekick/tmp --session ses_f80b03ca4ffevsFv2RTOzgxUVY --hostname 127.0.0.1 --port 4096
+```
+
+Port4096 had no observed listener at preflight. This is a proposed handover,
+not evidence that restart, plugin registration or delivery occurred. The lead
+has not terminated or duplicated that user session. Owner must verify actual
+listener/registration after restart; bus fallback remains active. Worker
+retirement and owned runner cleanup are reported in progress, not yet confirmed.
+
+This first installation names only `opencode`. Other task owners retain their
+mandate; configuring a second identity in the same project remains unresolved.
+Clean CLI workers retain their explicit-model `--pure` route so they do not
+load the live-owner board plugin. No runtime permission restriction is relaxed.
+
+Operator confirmed OpenCode was stopped/restarted. Root then observed a
+plugin registry entry for new session `ses_f7a55f740ffeWONAaW00bdGCrp`,
+server URL `http://localhost:4096/`. No listener was observed, and explicit
+loopback connections to both127.0.0.1:4096 and[::1]:4096 were refused. This
+establishes registration, not delivery readiness. Operator clarification on
+whether the explicit --port4096 launch was used is pending. No live-cycle
+post or endpoint prompt has been sent. Current installed configuration values
+match the authorized store/team/opencode settings; the two local files are
+now narrowly excluded through source Git info/exclude.
+
+Operator clarified the first restart used the normal launch command, then
+confirmed completion of the explicit-port resume. Root observed OpenCode
+PID59307 listening at127.0.0.1:4096 and a successful TCP connection. The
+registry still contained the earlier newly-created session at that instant.
+A single administrative prompt to original owner session
+`ses_f80b03ca4ffevsFv2RTOzgxUVY` through the existing prompt_async route
+returnedHTTP204, requesting bus/status reconciliation only. This is not
+board delivery or acceptance evidence; actual agent reply/registry refresh
+remains to be observed. No live task-cycle post has been sent.
+
+OpenCode confirmed setup-worker session deletion and removal of its owned
+runner/output in `20260909T102313Z-opencode-7f75`; both tracked processes
+had exited and no worker scratch remains. Installed participant configuration
+is live operational state, not disposable test scratch.
+
+OpenCode replied to the administrative wake in
+`20260909T102643Z-opencode-143a`: active original session, PID59307, matching
+refreshed registry URL127.0.0.1:4096 and healthy read-only server status. This
+confirms the administrative endpoint round trip, not board delivery. The
+unread inbox-adoption milestone reservation was moved to this reachable owner
+without starting a duplicate review; actual GLM start/pass remains pending.

@@ -27,7 +27,7 @@ reports cover their historical bytes only. No scan is claimed by this register.
 
 | Milestone | Parent deliverables / cumulative scope | Scan coordination | Boundary and current state |
 |---|---|---|---|
-| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pinned candidate prerequisite passed (2026-09-09).** Combined GLM round2 report and lead disposition below permit lead-controlled setup planning under109. Actual setup awaits the concrete operational sequence; full live acceptance110 and relevant later-delta coverage remain open. |
+| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Earlier pinned candidate passed; new adoption delta pending.** Initial setup used the accepted combined candidate. Task205 integration in f37b83b adds seven runtime paths requiring the GLM adoption-delta dispatch below before the live cycle; actual runtime readiness and full acceptance110 remain open. |
 | Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | OpenCode; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
 | Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | OpenCode Reviewer; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
 | Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the three task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
@@ -246,3 +246,39 @@ and does not inherit this gate. Subsequent task/register/report archival edits
 are lead bookkeeping, not newly scanned product bytes. Historical report-only
 local-file observations are not permission to read or delete credential files;
 only the exact selected report and task metadata are staged for this closure.
+
+### Inbox adoption delta dispatch (2026-09-09)
+
+Task205 ordinary implementation is pushed as
+`f37b83b7f4b8e3a37dfb18d1979caed4826c892c`, following clean Astra round2.
+It adds seven product paths relative to `bcda545f3964f5a523bd2fbc9f43a971b1c7f62b`;
+the root-corrected full hashes are in its parent record. These bytes are not
+approved by the prior 25-path report. Initial private-board setup preceded
+this integration on the accepted candidate; the forthcoming live cycle must
+wait for coverage of this adoption delta as well as participant readiness.
+
+Dispatch `20260909T101602Z-codex-1a41` assigns OpenCode Reviewer a fresh
+GLM5.3Flash-only worker, fixed f37b83b, security round1 of3 for this previously
+uncovered inbox-adoption scope. Prior helper2, policy2 and runtime1 cycles
+remain closed evidence, not reset budgets. Only the seven task205 paths may
+be fixed in an isolated candidate; shared main and Letta's retained worktree
+stay untouched. Installed local opencode.json and plugin configuration are
+read-only interaction inputs with their actual observed hashes. Any finding
+requiring other edits returns to the lead for scope assignment.
+
+Report target: `2026-09-09-phase1-inbox-adoption-delta.md`. Changed outputs
+require retirement and the next fresh GLM round, with a stop after3 if not
+clean. No duplicate task ID or routine re-review of unchanged accepted scopes.
+Reuse applicable existing validation; do not retry or work around the prior
+helper typecheck denial. Actual worker start/runtime evidence and verdict are
+pending. This register entry is coordination bookkeeping, not a security scan.
+
+Assignment update: root verified original dispatch101602Z-codex-1a41 remained
+in OpenCode Reviewer's new/unread inbox, with no reported worker start. It was
+withdrawn in `20260909T102938Z-codex-5e98` and transferred to the reachable
+OpenCode owner in `20260909T102938Z-codex-2594`. Fixed f37b83b scope and
+initial round1 budget are unchanged. The owner's confirmed local endpoint
+accepted a bounded assignment wake-up withHTTP204; actual worker start and
+verdict still require its handoff. Any unexpected prior worker must pause for
+overlap reconciliation. This supersedes the earlier coordinator assignment,
+not the GLM-only restriction or live-cycle hold.
