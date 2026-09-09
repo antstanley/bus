@@ -473,7 +473,7 @@ Hoa committed and pushed the exact reviewed guide/report with coordination
 records at `558710831c738d0f4c01c8919bcb3e04aa1964b6`. Packaging run34351990570
 passed. Main CI34351990609 failed an unchanged GitStore hint test and logged
 a filename-less FsStore callback exception; clean ordinary Astra diagnosis
-identified distinct runtime follow-up [148](148-handle-filename-less-watch-events.md).
+identified distinct runtime follow-up [148](done/148-handle-filename-less-watch-events.md).
 No rerun has been used to dismiss the failure. Guide integration is recorded,
 but task109/110 acceptance and runtime rollout remain blocked.
 

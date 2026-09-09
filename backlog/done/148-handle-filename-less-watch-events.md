@@ -3,7 +3,7 @@ id: 148
 title: Handle filename-less watch events and stabilize hint readiness
 phase: 1
 owner: opencode
-status: gated
+status: done
 depends: []
 related: [404, 109, 110]
 estimate: S
@@ -379,6 +379,31 @@ pending below; status stays gated until those complete. Integration is
 authorized separately from operational rollout. The remote-board milestone
 carries task148 as an uncovered delta; no security verdict, installed-config
 change or live-process restart is implied. Ordinary rounds remain3/3.
+
+### Integration completion and cleanup (2026-09-09)
+
+Hoa committed and pushed the exact reviewed files and integration records in
+`f129d97028a463978aa41ded80bde901f062fc75`. GitHub
+[CI34394128190](https://github.com/antstanley/bus/actions/runs/34394128190)
+passed tests/typecheck and real MinIO conformance;
+[CLI packaging34394128184](https://github.com/antstanley/bus/actions/runs/34394128184)
+passed. The live AWS conformance steps were skipped by the existing repository
+configuration check; no live AWS execution is claimed. The original failing
+CI34351990609 remains historical evidence, not erased by this fix.
+
+Owner round3 handoff confirms disposable sessions retired/deleted, runner/log
+removed and no owned scratch. After push and CI, Hoa reverified that the only
+three candidate changes equal the committed blobs and that no untracked
+scratch existed. Hoa removed the lead-created task148 worktree, its installed
+dependency directories and branch `task148-watch-filename`. No task148 worktree
+or branch remains. Existing task147 and unrelated shared untracked files are
+preserved. All task148 tracked changes are committed; the historical author
+patch hash is unchanged.
+
+Task148 is done for ordinary acceptance/integration/CI/cleanup. Remote-board
+milestone coverage for this delta is pending as recorded in MILESTONES; no
+runtime rollout or task109/110 acceptance is claimed. Ordinary rounds3/3,
+final clean no-change verdict preserved; no additional review worker started.
 
 ### Original GLM patch (historical audit only, preserved bytes)
 

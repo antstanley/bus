@@ -357,7 +357,7 @@ queue is created.
 
 The operator requested source integration of task148 after its clean ordinary
 round3. Hoa verified the three final hashes in the
-[parent task](../../backlog/148-handle-filename-less-watch-events.md) and adopted
+[parent task](../../backlog/done/148-handle-filename-less-watch-events.md) and adopted
 those exact bytes onto source main based on `cf4a709`. Product/dependency/CI
 files had no intervening changes from the owner's5587108 review baseline.
 
