@@ -52,13 +52,16 @@ contract-net, charter, live-migration or other rollout holds.
 Lead-provided candidate: `/private/tmp/sidekick-task202-letta`, branch
 `task202-request-response`, baseline
 `c2cc0c245acabf3f7961565d10cba344c5398286`. Keep implementation in that checkout;
-main-root canonical202 and its INDEX row carry coordination evidence.
+main-root canonical202 and its INDEX row carry coordination evidence. After
+committing this dispatch, Hoa fast-forwards the clean candidate through only
+that coordination metadata so workers can read the current checkout-local
+task without needing an out-of-checkout task-file read.
 
 Lead setup installed100 packages with
 `bun --no-env-file install --frozen-lockfile --ignore-scripts` (exit0).
 Candidate tracked status remained clean; Hoa ran no product tests or
-implementation during setup. The main-root canonical task is newer than the
-candidate's copy and must be read for this dispatch.
+implementation during setup. The owner records the refreshed candidate HEAD
+at pickup; workers use its current local task copy for the scoped handoff.
 
 Reserved scope:
 - Core: `packages/core/src/board.ts`, `packages/core/src/index.ts`, directly
