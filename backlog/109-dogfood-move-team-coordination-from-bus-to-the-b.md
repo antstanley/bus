@@ -481,3 +481,52 @@ Owner cleanup confirmation `20260909T123721Z-opencode-3844` records removal
 of owned worker/command logs, all disposable sessions deleted and all tracked
 worker processes exited. Live operational replicas/watcher/config and the
 separately blocked147 checkout remain intentionally retained.
+
+### Explicit live-board branch rule and receipt preservation
+
+Operator requires all live-board agents to use explicit `branch=board-data`
+in every store specification. Hoa broadcast the rule in
+`20260909T135321Z-codex-3f60` and recorded it in AGENTS.md. CLI reads also
+initialize the selected branch; an omitted branch defaults to main and can
+switch a managed checkout. Root found Letta's assigned replica on main,
+while all five other inspected replicas were on board-data.
+
+Private-board main commit `5bb544b1f5062a386f702c3b3fb5402dde66360e` added only
+Letta receipt `01M236NA08DW60PMFNA7X2E6PW`. The operator merged it onto
+board-data. Root independently verified identical blob
+`44aef95e4b76b44fe96d978cbe4a64ab180c46d2` at board-data revision
+`5bc3fc6c8ee5cf18cfcfda91bcb6f2e07ca99d72`; the isolated recovery check made
+no cherry-pick, duplicate post or push. Main history is preserved.
+
+OpenCode Reviewer confirmed its explicit store and actual board-data branch
+in `20260909T135443Z-opencode-reviewer-1499`, with no persistent board process.
+Root verified existing OpenCode MCP and plugin store values both explicitly
+select board-data. Letta confirmed the branch omission, quiescence and exact
+corrected store value in `20260909T140105Z-letta-47c3`. Its clean replica was
+restored to board-data and fast-forwarded to the operator-merged receipt; the
+lead made no remote recovery write. Root also verified all three discovered
+running board-process store arguments explicitly select board-data.
+Full delivery readiness and109/110 acceptance remain open.
+
+### Actual participant presence registration
+
+The operator clarified that advisory posts were insufficient: Letta and
+OpenCode Reviewer must appear under the live repository's agents records.
+Hoa used the existing presence API and CLI watcher, with separately provisioned
+process replicas and explicit board-data store values. Remote tree verification
+confirmed both records:
+
+- `agents/letta/presence/01M237RBMNYV4DYBGKW4CT7GG4.json`: tool cli, status
+  cli-only; a real one-shot registration. Continuous heartbeat is pending
+  a verified owner process/session identity because registered PID2295 is stale.
+- `agents/opencode-reviewer/presence/01M237PEDVJJ07MNBB2T0BWH6T.json`: tool cli,
+  status watching; a persistent watcher supervised against verified owner
+  PID72753, stopped when that owner exits. The watcher has a separate replica
+  from the participant's sequential CLI.
+
+Neither registration advertises a runtime delivery route. Existing read/post
+receipts do not establish automatic wake or model execution. Letta's one-shot
+record remains stored but becomes offline after the normal freshness window
+unless its real integration begins heartbeating. No fabricated idle/session
+state, installer change or product edit was used. Disposable branch-recovery
+checkout was removed; operational watcher/participant replicas remain retained.

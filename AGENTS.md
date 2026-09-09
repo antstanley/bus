@@ -58,6 +58,16 @@ If detection fails, prefix commands with `BUS_ME=<name>`.
 
 ## Commands
 
+**Live board branch (operator, 2026-09-09):** every agent must pin the private
+team board to `board-data` in every CLI, MCP, hook and watcher store value:
+`git:<dedicated-path>,remote=https://github.com/antstanley/bus-board.git,branch=board-data`.
+Keep the complete value together (quoted in shell). An omitted branch defaults
+to `main` and can switch an existing checkout, including during a read. There
+is no standalone CLI `--branch` flag. Verify both the effective store value
+and checkout branch before use; pause mismatches for lead recovery. Use only
+the agent/process's assigned replica. This concerns the private board data;
+source integration remains exclusively Hoa's responsibility.
+
 ```sh
 ./bus send <name> "text"          # direct message
 ./bus send all "text"             # broadcast to every registered agent
