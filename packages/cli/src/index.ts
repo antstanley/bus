@@ -237,6 +237,62 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
       }
       break;
     }
+    case "inbox": {
+      // The addressed inbox (task 205): unread to[]/mentions posts for one
+      // recipient, listed from the local index. Listing never marks read.
+      const agent = inboxAgent(parsed, board);
+      const limit = numberFlag(parsed.flags, "limit", 100, 1);
+      const index = await (deps.createIndex ?? (async (path: string) => new BoardIndex(path)))(
+        parsed.flags.get("index") ?? join(homedir(), ".board", "index.sqlite"),
+      );
+      try {
+        await index.sync(board);
+        const posts = index.inbox(agent, {
+          limit,
+          ...(parsed.flags.get("board") === undefined ? {} : { board: parsed.flags.get("board")! }),
+        });
+        if (parsed.flags.has("json")) {
+          output(JSON.stringify(posts));
+          break;
+        }
+        if (posts.length === 0) {
+          output(`no unread inbox items for ${agent}`);
+          break;
+        }
+        const header = ["POST ID", "BOARD", "FROM", "RECEIVED"];
+        const cells = posts.map((post) => [post.id, post.board, post.author, post.ts]);
+        const widths = header.map((h, i) => Math.max(h.length, ...cells.map((row) => row[i]!.length)));
+        output([header, ...cells]
+          .map((row) => row.map((cell, i) => cell.padEnd(widths[i]!)).join("  ").trimEnd())
+          .join("\n"));
+      } finally {
+        index.close();
+      }
+      break;
+    }
+    case "inbox-read": {
+      // Explicit mark-read for the addressed inbox: idempotent,
+      // non-destructive, and scoped to the recipient's own local markers.
+      const agent = inboxAgent(parsed, board);
+      const ids = [...new Set([...(csvFlag(parsed.flags, "id") ?? []), ...parsed.positionals])];
+      if (ids.length === 0) {
+        throw new CliError("inbox-read requires --id <post-id> (repeat or comma-separate to mark several) or post id positionals");
+      }
+      const index = await (deps.createIndex ?? (async (path: string) => new BoardIndex(path)))(
+        parsed.flags.get("index") ?? join(homedir(), ".board", "index.sqlite"),
+      );
+      try {
+        await index.sync(board);
+        const marked = index.markRead(agent, ids, {
+          ...(parsed.flags.get("board") === undefined ? {} : { board: parsed.flags.get("board")! }),
+        });
+        if (parsed.flags.has("json")) output(JSON.stringify({ agent, marked }));
+        else output(`marked ${marked} post(s) read for ${agent}`);
+      } finally {
+        index.close();
+      }
+      break;
+    }
     case "watch": {
       const intervalMs = numberFlag(parsed.flags, "interval", 2_000, 1);
       const requestedCursor = parsed.flags.get("after");
@@ -343,9 +399,10 @@ interface ParsedArgs {
 export const VALUE_FLAGS: ReadonlySet<string> = Object.freeze(new Set([
   "store", "board", "as", "title", "body", "tags", "mentions",
   "after", "limit", "interval", "max-age", "index", "runtime", "session", "state",
+  "agent", "id",
 ]));
 const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
-const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "watch", "who", "install"]);
+const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "inbox", "inbox-read", "watch", "who", "install"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) return { command: "help", flags: new Map(), positionals: [] };
@@ -379,7 +436,9 @@ function parseArgs(argv: string[]): ParsedArgs {
     const attached = equals >= 0;
     const value = attached ? arg.slice(equals + 1) : rest[++i];
     if (value === undefined || (!attached && value.startsWith("--"))) throw new CliError(`--${name} requires a value`);
-    flags.set(name, value);
+    flags.set(name, command === "inbox-read" && name === "id" && flags.has(name)
+      ? `${flags.get(name)},${value}`
+      : value);
   }
   return { command, flags, positionals };
 }
@@ -423,6 +482,16 @@ function csvFlag(flags: Map<string, string>, name: string): string[] | undefined
   if (value === undefined) return undefined;
   const items = value.split(",").map((item) => item.trim()).filter(Boolean);
   return items.length ? items : undefined;
+}
+
+/** The inbox recipient: --agent, falling back to the command's --as author. */
+function inboxAgent(parsed: ParsedArgs, board: Board): string {
+  const agent = parsed.flags.get("agent") ?? board.author;
+  try {
+    return assertName(agent, "agent");
+  } catch (error) {
+    throw new CliError(error instanceof Error ? error.message : "invalid agent");
+  }
 }
 
 function numberFlag(flags: Map<string, string>, name: string, fallback: number, minimum: number): number {
@@ -486,6 +555,8 @@ Commands:
   reply   <POST_ID> (--body TEXT | TEXT...)      reply to a post
   read    [--after CURSOR] [--limit N]           read a page as JSON
   tasks   [--state STATE | TASK_ID]              fold A2A task state into the local index (--index <path>)
+  inbox   [--agent AGENT] [--limit N]            list unread to[]/mentions posts from the local index (--index <path>)
+  inbox-read (--id POST_ID | POST_ID...)         mark posts read for --agent (explicit, non-destructive)
   watch   [--after CURSOR] [--interval MS]       stream posts as JSON lines
   who     [--max-age MS]                         list agent presence
   install <runtime> --store <spec>               merge runtime hooks/MCP config (Pi defaults to pi-<host>)

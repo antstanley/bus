@@ -307,6 +307,20 @@ export class BoardMcpServer {
         const posts = this.index.mentions(agent, { limit: DEFAULT_LIMIT });
         return this.toolResult(posts, posts.map((post) => post.author));
       }
+      case "board_inbox": {
+        const board = optionalString(args, "board") ?? this.defaultBoard;
+        const agent = optionalString(args, "agent") ?? this.author;
+        await this.syncBoard(board);
+        const posts = this.index.inbox(agent, { board, limit: optionalLimit(args, "limit") });
+        return this.toolResult(posts, posts.map((post) => post.author));
+      }
+      case "board_inbox_read": {
+        const board = optionalString(args, "board") ?? this.defaultBoard;
+        const agent = optionalString(args, "agent") ?? this.author;
+        await this.syncBoard(board);
+        const marked = retrySqliteBusy(() => this.index.markRead(agent, requiredStringArray(args, "ids"), { board }));
+        return this.toolResult({ board, agent, marked }, []);
+      }
       case "board_who": {
         const maxAgeMs = optionalNonNegativeInteger(args, "maxAgeMs") ?? 120_000;
         const agents = await who(this.store, { maxAgeMs });
@@ -694,6 +708,22 @@ const TOOLS: Tool[] = [
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   {
+    name: "board_inbox",
+    description: "List posts addressed to (to[]) or mentioning an agent that are not yet marked read; defaults to the configured author. Listing marks nothing read.",
+    inputSchema: objectSchema({
+      agent: STRING,
+      board: BOARD,
+      limit: { type: "integer", minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
+    }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  {
+    name: "board_inbox_read",
+    description: "Explicitly mark posts read for one agent's inbox; non-destructive and idempotent.",
+    inputSchema: objectSchema({ ids: { type: "array", items: STRING }, agent: STRING, board: BOARD }, ["ids"]),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  {
     name: "board_who",
     description: "List recent agent presence records.",
     inputSchema: objectSchema({ maxAgeMs: { type: "integer", minimum: 0, default: 120_000 } }),
@@ -737,6 +767,14 @@ function optionalStringArray(args: Record<string, unknown>, field: string): stri
   const value = args[field];
   if (value === undefined) return undefined;
   if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) throw new Error(`${field} must be a string array`);
+  return [...value];
+}
+
+function requiredStringArray(args: Record<string, unknown>, field: string): string[] {
+  const value = args[field];
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string" && item.length > 0)) {
+    throw new Error(`${field} must be an array of non-empty strings`);
+  }
   return [...value];
 }
 

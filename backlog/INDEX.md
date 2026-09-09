@@ -60,7 +60,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | blocked | S |
 | 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | opencode | blocked | M |
-| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | in-progress | S |
+| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | gated | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
 | 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | letta | todo | S |
 | 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |

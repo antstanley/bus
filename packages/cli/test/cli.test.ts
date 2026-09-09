@@ -124,6 +124,87 @@ describe("board CLI", () => {
       .rejects.toThrow("--state must be one of");
   });
 
+  it("lists the addressed inbox and marks posts read without destroying them", async () => {
+    const store = new MemoryStore();
+    const addressed = await new Board(store, { board: "general", author: "claude", now: () => Date.UTC(2026, 8, 1, 12) })
+      .post({ title: "Please review", body: "addressed to letta", to: ["letta"] });
+    const both = await new Board(store, { board: "general", author: "claude", now: () => Date.UTC(2026, 8, 1, 13) })
+      .post({ title: "Both", body: "addressed and mentioned", to: ["letta"], mentions: ["letta"] });
+    const other = await new Board(store, { board: "general", author: "claude", now: () => Date.UTC(2026, 8, 1, 14) })
+      .post({ body: "not for letta", mentions: ["codex"] });
+
+    const dir = await mkdtemp(join(tmpdir(), "board-cli-inbox-"));
+    roots.push(dir);
+    const lines: string[] = [];
+    const deps = {
+      createStore: (): Store => store,
+      createIndex: () => new BoardIndex(join(dir, "index.sqlite")),
+      stdout: (line: string) => lines.push(line),
+    };
+
+    await runCli(["inbox", "--store", "fs:ignored", "--agent", "letta"], deps);
+    const table = (lines.at(-1) ?? "").split("\n");
+    expect(table[0]).toContain("POST ID");
+    const listed = table.slice(1).map((line) => line.split(/\s{2,}/)[0]);
+    expect(listed).toEqual([both.id, addressed.id]); // to[]+mentions dedupe, newest first
+    expect(listed).not.toContain(other.id);
+
+    await runCli(["inbox", "--store", "fs:ignored", "--agent", "letta", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([both.id, addressed.id]);
+
+    // Bounded and non-destructive: a limited listing still leaves items unread.
+    await runCli(["inbox", "--store", "fs:ignored", "--agent", "letta", "--limit", "1", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([both.id]);
+
+    await runCli(["inbox-read", "--store", "fs:ignored", "--agent", "letta", "--id", addressed.id, "--id", `${both.id},${addressed.id}`], deps);
+    expect(lines.at(-1)).toContain("marked 2");
+
+    // The markers live in the index file, so the next command's fresh
+    // BoardIndex still sees them; the posts themselves are untouched.
+    await runCli(["inbox", "--store", "fs:ignored", "--agent", "letta"], deps);
+    expect(lines.at(-1)).toContain("no unread inbox items for letta");
+    const page = await new Board(store, { board: "general", author: "letta" }).since();
+    expect(page.posts.map((post) => post.id)).toEqual([addressed.id, both.id, other.id]);
+
+    await expect(runCli(["inbox-read", "--store", "fs:ignored", "--agent", "letta"], deps))
+      .rejects.toThrow("requires --id");
+    await expect(runCli(["inbox", "--store", "fs:ignored", "--agent", "BAD NAME"], deps))
+      .rejects.toThrow("invalid agent");
+  });
+
+  it("defaults the inbox agent to --as and scopes the listing with --board", async () => {
+    const store = new MemoryStore();
+    const generalPost = await new Board(store, { board: "general", author: "claude", now: () => Date.UTC(2026, 8, 1, 12) })
+      .post({ body: "general ping", to: ["codex"] });
+    const wildPost = await new Board(store, { board: "wild", author: "claude", now: () => Date.UTC(2026, 8, 1, 13) })
+      .post({ body: "wild ping", to: ["codex"] });
+
+    const dir = await mkdtemp(join(tmpdir(), "board-cli-inbox-"));
+    roots.push(dir);
+    const lines: string[] = [];
+    const deps = {
+      createStore: (): Store => store,
+      createIndex: () => new BoardIndex(join(dir, "index.sqlite")),
+      stdout: (line: string) => lines.push(line),
+    };
+
+    await runCli(["inbox", "--store", "fs:ignored", "--as", "codex", "--board", "general", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([generalPost.id]);
+
+    await runCli(["inbox", "--store", "fs:ignored", "--as", "codex", "--board", "wild", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([wildPost.id]);
+
+    // Both boards are synced now; without --board the inbox lists across them.
+    await runCli(["inbox", "--store", "fs:ignored", "--as", "codex", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([wildPost.id, generalPost.id]);
+
+    // Positional ids mark read just like --id.
+    await runCli(["inbox-read", "--store", "fs:ignored", "--as", "codex", generalPost.id], deps);
+    expect(lines.at(-1)).toContain("marked 1");
+    await runCli(["inbox", "--store", "fs:ignored", "--as", "codex", "--json"], deps);
+    expect((JSON.parse(lines.at(-1)!) as Array<{ id: string }>).map((post) => post.id)).toEqual([wildPost.id]);
+  });
+
   it("defaults a single-task lookup to the synced board while --board still overrides", async () => {
     const store = new MemoryStore();
     const root = await new Board(store, { board: "general", author: "letta" }).request(["codex"], {

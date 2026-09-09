@@ -97,6 +97,18 @@ export interface TaskQueryOptions {
   limit?: number;
 }
 
+export interface InboxQueryOptions {
+  board?: string;
+  limit?: number;
+  /** Skip this many unread items after ordering; for paging through the inbox. */
+  offset?: number;
+}
+
+export interface InboxReadOptions {
+  /** Restrict markers to posts on this board. */
+  board?: string;
+}
+
 export interface ThreadSummary {
   rootId: string;
   board: string;
@@ -209,7 +221,7 @@ export class BoardIndex {
   private readonly syncedBoards = new Set<string>();
   private operationChain: Promise<unknown> = Promise.resolve();
   /** Prepared statements for the bulk rebuild path, created lazily. */
-  private bulk: { insertPost: Statement; insertFts: Statement; insertMention: Statement } | null = null;
+  private bulk: { insertPost: Statement; insertFts: Statement; insertMention: Statement; insertAddressee: Statement } | null = null;
 
   constructor(path: string, opts: BoardIndexOptions = {}) {
     this.reconcileEvery = opts.reconcileEvery ?? 15;
@@ -316,6 +328,9 @@ export class BoardIndex {
 
     for (const agent of new Set(post.mentions ?? [])) {
       this.db.query("INSERT OR IGNORE INTO mentions (post_id, agent) VALUES (?, ?)").run(post.id, agent);
+    }
+    for (const agent of new Set(post.to ?? [])) {
+      this.db.query("INSERT OR IGNORE INTO addressees (post_id, agent) VALUES (?, ?)").run(post.id, agent);
     }
     this.db.query("INSERT INTO posts_fts (rowid, title, body) VALUES (?, ?, ?)").run(result.lastInsertRowid, post.title ?? "", post.body);
 
@@ -645,6 +660,82 @@ export class BoardIndex {
     return rows.map(rowPost);
   }
 
+  /**
+   * The addressed inbox (task 205): posts addressed to `agent` via `to[]` or
+   * advisory-mentioning `agent` (a post matching both lists exactly once),
+   * newest first, that this recipient has not explicitly marked read.
+   * Listing is non-destructive — nothing is marked read by reading.
+   *
+   * Markers are local reader state, one row per (agent, board, post) in the
+   * index database's read_markers table. They never travel through the
+   * shared store and imply nothing about authorization or confidentiality.
+   * They live apart from the derived post data and are keyed by immutable
+   * post ids, so `rebuild(board)`, syncs, and restarts leave them intact;
+   * `markRead` records them.
+   */
+  inbox(agent: string, opts: InboxQueryOptions = {}): Post[] {
+    const limit = queryLimit(opts.limit);
+    const offset = queryOffset(opts.offset);
+    const rows = opts.board === undefined
+      ? this.db.query<JsonRow, [string, string, string, number, number]>(`
+          SELECT p.post_json FROM posts p
+          WHERE p.id IN (
+              SELECT post_id FROM mentions WHERE agent = ?
+              UNION
+              SELECT post_id FROM addressees WHERE agent = ?
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM read_markers r
+              WHERE r.agent = ? AND r.board = p.board AND r.post_id = p.id
+            )
+          ORDER BY p.id DESC LIMIT ? OFFSET ?
+        `).all(agent, agent, agent, limit, offset)
+      : this.db.query<JsonRow, [string, string, string, string, number, number]>(`
+          SELECT p.post_json FROM posts p
+          WHERE p.id IN (
+              SELECT post_id FROM mentions WHERE agent = ?
+              UNION
+              SELECT post_id FROM addressees WHERE agent = ?
+            )
+            AND p.board = ?
+            AND NOT EXISTS (
+              SELECT 1 FROM read_markers r
+              WHERE r.agent = ? AND r.board = p.board AND r.post_id = p.id
+            )
+          ORDER BY p.id DESC LIMIT ? OFFSET ?
+        `).all(agent, agent, opts.board, agent, limit, offset);
+    return rows.map(rowPost);
+  }
+
+  /**
+   * Explicitly mark posts read for one recipient: the inverse of inbox().
+   * Non-destructive — it changes no post, no derived row, and no other
+   * agent's markers — and idempotent (re-marking is a no-op). Only indexed
+   * posts are marked, since an inbox item can only be marked after it was
+   * listed; unknown ids are skipped. Returns how many posts were newly
+   * marked. With `board`, a post is marked only on that board, mirroring the
+   * per-board marker key.
+   */
+  markRead(agent: string, postIds: readonly string[], opts: InboxReadOptions = {}): number {
+    if (!Array.isArray(postIds)) throw new Error("postIds must be an array of post ids");
+    const insert = this.db.query(
+      "INSERT OR IGNORE INTO read_markers (agent, board, post_id, read_at) VALUES (?, ?, ?, ?)",
+    );
+    const unscoped = this.db.query<{ board: string }, [string]>("SELECT board FROM posts WHERE id = ?");
+    const scoped = this.db.query<{ board: string }, [string, string]>("SELECT board FROM posts WHERE id = ? AND board = ?");
+    let marked = 0;
+    const transaction = this.db.transaction(() => {
+      const readAt = new Date(this.now()).toISOString();
+      for (const postId of postIds) {
+        const board = opts.board === undefined ? unscoped.get(postId)?.board : scoped.get(postId, opts.board)?.board;
+        if (board === undefined) continue;
+        marked += insert.run(agent, board, postId, readAt).changes;
+      }
+    });
+    transaction();
+    return marked;
+  }
+
   search(query: string, opts: QueryOptions = {}): SearchResult[] {
     const match = ftsQuery(query);
     if (!match) return [];
@@ -666,13 +757,20 @@ export class BoardIndex {
   }
 
   private migrate(): void {
+    this.db.transaction(() => this.migrateSchema())();
+  }
+
+  private migrateSchema(): void {
+    const hadAddressees = this.db.query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'addressees'").get() !== null;
     const version = this.db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version ?? 0;
     if (version !== 0 && version !== SCHEMA_VERSION) {
       // The index is derived and rebuildable, so a version change drops every
-      // table and the next sync/rebuild reconstructs it from the store.
+      // table and the next sync/rebuild reconstructs it from the store —
+      // except read_markers: reader state, not derived content (see below).
       this.db.exec(`
         DROP TABLE IF EXISTS posts_fts;
         DROP TABLE IF EXISTS mentions;
+        DROP TABLE IF EXISTS addressees;
         DROP TABLE IF EXISTS posts;
         DROP TABLE IF EXISTS threads;
         DROP TABLE IF EXISTS tasks;
@@ -739,6 +837,22 @@ export class BoardIndex {
       );
       CREATE INDEX IF NOT EXISTS mentions_agent_post ON mentions(agent, post_id DESC);
 
+      CREATE TABLE IF NOT EXISTS addressees (
+        post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+        agent TEXT NOT NULL,
+        PRIMARY KEY (post_id, agent)
+      );
+      CREATE INDEX IF NOT EXISTS addressees_agent_post ON addressees(agent, post_id DESC);
+
+      CREATE TABLE IF NOT EXISTS read_markers (
+        agent TEXT NOT NULL,
+        board TEXT NOT NULL,
+        post_id TEXT NOT NULL,
+        read_at TEXT NOT NULL,
+        PRIMARY KEY (agent, board, post_id)
+      );
+      CREATE INDEX IF NOT EXISTS read_markers_board_post ON read_markers(board, post_id);
+
       CREATE VIRTUAL TABLE IF NOT EXISTS posts_fts USING fts5(
         title,
         body,
@@ -754,6 +868,17 @@ export class BoardIndex {
       );
       PRAGMA user_version = ${SCHEMA_VERSION};
     `);
+    // Additive migration for already-indexed v2 posts: ordinary ingest skips
+    // existing ids, so a sync cannot populate this new derived table. Commit
+    // its creation and backfill together so interrupted upgrades are retried.
+    if (!hadAddressees) {
+      this.db.exec(`
+        INSERT OR IGNORE INTO addressees (post_id, agent)
+        SELECT p.id, recipient.value
+        FROM posts p, json_each(p.post_json, '$.to') recipient
+        WHERE recipient.type = 'text';
+      `);
+    }
   }
 
   private async ingestSince(board: Board, state: BoardSyncState): Promise<number> {
@@ -797,7 +922,7 @@ export class BoardIndex {
    */
   private ingestChunk(posts: Post[], jsons?: Array<string | null>): number {
     let ingested = 0;
-    const { insertPost, insertFts, insertMention } = this.bulkStatements();
+    const { insertPost, insertFts, insertMention, insertAddressee } = this.bulkStatements();
     const transaction = this.db.transaction(() => {
       for (let i = 0; i < posts.length; i++) {
         const post = posts[i]!;
@@ -823,6 +948,11 @@ export class BoardIndex {
             insertMention.run(post.id, agent);
           }
         }
+        if (post.to !== undefined) {
+          for (const agent of new Set(post.to)) {
+            insertAddressee.run(post.id, agent);
+          }
+        }
         ingested++;
       }
     });
@@ -830,7 +960,7 @@ export class BoardIndex {
     return ingested;
   }
 
-  private bulkStatements(): { insertPost: Statement; insertFts: Statement; insertMention: Statement } {
+  private bulkStatements(): { insertPost: Statement; insertFts: Statement; insertMention: Statement; insertAddressee: Statement } {
     if (this.bulk === null) {
       this.bulk = {
         insertPost: this.db.query(`
@@ -840,6 +970,7 @@ export class BoardIndex {
         `),
         insertFts: this.db.query("INSERT INTO posts_fts (rowid, title, body) VALUES (?, ?, ?)"),
         insertMention: this.db.query("INSERT OR IGNORE INTO mentions (post_id, agent) VALUES (?, ?)"),
+        insertAddressee: this.db.query("INSERT OR IGNORE INTO addressees (post_id, agent) VALUES (?, ?)"),
       };
     }
     return this.bulk;
@@ -976,11 +1107,16 @@ export class BoardIndex {
     const transaction = this.db.transaction(() => {
       this.db.query("DELETE FROM posts_fts WHERE rowid IN (SELECT rowid FROM posts WHERE board = ?)").run(board);
       this.db.query("DELETE FROM mentions WHERE post_id IN (SELECT id FROM posts WHERE board = ?)").run(board);
+      this.db.query("DELETE FROM addressees WHERE post_id IN (SELECT id FROM posts WHERE board = ?)").run(board);
       this.db.query("DELETE FROM posts WHERE board = ?").run(board);
       this.db.query("DELETE FROM threads WHERE board = ?").run(board);
       this.db.query("DELETE FROM tasks WHERE board = ?").run(board);
       this.db.query("DELETE FROM task_history WHERE board = ?").run(board);
       this.db.query("DELETE FROM sync_state WHERE board = ?").run(board);
+      // read_markers is deliberately NOT cleared: it is per-recipient reader
+      // state, not derived post data, so a rebuild must not resurrect old
+      // posts as unread. Orphaned markers (posts later dropped by retention)
+      // match nothing and are bounded by explicit mark-read calls.
     });
     transaction();
   }
@@ -1041,6 +1177,11 @@ function rowPost(row: JsonRow): Post {
 function queryLimit(limit = 50): number {
   if (!Number.isInteger(limit) || limit < 1) throw new Error("limit must be a positive integer");
   return limit;
+}
+
+function queryOffset(offset = 0): number {
+  if (!Number.isInteger(offset) || offset < 0) throw new Error("offset must be a non-negative integer");
+  return offset;
 }
 
 function ftsQuery(query: string): string {
