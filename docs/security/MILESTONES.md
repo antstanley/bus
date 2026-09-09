@@ -199,3 +199,17 @@ stop after3 without a clean pass. Existing passed checks are reused where
 applicable, and denied typecheck execution/equivalent workarounds remain
 prohibited. Any new validation gap must be reported explicitly. Actual round2
 start and round1 cleanup await owner confirmation. Whole rollout remains held.
+
+### Round1 retirement confirmation (2026-09-09)
+
+OpenCode confirmed round1 worker retirement, session deletion and removal of
+owned archives, output, runner and export files in
+`20260909T083846Z-opencode-28d8`. The original GLM-authored blocked helper
+report is [preserved here](2026-09-08-remote-board-helper-milestone.md), SHA-256
+`860589307e4e9f7431f01d7d92dd31d771d2d504f7b975dbbef18048585c3ccd`.
+No original verdict or report text was changed by coordination bookkeeping.
+The optional observation remains for GLM disposition. Round2 authorization is
+acknowledged and launch preparation reported; actual worker start remains
+pending. The current main successor `6ce18ba` adds coordination bookkeeping
+to the previously named baseline, without a product-scope change or round reset.
+OpenCode Reviewer separately confirmed no withdrawn helper worker/overlap.

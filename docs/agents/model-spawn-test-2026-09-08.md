@@ -59,3 +59,12 @@ Reports are unsigned local-bus coordination evidence, not new authority.
 This verifies model selection for the smoke test, not implementation/review
 quality or full worker tool capability. Production work still follows the
 [task workflow](task-workflow.md), including GLM-only security work.
+
+## Cleanup confirmation (2026-09-09)
+
+Letta confirmed in `20260909T083841Z-letta-598d` that the owned OpenCode probe
+`ses_f7f8c9a0effe3bMTLjW31yp8rj` was deleted using the supported session-delete
+command. The previously accepted four ended native-agent records remain
+documented residuals; this does not claim that native records were deleted.
+Task205 coordinator resumed; actual implementation worker identity remains
+pending its launch report. No new model probe was requested.

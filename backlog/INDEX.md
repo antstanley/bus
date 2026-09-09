@@ -47,7 +47,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 127 | [SECURITY.md — repository security policy](done/127-security-policy-md.md) | letta | done | S |
 | 128 | [security gate: backlog role and dependency alignment](done/128-security-gate-backlog-role-alignment.md) | letta | done | S |
 | 129 | [diagnose CI installer collision-scan timeout](done/129-diagnose-installer-collision-scan-ci-timeout.md) | letta | done | S |
-| 130 | [stabilize installer collision-scan test fixture](130-stabilize-installer-collision-scan-test.md) | letta | gated | S |
+| 130 | [stabilize installer collision-scan test fixture](done/130-stabilize-installer-collision-scan-test.md) | letta | done | S |
 | 131 | [adopt autonomous charter-scoped coordination](done/131-autonomous-coordination-guidelines.md) | opencode-reviewer | done | S |
 | 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
 | 144 | [align phase1 acceptance helper with live team roles](144-align-phase1-helper-live-roles.md) | opencode | gated | S |
