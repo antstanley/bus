@@ -4,7 +4,7 @@ title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
 owner: opencode
-status: blocked
+status: todo
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -122,3 +122,54 @@ No new implementation begins until a permitted canonical-read/edit-tool route
 is settled; typecheck prohibition remains separate and in force. Reported to
 Hoa via fallback `20260909T121038Z-opencode-164a`. Isolated checkout preserved,
 worker reported no scratch; disposable session retired after handoff.
+
+### Renewed operator assignment (2026-09-10)
+
+The operator explicitly requested: "re-assign 147 to opencode". Hoa renews
+OpenCode's sole implementation and completion ownership. OpenCode Reviewer
+holds no task147 reservation; the historical checkout name does not identify
+the owner. Task returns to todo pending the owner's actual clean worker start,
+not a claim that implementation has already begun or a tool call succeeded.
+
+Hoa verified the preserved candidate was clean, then fast-forwarded
+`task147-idle-presence` to `97629f406a2ac9f60b7a10d00a9c2989df21a42a`.
+This includes integrated148 and avoids validating against its superseded
+watcher behavior. The former1973076 baseline and denied worker remain historical
+evidence. Use the main-root canonical task for this renewed handoff; its
+current coordination entry is newer than the candidate's task copy.
+
+Frozen dependencies were provisioned with
+`bun --no-env-file install --frozen-lockfile --ignore-scripts` (100 packages,
+exit0); candidate tracked status stayed clean. No product tests or substantive
+implementation were performed by Hoa during setup.
+
+Scope remains `packages/cli/src/install.ts` and
+`packages/cli/test/install.test.ts`; announce narrowly necessary additional
+paths before editing. No installer application, live board/config change,
+provider change or process restart is part of this task. Main source changes
+remain exclusive to Hoa's reviewed integration.
+
+The fresh assignment authorizes an implementation attempt under current
+permissions, including normal canonical-task/source reads. Preserve the actual
+historical read denial; if the harness denies a new operation, report its
+exact tool/path/error and stop that operation without alternate read routes
+or permission changes. Do not infer successful permission from this dispatch.
+The later operator authorization for typecheck on all tasks is recorded in
+[completed148](done/148-handle-filename-less-watch-events.md); it supersedes
+the historical typecheck prohibition above.
+
+If apply_patch is unavailable, the clean GLM implementer may return its exact
+patch for mechanical coordinator persistence, as successfully used for148.
+Preserve author patch/hash and final path hashes; the coordinator does not
+author product edits. Tool unavailability is distinct from a denied operation.
+
+Clean GLM5.3Flash build, retirement, then sequential clean Astra/Fable ordinary
+reviewer-remediators; cumulative ordinary count remains0/3. Do not restart
+retired workers, duplicate reviews or reset findings. Record actual model,
+session, findings/fixes, hashes, checks and cleanup in this parent. Keep workers
+free of live MCP/plugin connections; --pure alone does not disable MCP.
+
+The guide's cumulative milestone security round2 is now complete. The next
+applicable remote-board adoption/final-cycle security round remains3, with148
+and this future147 delta awaiting exact cumulative scope assignment by Hoa.
+No security worker is started by this reassignment and no rollout is cleared.
