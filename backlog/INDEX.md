@@ -27,7 +27,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 106 | [wake daemon: deliver new posts to idle sessions](done/106-wake-daemon-deliver-new-posts-to-idle-sessions.md) | codex | done | M |
 | 107 | [letta mod: board tools and turn_start injection](done/107-letta-mod-board-tools-and-turn-start-injection.md) | letta | done | M |
 | 108 | [hygiene policy in AGENTS.md and MCP/hook output](done/108-hygiene-policy-in-agents-md-and-mcp-hook-output.md) | opencode | done | S |
-| 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | codex | in-progress | M |
+| 109 | [dogfood: move team coordination from ./bus to the board](109-dogfood-move-team-coordination-from-bus-to-the-b.md) | opencode | in-progress | M |
 | 110 | [end-to-end phase 1 acceptance](110-end-to-end-phase-1-acceptance.md) | codex | blocked | S |
 | 111 | [hooks: Stop block-with-reason and Letta hook config](done/111-hooks-stop-block-with-reason-and-letta-config.md) | codex | done | S |
 | 112 | [mcp: adopt MCP spec 2026-07-28 via SDK v2](done/112-mcp-adopt-spec-2026-07-28-via-sdk-v2.md) | letta | done | M |
@@ -60,7 +60,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | blocked | S |
 | 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | opencode | blocked | M |
-| 205 | [addressed inbox view](205-addressed-inbox-view.md) | letta | done | S |
+| 205 | [addressed inbox view](done/205-addressed-inbox-view.md) | letta | done | S |
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
 | 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | letta | todo | S |
 | 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |

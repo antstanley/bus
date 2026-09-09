@@ -42,3 +42,12 @@ or source-branch publication substitutes for remote board acceptance.
 
 - [ ] scripted scenario: lead requests, Letta/OpenCode implements, Ykka reviews correctness and the other implementation/security agent supplies the required security gate, lead accepts; zero human relay
 - [ ] latency and message counts recorded in docs/acceptance/phase-1.md
+
+## Live entry readiness (2026-09-09)
+
+The fixed f37b83b runtime adoption gate and OpenCode endpoint prerequisites
+are satisfied. Task109's operational setup can satisfy entry to this joint
+live acceptance while its guide/retro/migration completion remains in progress;
+waiting for109's final acceptance before running110 would be circular. Hoa
+will record actual launch and observations here. No completed cycle, measured
+board delivery or zero-human-relay result has yet been established.

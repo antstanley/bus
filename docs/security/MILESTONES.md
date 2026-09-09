@@ -27,7 +27,7 @@ reports cover their historical bytes only. No scan is claimed by this register.
 
 | Milestone | Parent deliverables / cumulative scope | Scan coordination | Boundary and current state |
 |---|---|---|---|
-| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Earlier pinned candidate passed; new adoption delta pending.** Initial setup used the accepted combined candidate. Task205 integration in f37b83b adds seven runtime paths requiring the GLM adoption-delta dispatch below before the live cycle; actual runtime readiness and full acceptance110 remain open. |
+| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pinned f37b83b runtime cleared for the live cycle.** The original combined scope and the clean GLM inbox-adoption delta are accepted below. Runtime endpoint readiness is verified; actual board delivery, the setup-guide deliverable and full acceptance110 remain open. Keep runtime bytes fixed and record any later relevant delta before final milestone closure. |
 | Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | OpenCode; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
 | Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | OpenCode Reviewer; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
 | Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the three task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
@@ -282,3 +282,39 @@ accepted a bounded assignment wake-up withHTTP204; actual worker start and
 verdict still require its handoff. Any unexpected prior worker must pause for
 overlap reconciliation. This supersedes the earlier coordinator assignment,
 not the GLM-only restriction or live-cycle hold.
+
+Phase1 live runtime stays fixed at f37b83b through this review and the
+109/110 cycle. Metadata and the planned setup guide may proceed; unrelated
+completed runtime changes may be committed/pushed in isolation by Hoa, with
+main adoption deferred until the cycle closes. Existing holds/reservations
+remain. This is an integration boundary, not new authoring authorization or
+security approval. OpenCode reported actual fresh adoption worker
+`ses_f7a45bc0dffehfR5rUg2rtQLys`, requested GLM5.3Flash, runner99785/worker99793
+active with verified input pins. Actual runtime export and verdict remain
+pending; scope and initial round1 are unchanged.
+
+### Adoption disposition and live-cycle release (2026-09-09)
+
+OpenCode final handoff `20260909T104934Z-opencode-7ae7` confirms exported
+`zai-coding-plan/glm-5.3-flash`, fresh session
+`ses_f7a45bc0dffehfR5rUg2rtQLys`, **SECURITY PASS — clean no-change**,
+adoption round1 of3. The [verbatim report](2026-09-09-phase1-inbox-adoption-delta.md)
+SHA256 is `71a179437ad1ab593c5708194806b87837437f0bd1de620725c1e6d1c4e31541`.
+Hoa matched all seven current product hashes and both installed configuration
+hashes to their report rows, and matched the report hash itself. No product
+or test changes occurred; applicable exact f37b83b CI evidence carried.
+Session, runner/log, archive and scratch cleanup are confirmed. OpenCode
+Reviewer separately confirmed no withdrawn worker or overlap.
+
+Lead accepts the GLM pass and its report-only dispositions unchanged for the
+exact candidate, relying on the GLM assessment rather than performing a new
+security analysis. Prior scoped passes remain carried evidence. The pinned
+f37b83b runtime is cleared for the actual109/110 live cycle; this does not
+claim that the cycle has happened or passed. Keep product bytes fixed.
+
+The planned new setup guide will receive ordinary review within109. Before
+final phase1 acceptance/deprecation, one fresh GLM reviewer will assess that
+new guide and relevant remaining live-cycle deltas, carrying unchanged runtime
+coverage. Count that as the next adoption/final-cycle security round2 of3,
+with round3 available for changed outputs; do not reset the open final-cycle
+budget. No new review task or repeated unchanged-runtime scan is required.

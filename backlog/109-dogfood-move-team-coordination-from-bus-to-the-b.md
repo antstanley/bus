@@ -3,7 +3,7 @@ id: 109
 title: dogfood: move team coordination from ./bus to the board
 phase: 1
 priority: critical
-owner: codex
+owner: opencode
 status: in-progress
 depends: [101, 102, 103, 108, 144]
 estimate: M
@@ -265,3 +265,36 @@ refreshed registry URL127.0.0.1:4096 and healthy read-only server status. This
 confirms the administrative endpoint round trip, not board delivery. The
 unread inbox-adoption milestone reservation was moved to this reachable owner
 without starting a duplicate review; actual GLM start/pass remains pending.
+
+## Live-cycle deliverable and ownership (2026-09-09)
+
+Following the accepted f37b83b adoption gate, OpenCode owns this parent's
+completion cycle; Hoa retains lead decisions, git and task110 observation.
+Actual authoring starts only on the lead's board request, not this planning
+record. Reserved new artifact: `docs/acceptance/team-board-setup.md`.
+Document the verified private-store setup, existing installers, explicit-port
+OpenCode resume, actual session/registry/listener verification, Codex queue
+capability versus unproven receipt, single-owner configuration boundary and
+retained bus fallback. Use reusable placeholders for session IDs and clear
+verification steps; distinguish observed setup from future full acceptance.
+No runtime/helper/policy/config edits, installations, process restarts,
+provider probes or live board operations by clean workers. Only the owner
+posts actual cycle stages and worker evidence.
+
+This is a real missing operational guide, not a synthetic code change for
+testing. A clean GLM5.3Flash author creates it; fresh Astra/Fable reviewers
+fix ordinary findings themselves. Count historical completed137 as parent
+ordinary round1, so the guide's first new ordinary review is round2 of3
+(superseding the earlier planning-only round1 suggestion); changes require
+fresh round3, then stop for Hoa if not clean. Preserve both scopes' evidence.
+No redundant product tests for documentation: check actual command options,
+links, internal consistency and factual correspondence with this record.
+
+After ordinary review passes, a fresh GLM final milestone reviewer checks the
+new guide/relevant remaining deltas, carrying the unchanged runtime report.
+This is adoption/final-cycle security round2 of3, separate from ordinary
+counts. No source change or live acceptance is implied by the initial gate.
+Record all actual request/stage IDs, worker models/sessions, hashes, checks
+and timing through the board. After launch, use board traffic for this cycle;
+bus remains a monitored fallback for real blockers. No human relay is claimed
+until actual observations support it.
