@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { storeConformance } from "@board/core/test/store-conformance";
 import { EventEmitter } from "node:events";
-import type { FSWatcher } from "node:fs";
+import { watch, type FSWatcher } from "node:fs";
 import { chmod, mkdtemp, mkdir, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FsStore } from "../src/index.ts";
+import { FsStore, type WatchFactory } from "../src/index.ts";
 
 const roots: string[] = [];
 
@@ -156,6 +156,53 @@ describe("FsStore", () => {
     bAbort.abort();
     expect(await bDone).toEqual({ done: true, value: undefined });
     expect(fake.closeCount).toBe(1);
+  });
+
+  it("delivers hints for watcher callbacks with undefined or null filenames", async () => {
+    const ready = Promise.withResolvers<FSWatcher>();
+    let listener!: Parameters<WatchFactory>[2];
+    const store = new FsStore(await tempRoot(), {
+      hintDebounceMs: 2,
+      watchFactory: (path, options, callback) => {
+        listener = callback;
+        const watcher = watch(path, options, callback);
+        ready.resolve(watcher);
+        return watcher;
+      },
+    });
+    const iterator = store.hint()[Symbol.asyncIterator]();
+    const undefinedWake = iterator.next();
+    await ready.promise;
+    try {
+      // Invoke the exact callback supplied to real fs.watch; native filename
+      // omission cannot be requested deterministically from the filesystem.
+      listener("rename", undefined);
+      expect(await Promise.race([
+        undefinedWake,
+        rejectAfter(250, "undefined filename did not wake the consumer"),
+      ])).toEqual({ done: false, value: undefined });
+
+      const nullWake = iterator.next();
+      listener("change", null);
+      expect(await Promise.race([
+        nullWake,
+        rejectAfter(250, "null filename did not wake the consumer"),
+      ])).toEqual({ done: false, value: undefined });
+
+      let wokeForMetadata = false;
+      const bufferWake = iterator.next();
+      void bufferWake.then(() => { wokeForMetadata = true; });
+      for (const filename of [".git", ".git/HEAD", ".git\\HEAD", Buffer.from(".git/HEAD")]) {
+        listener("change", filename);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(wokeForMetadata).toBe(false);
+      listener("rename", "boards/g/object");
+      expect(await bufferWake).toEqual({ done: false, value: undefined });
+    } finally {
+      await iterator.return(undefined);
+    }
+    expect(await iterator.next()).toEqual({ done: true, value: undefined });
   });
 
   it("ends hint iterators on watcher errors or unexpected closure", async () => {

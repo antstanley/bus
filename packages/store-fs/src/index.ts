@@ -31,7 +31,7 @@ export interface FsStoreOptions {
 export type WatchFactory = (
   path: string,
   options: { recursive: true },
-  listener: (eventType: string, filename: string | Buffer | null) => void,
+  listener: (eventType: string, filename: string | Buffer | null | undefined) => void,
 ) => FSWatcher;
 
 /** A filesystem-backed Store. All paths are relative to `root`. */
@@ -429,8 +429,8 @@ function assertObjectKey(key: string): void {
   }
 }
 
-function isGitMetadata(filename: string | Buffer | null): boolean {
-  if (filename === null) return false;
+function isGitMetadata(filename: string | Buffer | null | undefined): boolean {
+  if (filename === null || filename === undefined) return false;
   const name = typeof filename === "string" ? filename : filename.toString("utf8");
   return name === ".git" || name.startsWith(".git/") || name.startsWith(".git\\");
 }

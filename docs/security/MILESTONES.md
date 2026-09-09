@@ -352,3 +352,23 @@ installed configuration bytes stay fixed. The next applicable changed-delta
 security review is cumulative round3, subject to explicit scope assignment;
 after3 without a clean pass, stop for Hoa. No budget reset or per-task scan
 queue is created.
+
+### Task148 source integration; rollout coverage pending (2026-09-09)
+
+The operator requested source integration of task148 after its clean ordinary
+round3. Hoa verified the three final hashes in the
+[parent task](../../backlog/148-handle-filename-less-watch-events.md) and adopted
+those exact bytes onto source main based on `cf4a709`. Product/dependency/CI
+files had no intervening changes from the owner's5587108 review baseline.
+
+This integration adds an uncovered remote-board milestone delta:
+`packages/store-fs/src/index.ts`, `packages/store-fs/test/store-fs.test.ts`,
+and `packages/store-git/test/store-git.test.ts`. Previous reports continue to
+cover only their pinned bytes. No security review or acceptance is claimed
+for this delta, and operational rollout/installation remains held. Source
+integration and CI may proceed under the shared workflow.
+
+The next applicable cumulative adoption/final-cycle security round remains3;
+it is not started by this bookkeeping entry. Before rollout, Hoa must freeze
+the actual cumulative candidate and assign a clean GLM5.3Flash review through
+the milestone owner. Preserve prior findings, reports and round counts.

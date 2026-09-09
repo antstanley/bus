@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it, spyOn } from "bun:test";
 import { decoder } from "@board/core";
 import { storeConformance } from "@board/core/test/store-conformance";
 import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
@@ -260,7 +260,7 @@ describe("GitStore", () => {
     const store = new GitStore({ dir, branch: "main" });
     await store.sync();
     const iterator = store.hint()[Symbol.asyncIterator]();
-    const pending = iterator.next();
+    const { pending } = await nextWhenWatching(store, iterator);
     const returned = iterator.return(undefined);
     await expect(Promise.race([
       returned,
@@ -272,7 +272,7 @@ describe("GitStore", () => {
     ])).resolves.toEqual({ done: true, value: undefined });
 
     const follow = store.hint()[Symbol.asyncIterator]();
-    const followWake = follow.next();
+    const { pending: followWake } = await nextWhenWatching(store, follow);
     await git(dir, ["hook", "run", "post-merge"]);
     await expect(Promise.race([
       followWake,
@@ -280,7 +280,6 @@ describe("GitStore", () => {
     ])).resolves.toEqual({ done: false, value: undefined });
     await follow.return(undefined);
     await git(dir, ["hook", "run", "post-merge"]);
-    await new Promise((resolve) => setTimeout(resolve, 250));
     expect(await follow.next()).toEqual({ done: true, value: undefined });
   });
 
@@ -485,6 +484,30 @@ async function gitResult(dir: string, args: string[]): Promise<{ code: number; s
 
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", `'\\''`)}'`;
+}
+
+async function nextWhenWatching(store: GitStore, iterator: AsyncGenerator<void>) {
+  // Observe completion of the real startup, including mkdir/lstat and fs.watch.
+  // GitStore readiness alone does not imply that its FsStore watcher is ready.
+  const fs = store.fs as unknown as { ensureWatcher(): Promise<void> };
+  const original = fs.ensureWatcher.bind(fs);
+  const ready = Promise.withResolvers<void>();
+  const startup = spyOn(fs, "ensureWatcher").mockImplementation(async () => {
+    try {
+      await original();
+      ready.resolve();
+    } catch (error) {
+      ready.reject(error);
+      throw error;
+    }
+  });
+  const pending = iterator.next();
+  try {
+    await Promise.race([ready.promise, rejectAfter(1000, "watcher never became ready")]);
+    return { pending };
+  } finally {
+    startup.mockRestore();
+  }
 }
 
 function rejectAfter(ms: number, message: string): Promise<never> {
