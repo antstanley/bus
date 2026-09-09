@@ -3,7 +3,7 @@ id: 148
 title: Handle filename-less watch events and stabilize hint readiness
 phase: 1
 owner: opencode
-status: in-progress
+status: todo
 depends: []
 related: [404, 109, 110]
 estimate: S
@@ -122,6 +122,66 @@ ordinary0/3 count remain intact. Edit-tool availability and applicable
 validation still require honest verification; no successful retry is claimed
 until observed. Hoa notified through `20260909T133643Z-opencode-7945`.
 
+### Authorized retry still denied by the harness
+
+Fresh pure worker `ses_f799ba3d2ffedz0ZMQByzoj6jB`, exported runtime
+`zai-coding-plan/glm-5.3-flash`, runner11339/worker11349. Its first and only
+tool action was native `read` with exact input filePath
+`/private/tmp/sidekick-task148-opencode/packages/store-fs/src/index.ts`.
+Despite the direct operator authorization in its launch instruction, that
+action again returned `The user rejected permission to use this specific tool call.`
+Actual tool/input/error verified in the session export, not inferred from
+worker self-report. No source content, edits, tests or patch produced; no
+broader permission/config change, equivalent read or model substitution.
+The CLI exited without an author handoff after this one failed tool action.
+
+The operator authorization remains valid evidence, but the effective harness
+permission gate is still blocking execution. Further retry requires resolving
+that exact gate, not another blind worker launch. Task147/typecheck denials
+remain unchanged; ordinary148 rounds remain0/3. Failure metadata preserved,
+failed session retired/deleted and owned runner/log removed after capture.
+No worker scratch or source changes. Hoa notified via
+`20260909T134235Z-opencode-2259`.
+
+### Exact-read retry succeeded
+
+After a new direct operator instruction, "try again", one fresh pure GLM
+session `ses_f7988300fffeD4e1jA5KdR26cG` retried only the authorized native Read.
+It completed successfully and returned `READ_OK` with513 lines. Session export
+confirms actual `zai-coding-plan/glm-5.3-flash`, exactly one completed read tool
+and final finish=stop. Launch was a bounded foreground `opencode run --pure
+--model zai-coding-plan/glm-5.3-flash --format json` in the task148 isolated cwd.
+No configuration/permission changes or alternate read routes were used; the
+reason the effective permission outcome changed is not inferred.
+
+The exact source-read blocker is now resolved. This read-only attempt made no
+edits and ran no tests or analysis. Remaining implementation/edit-tool and
+validation limitations are not thereby resolved; task147/typecheck restrictions
+remain unchanged, ordinary148 rounds0/3. Read-only session retired after evidence
+capture; no scratch created. Hoa notified in `20260909T140102Z-opencode-2da1`.
+
 Cleanup confirmed by owner `20260909T130218Z-opencode-0ec2`: disposable
 session deleted, owned runner/author/recovery logs removed, and all initial
 and recovery workers exited. Lead-owned unchanged candidate remains retained.
+
+### Lead setup decisions and implementation release
+
+Hoa releases implementation after the successful exact source read. Frozen
+dependencies were provisioned in the isolated candidate with
+`bun --no-env-file install --frozen-lockfile --ignore-scripts`:100 packages
+installed; tracked working tree remained clean. No tests or source edits
+were performed by the lead.
+
+If the GLM implementer lacks apply_patch as a tool, it may return an exact
+unified patch. The coordinator may persist those bytes mechanically through
+its available apply_patch, without authoring product changes; preserve patch
+and file hashes before retiring the implementer. This addresses unavailable
+tooling only and does not override an actual denied operation. A fresh
+Astra/Fable reviewer then reviews the resulting candidate under ordinary0/3.
+
+Task returns to todo, ready for actual implementation pickup; owner records
+in-progress only when its worker starts. No additional read-only probe is
+needed. Existing task147 and helper-typecheck restrictions remain separate,
+and missing validation must be reported before any clean acceptance claim.
+Lead dispatch: `20260909T145000Z-codex-0480`; dependency completion:
+`20260909T145049Z-codex-5322`.

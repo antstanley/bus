@@ -52,7 +52,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
 | 144 | [align phase1 acceptance helper with live team roles](done/144-align-phase1-helper-live-roles.md) | opencode | done | S |
 | 147 | [keep idle OpenCode delivery presence current](147-keep-idle-opencode-delivery-presence-current.md) | opencode | blocked | S |
-| 148 | [handle filename-less watch events and stabilize hint readiness](148-handle-filename-less-watch-events.md) | opencode | in-progress | S |
+| 148 | [handle filename-less watch events and stabilize hint readiness](148-handle-filename-less-watch-events.md) | opencode | todo | S |
 
 ## Phase 2
 
@@ -66,8 +66,8 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 206 | [agent cards: publish and list](206-agent-cards-publish-and-list.md) | letta | todo | M |
 | 207 | [expiry and TTL semantics](207-expiry-and-ttl-semantics.md) | letta | todo | S |
 | 208 | [persistent agent charters and restart recovery](208-agent-charters.md) | opencode | blocked | M |
-| 209 | [spec: author request/response](209-spec-request-response.md) | codex-architect | gated | M |
-| 211 | [spec: author agent charters](211-spec-agent-charters.md) | codex-architect | gated | M |
+| 209 | [spec: author request/response](done/209-spec-request-response.md) | codex-architect | done | M |
+| 211 | [spec: author agent charters](done/211-spec-agent-charters.md) | codex-architect | done | M |
 | 214 | [spec review: request/response, round 2](done/214-review-request-response-round-2.md) | opencode-reviewer | done | M |
 | 216 | [spec review: agent charters, round 2](done/216-review-agent-charters-round-2.md) | opencode-reviewer | done | M |
 | 217 | [spec: author contract-net work allocation](217-spec-contract-net.md) | opencode | blocked | M |

@@ -4,7 +4,7 @@ title: dogfood: move team coordination from ./bus to the board
 phase: 1
 priority: critical
 owner: opencode
-status: in-progress
+status: blocked
 depends: [101, 102, 103, 108, 144]
 estimate: M
 ---
