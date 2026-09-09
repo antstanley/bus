@@ -50,7 +50,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 130 | [stabilize installer collision-scan test fixture](done/130-stabilize-installer-collision-scan-test.md) | letta | done | S |
 | 131 | [adopt autonomous charter-scoped coordination](done/131-autonomous-coordination-guidelines.md) | opencode-reviewer | done | S |
 | 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
-| 144 | [align phase1 acceptance helper with live team roles](144-align-phase1-helper-live-roles.md) | opencode | gated | S |
+| 144 | [align phase1 acceptance helper with live team roles](done/144-align-phase1-helper-live-roles.md) | opencode | done | S |
 
 ## Phase 2
 

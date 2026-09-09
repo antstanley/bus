@@ -97,3 +97,57 @@ may still be local and uncommitted; a recorded local path or historical verdict
 does not mean that artifact is included or approved by this commit. The new
 policy milestone report and reviewed task144 helper/guide are explicitly
 included; other deliverables retain their recorded integration holds.
+
+## Read-only preparation refresh (2026-09-09)
+
+Hoa queried the already-selected `antstanley/bus-board` repository with
+`gh repo view`: visibility PRIVATE, empty repository, ADMIN viewer permission,
+no named default branch. No initialization, installation, git write or live
+message was performed by this check. Recheck material remote state at actual
+setup time; this observation does not release the milestone hold.
+
+OpenCode Reviewer received `20260909T084153Z-codex-1f0d`: one clean GLM worker
+may prepare a compact read-only execution checklist for109/110, without
+editing files, contacting remotes, running setup/acceptance/security tests or
+duplicating144 security coverage. Worker start remains unconfirmed. The lead
+retains109 ownership and final operational decisions.
+
+### Checklist extraction (2026-09-09)
+
+The unacknowledged external checklist dispatch was withdrawn in
+`20260909T091010Z-codex-6b33`. A clean documentation-only lead worker extracted
+the existing109/110 and acceptance-guide instructions without code/security
+review, file edits, remote contact or live operations. Its work is preparation,
+not a gate. Current approved guide references:
+
+- `docs/acceptance/phase-1.md:54`: repository/checkout/installation setup is
+  explicitly outside the guide; preserve the private board-data boundary.
+- `docs/acceptance/phase-1.md:82`: select actual sessions and an authorized task;
+  owner posts worker outcomes, with real model/session evidence.
+- `docs/acceptance/phase-1.md:89`: serialized request/claim/ready/review/accept
+  commands and report. Examples contain placeholders and a pending milestone
+  reference; they do not authorize live use or establish an approved gate.
+- `docs/acceptance/phase-1.md:145`: capture actual IDs, timing, message counts,
+  revisions, human-relay observations and remote replication. Structural helper
+  completion alone does not establish those external facts.
+
+Before live setup, still concretize the initialization/checkout/board-create/
+install commands, complete `BOARD_TEAM_STORE`, participant delivery/configuration,
+selected task/sessions, approved milestone reference and observation/remote-check
+procedure. Preserve bus fallback until the full live acceptance criteria pass.
+These are operational preparation gaps, not newly created review tasks.
+
+### Combined prerequisite and next operation (2026-09-09)
+
+Task144's combined GLM round2 pass and lead disposition are now recorded in
+`docs/security/MILESTONES.md`; all 25 reviewed pins matched the current
+checkout before that metadata update. The security prerequisite for this
+pinned candidate is satisfied. No live setup has occurred: concrete commands
+and participant delivery/configuration remain the next lead decision, followed
+by actual execution and task110 evidence. Source and private board-data
+remotes remain separate; bus fallback stays active.
+
+OpenCode Reviewer confirmed the withdrawn checklist never started and left
+no resources (`20260909T092037Z-opencode-reviewer-33de`). A clean lead
+documentation worker is extracting existing setup commands from docs/CLI
+help; this is operational preparation, not another code/security review.

@@ -27,7 +27,7 @@ reports cover their historical bytes only. No scan is claimed by this register.
 
 | Milestone | Parent deliverables / cumulative scope | Scan coordination | Boundary and current state |
 |---|---|---|---|
-| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pending.** Gate the combined candidate before board initialization, installation or live posting. Preserve the existing rollout hold. Include helper changes required by the new owner/reviewer model. Run any relevant delta verification before phase-1 acceptance is signed off. |
+| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pinned candidate prerequisite passed (2026-09-09).** Combined GLM round2 report and lead disposition below permit lead-controlled setup planning under109. Actual setup awaits the concrete operational sequence; full live acceptance110 and relevant later-delta coverage remain open. |
 | Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | OpenCode; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
 | Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | OpenCode Reviewer; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
 | Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the three task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
@@ -213,3 +213,36 @@ acknowledged and launch preparation reported; actual worker start remains
 pending. The current main successor `6ce18ba` adds coordination bookkeeping
 to the previously named baseline, without a product-scope change or round reset.
 OpenCode Reviewer separately confirmed no withdrawn helper worker/overlap.
+
+### Combined candidate disposition (2026-09-09)
+
+OpenCode final handoff `20260909T092455Z-opencode-5563` reports fresh worker
+`ses_f7aaccbf3ffe5yAP3mRmSVkCRX`, exported runtime
+`zai-coding-plan/glm-5.3-flash`, **SECURITY PASS — clean no-change**.
+The [unchanged combined report](2026-09-09-remote-board-combined-round2.md)
+SHA-256 is `cc99f04fc1a96d0488b6f33ee672815cfc235466bc08536a4abc4d6ca596199f`.
+Hoa independently matched all 25 current path hashes to its manifest before
+this bookkeeping update. Requested baseline was `ba567d5`; the actual
+manifest includes the disclosed later register metadata. The report's broad
+claim of identical product bytes back to `b11145c` is not accepted as revision
+evidence: earlier reviews used candidate overlays, and integration occurred
+later. Exact manifest hashes and scoped prior evidence govern.
+
+Hoa accepts the GLM worker's optional-observation disposition unchanged for
+this milestone, relying on its assessment and rationale; the lead performed
+no security analysis. No artifact edits or new checks occurred in round2.
+Prior exact CI34214935470 carries only on unchanged relevant bytes; the
+denied typecheck was neither retried nor worked around. Helper rounds remain
+1 BLOCKED + 2 clean, policy2 complete and runtime1 complete, with ordinary
+rounds recorded separately. No third helper round is needed. OpenCode
+confirmed session deletion, exited processes and owned runner/log cleanup.
+
+Boundary decision: the combined pinned candidate satisfies the security
+prerequisite for the scoped private-board rollout. Task109 must still settle
+and execute its concrete setup/participant sequence; task110 must prove actual
+live acceptance before bus deprecation. No blanket approval of later changes
+is given. In particular, task205's isolated candidate is outside this manifest
+and does not inherit this gate. Subsequent task/register/report archival edits
+are lead bookkeeping, not newly scanned product bytes. Historical report-only
+local-file observations are not permission to read or delete credential files;
+only the exact selected report and task metadata are staged for this closure.
