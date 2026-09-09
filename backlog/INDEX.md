@@ -52,7 +52,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 134 | [spec: reliable OpenCode bus message processing](134-spec-opencode-message-processing.md) | codex-architect | blocked | M |
 | 144 | [align phase1 acceptance helper with live team roles](done/144-align-phase1-helper-live-roles.md) | opencode | done | S |
 | 147 | [keep idle OpenCode delivery presence current](147-keep-idle-opencode-delivery-presence-current.md) | opencode | blocked | S |
-| 148 | [handle filename-less watch events and stabilize hint readiness](148-handle-filename-less-watch-events.md) | opencode | todo | S |
+| 148 | [handle filename-less watch events and stabilize hint readiness](148-handle-filename-less-watch-events.md) | opencode | in-progress | S |
 
 ## Phase 2
 
