@@ -59,7 +59,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | id | task | owner | status | est |
 |----|------|-------|--------|-----|
 | 201 | [core: envelope v2 fields](done/201-core-envelope-v2-fields.md) | letta | done | M |
-| 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | blocked | S |
+| 202 | [core: request/response helper with deadlines](202-core-request-response-helper-with-deadlines.md) | letta | todo | S |
 | 203 | [task lifecycle folded from status posts](done/203-task-lifecycle-folded-from-status-posts.md) | letta | done | M |
 | 204 | [contract-net profile for work allocation](204-contract-net-profile-for-work-allocation.md) | opencode | blocked | M |
 | 205 | [addressed inbox view](done/205-addressed-inbox-view.md) | letta | done | S |
