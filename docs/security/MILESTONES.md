@@ -330,9 +330,11 @@ matched the unchanged guide SHA256
 `78491cd294661bf6230de0125bd97f60c24cc4b91dcfab3e66b385f3c8a460d5`.
 The [verbatim report](2026-09-09-team-board-guide-final-cycle.md) SHA256 is
 `e74c94243e69fa6609e3176d507bd9c69da26a4c29f788ea6192bdc097342bfb`, also
-matched by root. Owner confirms session retirement/deletion; remaining
-runner/log cleanup still needs final confirmation. Root retains live
-operational replicas/watcher separately.
+matched by root. Owner cleanup confirmation
+`20260909T123721Z-opencode-3844` records deleted disposable sessions, removed
+owned runner/command logs and exited worker processes. Root retains live
+operational replicas/watcher separately; the blocked task147 checkout remains
+reserved for that task.
 
 Hoa accepts the GLM assessment for this exact guide, carrying prior unchanged
 runtime coverage. No new security analysis or broader approval is implied.

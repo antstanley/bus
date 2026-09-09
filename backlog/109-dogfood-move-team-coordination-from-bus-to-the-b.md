@@ -466,3 +466,18 @@ Worker removed its syntax scratch, reported no other resources. Owner retires
 the session and removes owned worker/command logs after handoff; operational
 board replica and installed config remain live lead-owned state, not scratch.
 Aggregate usage/cost unavailable. Final guide/report frozen for Hoa.
+
+### Guide integration and CI disposition
+
+Hoa committed and pushed the exact reviewed guide/report with coordination
+records at `558710831c738d0f4c01c8919bcb3e04aa1964b6`. Packaging run34351990570
+passed. Main CI34351990609 failed an unchanged GitStore hint test and logged
+a filename-less FsStore callback exception; clean ordinary Astra diagnosis
+identified distinct runtime follow-up [148](148-handle-filename-less-watch-events.md).
+No rerun has been used to dismiss the failure. Guide integration is recorded,
+but task109/110 acceptance and runtime rollout remain blocked.
+
+Owner cleanup confirmation `20260909T123721Z-opencode-3844` records removal
+of owned worker/command logs, all disposable sessions deleted and all tracked
+worker processes exited. Live operational replicas/watcher/config and the
+separately blocked147 checkout remain intentionally retained.
