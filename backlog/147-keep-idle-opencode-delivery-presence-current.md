@@ -4,7 +4,7 @@ title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
 owner: opencode
-status: in-progress
+status: gated
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -298,3 +298,91 @@ CORRECT/COMPLETE verdict, then stop for Hoa. Ordinary consumed0/3 at dispatch,
 actual round1 start pending. Milestone cumulative security round3 and all
 live rollout holds remain unchanged. Decision delivered in the existing
 legacy thread while board wake is unavailable; mirror on the task board thread.
+
+### Ordinary reviewer round1 actual start
+
+Administrative wake delivered the recorded continuation090143Z-codex-6c21.
+Fresh pure reviewer `ses_f756ead04ffe0Wko1w1MTn8Q2d` actually started with
+requested `openai/gpt-6-astra`, low variant, runner60285/worker60321.
+Board receipt `01M2594FJC5QS0ZK7B3NC3CDT0` on original147 thread mentions
+codex and records actual start at2026-09-10T09:07:15.148Z. This is
+administrative recovery, not automatic board delivery. Initial two hashes
+c5e630f8/1e627913 above reverified; same97629f4 isolated candidate/scope.
+Ordinary round1/3 underway, no verdict inferred. Worker MCP connections and
+plugins disabled; denied scratch instrumentation/equivalents and permission
+changes expressly prohibited. Normal source-level fixes and tests/typecheck
+allowed under the decision; author deviations and failing tests preserved.
+
+### Ordinary round1 handoff: remediated
+
+Fresh pure reviewer `ses_f756ead04ffe0Wko1w1MTn8Q2d`, exported actual runtime
+`openai/gpt-6-astra`, finished with **REMEDIATED-FRESHREVIEWREQUIRED**, ordinary1/3.
+About8.2 minutes elapsed. Source/tests changed exclusively via apply_patch;
+prior author tool deviations and failed24/1 input are not relabelled as passing.
+Reviewer reproduced the input failure, fixed fake-hook append behavior, moved
+state into each plugin instance, serialized heartbeat writes and skipped
+superseded work, added busy/retry/deletion/disposal/process-exit handling,
+bounded hook subprocess lifetime and cleaned child processes. Removed the
+non-plugin control export and polling/sleep-based checks; controlled clocks
+cover135s idle, transitions, deletion races, multiple sessions and instances.
+No denied scratch instrumentation/equivalent or permission changes; normal
+source-level remediation only, no security assessment.
+
+| Path | Input SHA-256 | Output SHA-256 |
+|---|---|---|
+| packages/cli/src/install.ts | c5e630f8c320efcf4b30184f9740c01d91dda4f711b9ade4a91e069ef8f8067b | 4eece9efd642dcb9449b46a4276c32e7169031224bf16b69280beaf34026e6d3 |
+| packages/cli/test/install.test.ts | 1e62791323622c266a278da1c2f404861a1553bbca10b382b429707ef3e53130 | 7e1200cb7c61141e234931dc4f9d881626dc02671a5def999b66a53ef5f47473 |
+
+Final normal checks: installer suite26 pass/0fail,272 assertions, exit0;
+root315 pass/1skip/0fail,2143 assertions/22 files, exit0; typecheck exit0
+without diagnostics; diff-check exit0. Only the two scoped isolated files
+modified, no untracked scratch. Input failure remains24pass/1fail with timeout;
+no synthetic live-delivery or milestone approval follows from final tests.
+Owner rehashed output pins. Reviewer retired after handoff; fresh ordinary2
+required on changed output, no self-approval or count reset. Fixture cleanup
+completed; no persistent processes reported. Aggregate usage/cost unknown.
+
+### Ordinary round2: clean no-change acceptance
+
+Fresh pure reviewer `ses_f7563d745ffeu0Zq0J4G8XK2NQ`, exported actual runtime
+`openai/gpt-6-astra`, runner35172/worker35196, returned **CORRECT/COMPLETE**,
+ordinary2/3. No edits or blocking ordinary findings. Round1 handoff and actual
+round2 start were posted on the team task thread in
+`01M259SJEVQJ9N901F6H9DXME9` at09:18:46.235Z. No count reset or third ordinary
+review needed on unchanged bytes; denied diagnostic remains prohibited.
+
+Independent final checks: installer26 pass/0fail,272 assertions, exit0;
+root315 pass/1skip/0fail,2143 assertions/22files, exit0; typecheck exit0/no
+diagnostics; diff-check exit0. Bun1.4.0 with frozen provided dependencies.
+Verified periodic45s idle refresh beyond120s without model injection, busy/
+retry transitions and superseded work, session/instance isolation, deletion/
+disposal/process-exit cleanup, and unchanged freshness/routing checks. No
+security assessment, live installer/endpoint/board activity or permission denial.
+
+Input/output frozen pins equal round1 final pins, independently rehashed by
+owner: installer `4eece9efd642dcb9449b46a4276c32e7169031224bf16b69280beaf34026e6d3`;
+test `7e1200cb7c61141e234931dc4f9d881626dc02671a5def999b66a53ef5f47473`.
+Only these two isolated files modified; no untracked scratch. Reviewer test
+cleanup completed, no persistent worker-created processes. About2 minutes
+elapsed; aggregate usage/cost unavailable. Disposable reviewer session and
+owner runner/logs retired after evidence capture; lead-owned candidate retained.
+
+Task gated for Hoa integration, not done/live-adopted. Main source, installed
+configuration and rollout holds remain untouched. Cumulative security round3
+for applicable147/148 deltas still awaits explicit lead scope/assignment; no
+security worker or acceptance is inferred from ordinary success. Historical
+author24/1 failure and tool deviations remain preserved.
+
+Final integration packet posted on the original task thread as
+`01M25AB31243J2GX76DP2XFKGF` at2026-09-10T09:28:20.258Z, mentioning codex.
+Publication returned exit0; this is owner handoff evidence, not automatic
+delivery or recipient-processing proof. Latest bounded board-read cursor:
+`boards/team/posts/2026-09-10/01M25AB31243J2GX76DP2XFKGF.json`.
+
+### Lead integration — 2026-09-10
+
+Hoa adopted the two exact ordinary-round2 hashes onto main. Neither target
+file had changed between owner baseline97629f4 and main faba3c3. Owner root
+validation remains applicable; commit/push/CI and candidate cleanup pending.
+Source integration does not authorize installed configuration changes or
+clear the existing milestone rollout hold.

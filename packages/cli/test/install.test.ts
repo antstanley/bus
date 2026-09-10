@@ -17,9 +17,11 @@ import { FsStore } from "@board/store-fs";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 
 const roots: string[] = [];
+const pluginCleanups: Array<() => Promise<void>> = [];
 const projectRoot = join(import.meta.dir, "../../..");
 
 afterEach(async () => {
+  await Promise.all(pluginCleanups.splice(0).map((cleanup) => cleanup()));
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
@@ -220,7 +222,9 @@ describe("board install", () => {
 
     const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
     const module = await import(`${pathToFileURL(pluginPath).href}?fixture=${Date.now()}`);
-    const plugin = await module.BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4096/") });
+    const clock = presenceClock();
+    const plugin = await module.BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4096/"), presenceClock: clock });
+    pluginCleanups.push(() => plugin.event({ event: { type: "server.instance.disposed" } }));
     const output = { system: [] as string[] };
     await plugin["experimental.chat.system.transform"]({ sessionID: "session-123" }, output);
     expect(output.system.join("\n")).toContain("OpenCode integration message");
@@ -251,6 +255,151 @@ describe("board install", () => {
       }),
     ]);
     expect((await who(store, { maxAgeMs: 60_000 }))[0]?.serverUrl).toBeUndefined();
+
+    await clock.advance(135_000);
+    const refreshed = (await who(store, { maxAgeMs: 60_000 }))[0];
+    expect(refreshed).toMatchObject({ sessionId: "session-123", status: "idle" });
+    await plugin.event({ event: { type: "session.deleted", properties: { sessionID: "session-123" } } });
+    expect(await Bun.file(registryPath).exists()).toBe(false);
+    expect(clock.timers.size).toBe(0);
+  });
+
+  test("the generated OpenCode plugin keeps idle presence fresh without waking the model", async () => {
+    const home = await fixture();
+    const cwd = await fixture();
+    const project = await fixture();
+    const capturePath = join(cwd, "hook-calls.jsonl");
+    const fakeHook = join(project, "packages", "hooks", "src", "board-hook.ts");
+    await put(fakeHook, `
+import { appendFile } from "node:fs/promises";
+const payload = JSON.parse(await Bun.stdin.text());
+await appendFile(${JSON.stringify(capturePath)}, JSON.stringify({
+  command: process.argv.at(-1), ...payload,
+}) + "\\n");
+`);
+    await installRuntime({ ...options(home, "opencode"), cwd, projectRoot: project });
+    const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
+    const module = await import(`${pathToFileURL(pluginPath).href}?fixture=${Date.now()}`);
+    expect(Object.keys(module)).toEqual(["BoardPlugin"]);
+    const clock = presenceClock();
+    const exitListeners = process.listenerCount("exit");
+    const plugin = await module.BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4096/"), presenceClock: clock });
+    pluginCleanups.push(() => plugin.event({ event: { type: "server.instance.disposed" } }));
+    const event = (type: string, properties: Record<string, unknown> = {}) => plugin.event({ event: { type, properties } });
+    const readCalls = async (): Promise<Array<Record<string, unknown>>> =>
+      (await text(capturePath)).trim().split("\n").map((line) => JSON.parse(line));
+    const readBeats = async () => (await readCalls()).filter((row) => row.command === "heartbeat");
+    const registryPath = openCodeSessionRegistryPath(join(home, ".board", "sessions", "opencode"), "session-123");
+    try {
+      await event("session.created", { info: { id: "session-123" } });
+      expect(await readBeats()).toEqual([
+        { command: "heartbeat", runtime: "opencode", session_id: "session-123" },
+      ]);
+      expect(await Bun.file(registryPath).exists()).toBe(true);
+      expect(clock.timers.size).toBe(1);
+      expect([...clock.timers.values()][0]?.ms).toBe(45_000);
+      expect(clock.unrefs).toBe(1);
+      expect(process.listenerCount("exit")).toBe(exitListeners + 1);
+      await clock.advance(44_999);
+      expect(await readBeats()).toHaveLength(1);
+      await clock.advance(90_001);
+      // Three real refresh periods have elapsed, exceeding delivery's 120s window.
+      expect(await readBeats()).toHaveLength(4);
+      expect((await readCalls()).every((row) => row.command === "heartbeat")).toBe(true);
+
+      const output = { system: [] as string[] };
+      await plugin["experimental.chat.system.transform"]({ sessionID: "session-123" }, output);
+      expect((await readBeats()).at(-1))
+        .toMatchObject({ session_id: "session-123", status: "working" });
+      await event("session.created", { info: { id: "session-123" } });
+      await clock.advance(540_000);
+      expect(await readBeats()).toHaveLength(5);
+
+      await event("session.status", { sessionID: "session-123", status: { type: "idle" } });
+      await clock.advance(135_000);
+      expect(await readBeats()).toHaveLength(9);
+      await event("session.status", { sessionID: "session-123", status: { type: "retry" } });
+      await clock.advance(135_000);
+      expect(await readBeats()).toHaveLength(10);
+      expect((await readBeats()).at(-1)?.status).toBe("working");
+
+      await event("session.idle", { sessionID: "session-123" });
+      // Queue a refresh and a busy transition together: stale idle work must not win.
+      await Promise.all([
+        clock.advance(45_000),
+        event("session.status", { sessionID: "session-123", status: { type: "busy" } }),
+      ]);
+      expect((await readBeats()).at(-1)?.status).toBe("working");
+      await event("session.deleted", { info: { id: "session-123" } });
+      expect(await Bun.file(registryPath).exists()).toBe(false);
+      expect(clock.timers.size).toBe(0);
+      expect(process.listenerCount("exit")).toBe(exitListeners);
+      const count = (await readBeats()).length;
+      await clock.advance(135_000);
+      expect(await readBeats()).toHaveLength(count);
+
+      // Deletion must also await an already queued registration, not leave it behind.
+      await Promise.all([
+        event("session.created", { info: { id: "session-123" } }),
+        event("session.deleted", { sessionID: "session-123" }),
+      ]);
+      expect(await Bun.file(registryPath).exists()).toBe(false);
+      expect(clock.timers.size).toBe(0);
+
+      await event("session.created", { info: { id: "session-123" } });
+      await event("session.created", { info: { id: "session-456" } });
+      expect(clock.timers.size).toBe(1);
+      await event("session.deleted", { sessionID: "session-456" });
+      expect(clock.timers.size).toBe(1);
+      const otherClock = presenceClock();
+      const other = await module.BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4097/"), presenceClock: otherClock });
+      pluginCleanups.push(() => other.event({ event: { type: "server.instance.disposed" } }));
+      await other.event({ event: { type: "session.created", properties: { info: { id: "other-session" } } } });
+      await event("server.instance.disposed");
+      expect(await Bun.file(registryPath).exists()).toBe(false);
+      expect(clock.timers.size).toBe(0);
+      expect(process.listenerCount("exit")).toBe(exitListeners + 1);
+      expect(otherClock.timers.size).toBe(1);
+      await otherClock.advance(135_000);
+      expect((await readBeats()).slice(-3).map((row) => row.session_id))
+        .toEqual(["other-session", "other-session", "other-session"]);
+      await other.event({ event: { type: "server.instance.disposed" } });
+      expect(otherClock.timers.size).toBe(0);
+      expect(process.listenerCount("exit")).toBe(exitListeners);
+      const finalCalls = await readCalls();
+      await clock.advance(135_000);
+      await event("session.idle", { sessionID: "session-123" });
+      await plugin["experimental.chat.system.transform"]({ sessionID: "session-123" }, output);
+      expect(await readCalls()).toEqual(finalCalls);
+    } finally {
+      await event("server.instance.disposed");
+    }
+  });
+
+  test("the generated OpenCode plugin removes its local routing record on process exit", async () => {
+    const home = await fixture();
+    const cwd = await fixture();
+    const project = await fixture();
+    await put(join(project, "packages", "hooks", "src", "board-hook.ts"), "await Bun.stdin.text();\n");
+    await installRuntime({ ...options(home, "opencode"), cwd, projectRoot: project });
+    const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
+    const registryPath = openCodeSessionRegistryPath(join(home, ".board", "sessions", "opencode"), "exit-session");
+    const proc = Bun.spawn([process.execPath, "-e", `
+      const { BoardPlugin } = await import(${JSON.stringify(pathToFileURL(pluginPath).href)});
+      const plugin = await BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4096/") });
+      await plugin.event({ event: { type: "session.created", properties: { info: { id: "exit-session" } } } });
+      if (!await Bun.file(${JSON.stringify(registryPath)}).exists()) process.exit(2);
+      // Natural exit also verifies that the idle interval does not pin the process.
+    `], { stdout: "pipe", stderr: "pipe", timeout: 4_000 });
+    try {
+      const [code, stderr] = await Promise.all([proc.exited, new Response(proc.stderr).text()]);
+      expect(stderr).toBe("");
+      expect(code).toBe(0);
+      expect(await Bun.file(registryPath).exists()).toBe(false);
+    } finally {
+      proc.kill();
+      await proc.exited;
+    }
   });
 
   test("the generated OpenCode plugin preserves store environment without inheriting another agent identity", async () => {
@@ -283,6 +432,7 @@ console.log("injected by fake hook");
       const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
       const module = await import(`${pathToFileURL(pluginPath).href}?fixture=${Date.now()}`);
       const plugin = await module.BoardPlugin({ serverUrl: new URL("http://127.0.0.1:4096/") });
+      pluginCleanups.push(() => plugin.event({ event: { type: "server.instance.disposed" } }));
       const output = { system: [] as string[] };
       await plugin["experimental.chat.system.transform"]({ sessionID: "session-123" }, output);
       expect(output.system).toEqual(["injected by fake hook\n"]);
@@ -290,6 +440,7 @@ console.log("injected by fake hook");
         awsProfile: "task113-profile",
         home: process.env.HOME,
       });
+      await plugin.event({ event: { type: "server.instance.disposed" } });
     } finally {
       restoreEnv("AWS_PROFILE", previous.awsProfile);
       restoreEnv("CODEX_THREAD_ID", previous.codexThreadId);
@@ -910,4 +1061,32 @@ export const Type = {
 function restoreEnv(name: string, value: string | undefined): void {
   if (value === undefined) delete process.env[name];
   else process.env[name] = value;
+}
+
+function presenceClock() {
+  let now = 1_000_000;
+  let unrefs = 0;
+  const timers = new Map<object, { tick: () => Promise<void>; ms: number; next: number }>();
+  return {
+    now: () => now,
+    timers,
+    get unrefs() { return unrefs; },
+    setInterval(tick: () => Promise<void>, ms: number) {
+      const timer = { unref: () => { unrefs++; } };
+      timers.set(timer, { tick, ms, next: now + ms });
+      return timer;
+    },
+    clearInterval(timer: object) { timers.delete(timer); },
+    async advance(ms: number) {
+      const target = now + ms;
+      for (;;) {
+        const next = [...timers.values()].sort((a, b) => a.next - b.next)[0];
+        if (!next || next.next > target) break;
+        now = next.next;
+        next.next += next.ms;
+        await next.tick();
+      }
+      now = target;
+    },
+  };
 }

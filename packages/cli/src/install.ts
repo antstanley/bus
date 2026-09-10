@@ -385,6 +385,7 @@ function openCodePlugin(
 ): string {
   return `// >>> board install opencode plugin
 import { createHash, randomUUID } from "node:crypto";
+import { unlinkSync } from "node:fs";
 import { chmod, mkdir, rename, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -438,7 +439,23 @@ async function registerLocalSession(sessionID: string, value: string): Promise<v
   }
 }
 
+export const BoardPlugin = async ({ serverUrl, presenceClock = {
+  now: () => Date.now(),
+  setInterval: (tick: () => Promise<void>, ms: number) => setInterval(() => { void tick(); }, ms),
+  clearInterval: (timer: ReturnType<typeof setInterval>) => clearInterval(timer),
+} }: {
+  serverUrl: URL;
+  presenceClock?: {
+    now: () => number;
+    setInterval: (tick: () => Promise<void>, ms: number) => ReturnType<typeof setInterval>;
+    clearInterval: (timer: ReturnType<typeof setInterval>) => void;
+  };
+}) => {
+const children = new Set<ReturnType<typeof Bun.spawn>>();
+let disposed = false;
+
 async function invokeBoardHook(command: "inject" | "heartbeat", payload: Record<string, unknown>): Promise<string> {
+  if (disposed) return "";
   try {
     const env = { ...process.env, ...hookEnv };
     for (const name of foreignRuntimeEnv) delete env[name];
@@ -449,39 +466,143 @@ async function invokeBoardHook(command: "inject" | "heartbeat", payload: Record<
       stdin: "pipe",
       stdout: "pipe",
       stderr: "ignore",
+      timeout: 10_000,
     });
-    proc.stdin.write(JSON.stringify(payload));
-    proc.stdin.end();
-    const [output, code] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
-    return code === 0 ? output : "";
+    children.add(proc);
+    try {
+      proc.stdin.write(JSON.stringify(payload));
+      proc.stdin.end();
+      const [output, code] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+      return code === 0 ? output : "";
+    } finally {
+      proc.kill();
+      children.delete(proc);
+    }
   } catch {
     return "";
   }
 }
 
-export const BoardPlugin = async ({ serverUrl }: { serverUrl: URL }) => ({
+// Lifecycle events alone let idle presence age past the 120s delivery
+// freshness window. One unref'd timer refreshes only this plugin instance's
+// idle sessions; serialized writes prevent an older idle beat winning over busy.
+const IDLE_REFRESH_MS = 45_000;
+const trackedSessions = new Map<string, { status: "idle" | "busy"; lastRefresh: number }>();
+let idleTimer: ReturnType<typeof setInterval> | undefined;
+let refreshingIdle = false;
+let pending = Promise.resolve();
+
+function enqueue(work: () => Promise<void>): Promise<void> {
+  const result = pending.then(work);
+  pending = result.catch(() => {});
+  return result;
+}
+
+function stopTimer(): void {
+  if (idleTimer !== undefined) presenceClock.clearInterval(idleTimer);
+  idleTimer = undefined;
+  process.removeListener("exit", onExit);
+}
+
+function onExit(): void {
+  disposed = true;
+  stopTimer();
+  for (const child of children) child.kill();
+  for (const sessionID of trackedSessions.keys()) {
+    const digest = createHash("sha256").update(sessionID, "utf8").digest("hex");
+    try { unlinkSync(join(registryDir, digest + ".json")); } catch {}
+  }
+  trackedSessions.clear();
+}
+
+async function forgetSession(sessionID: string): Promise<void> {
+  trackedSessions.delete(sessionID);
+  if (!trackedSessions.size) stopTimer();
+  const digest = createHash("sha256").update(sessionID, "utf8").digest("hex");
+  await enqueue(async () => {
+    await unlink(join(registryDir, digest + ".json")).catch(() => {});
+  });
+}
+
+function markSession(sessionID: string, status: "idle" | "busy"): Promise<void> {
+  if (disposed) return Promise.resolve();
+  const state = { status, lastRefresh: presenceClock.now() };
+  trackedSessions.set(sessionID, state);
+  if (idleTimer === undefined) {
+    idleTimer = presenceClock.setInterval(refreshIdlePresence, IDLE_REFRESH_MS);
+    idleTimer.unref?.();
+    process.once("exit", onExit);
+  }
+  return enqueue(async () => {
+    if (disposed || trackedSessions.get(sessionID) !== state) return;
+    await registerLocalSession(sessionID, serverUrl.toString());
+    if (disposed || trackedSessions.get(sessionID) !== state) return;
+    await invokeBoardHook("heartbeat", {
+      runtime: "opencode", session_id: sessionID,
+      ...(status === "busy" ? { status: "working" } : {}),
+    });
+    state.lastRefresh = presenceClock.now();
+  });
+}
+
+async function refreshIdlePresence(): Promise<void> {
+  if (disposed || refreshingIdle) return;
+  const now = presenceClock.now();
+  const due = [...trackedSessions].filter(([, state]) =>
+    state.status === "idle" && now - state.lastRefresh >= IDLE_REFRESH_MS);
+  if (!due.length) return;
+  refreshingIdle = true;
+  try {
+    await enqueue(async () => {
+      for (const [sessionID, state] of due) {
+        if (disposed || trackedSessions.get(sessionID) !== state) continue;
+        await invokeBoardHook("heartbeat", { runtime: "opencode", session_id: sessionID });
+        state.lastRefresh = presenceClock.now();
+      }
+    });
+  } finally {
+    refreshingIdle = false;
+  }
+}
+
+return {
   event: async ({ event }: { event: { type: string; properties?: Record<string, unknown> } }) => {
+    if (disposed) return;
     const properties = event.properties ?? {};
     const info = properties.info as { id?: unknown } | undefined;
+    if (event.type === "server.instance.disposed" || event.type === "global.disposed") {
+      disposed = true;
+      stopTimer();
+      for (const child of children) child.kill();
+      await Promise.all([...trackedSessions.keys()].map(forgetSession));
+      return;
+    }
+    if (event.type === "session.deleted") {
+      const deleted = typeof properties.sessionID === "string" ? properties.sessionID : info?.id;
+      if (typeof deleted === "string") await forgetSession(deleted);
+      return;
+    }
     const sessionID = event.type === "session.created"
       ? info?.id
-      : event.type === "session.idle" ? properties.sessionID : undefined;
+      : event.type === "session.idle" || event.type === "session.status" ? properties.sessionID : undefined;
     if (typeof sessionID === "string") {
-      await registerLocalSession(sessionID, serverUrl.toString());
-      await invokeBoardHook("heartbeat", {
-        runtime: "opencode",
-        session_id: sessionID,
-      });
+      if (event.type === "session.created" && trackedSessions.has(sessionID)) return;
+      const status = (properties.status as { type?: unknown } | undefined)?.type;
+      if (event.type === "session.status" && status !== "idle" && status !== "busy" && status !== "retry") return;
+      await markSession(sessionID, status === "busy" || status === "retry" ? "busy" : "idle");
     }
   },
   "experimental.chat.system.transform": async (
     { sessionID }: { sessionID: string },
     output: { system: string[] },
   ) => {
+    if (disposed || typeof sessionID !== "string") return;
+    await markSession(sessionID, "busy");
     const context = await invokeBoardHook("inject", { runtime: "opencode", session_id: sessionID });
     if (context) output.system.push(context);
   },
-});
+};
+};
 // <<< board install opencode plugin
 `;
 }
