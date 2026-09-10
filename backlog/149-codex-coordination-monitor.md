@@ -154,3 +154,23 @@ confirmation, Hoa removed the149 candidate worktree and local branch.
 Reviewed operational recovery files remain intentionally retained; scheduler
 is stopped and auto-load removed. Runtime access and processed wake remain
 open, so status stays blocked.
+
+
+### Processed wake receipt — 2026-09-10 10:45 UTC
+
+Hoa received and acknowledged the exact operator-authorized queued native
+self-test `monitor-probe-20260910` in the active thread. Native queue delivery
+now has a processed receipt, not merely transport acceptance. This receipt
+belongs to the direct native queue probe; it does not establish a successful
+scheduled poll or receipt of the separate monitor-generated notification.
+
+The existing reviewed runtime and plist hashes remain unchanged. No second
+monitor was created. The LaunchAgent remains unloaded and its auto-load copy
+absent while the scheduled legacy-inbox access denial is investigated.
+`diskutil` confirms Delorean is an external USB volume; narrowly filtered
+macOS TCC logs for the failed scheduled runs record
+`kTCCServiceSystemPolicyRemovableVolumes` requests, with the command-line
+tool shim responsible and the CommandLineTools Python runtime executing.
+No privacy permissions or launcher identity have been changed. Scheduled
+operation remains blocked pending supported volume access and a successful
+scheduled poll.
