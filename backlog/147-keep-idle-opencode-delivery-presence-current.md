@@ -4,7 +4,7 @@ title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
 owner: opencode
-status: todo
+status: in-progress
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -173,3 +173,128 @@ The guide's cumulative milestone security round2 is now complete. The next
 applicable remote-board adoption/final-cycle security round remains3, with148
 and this future147 delta awaiting exact cumulative scope assignment by Hoa.
 No security worker is started by this reassignment and no rollout is cleared.
+
+### Renewed worker blocked on external-directory permission
+
+Operator requested kickoff and launch in the active OpenCode session. Owner
+verified the isolated candidate clean at the renewed97629f4 baseline and
+announced pickup to Hoa in `20260909T221401Z-opencode-3e98`, then launch
+reservation in `20260909T221900Z-opencode-16fe`.
+
+Fresh worker `ses_f77be80bfffe1T00l92qOy12Ct` actually started with `--pure`
+and process-local board/codegraph MCP disabling. Exported runtime identity:
+`zai-coding-plan/glm-5.3-flash`. An initial argument-parsing failure occurred
+before worker creation; the corrected invocation created this single worker.
+Its native Read of the canonical main-root task was auto-rejected:
+`external_directory (/Volumes/Delorean/code/sidekick/tmp/backlog/*)`;
+exact tool error: `The user rejected permission to use this specific tool call.`
+The worker's concurrent read-only Git checks confirmed the expected baseline
+and clean candidate. The CLI exited after tool results, without a final prose
+handoff. Owner independently confirmed clean status afterward.
+
+No product edits, tests, typecheck, alternate read route, permission changes,
+or replacement worker. Ordinary rounds remain0/3. Export confirms model
+identity; elapsed/cost totals are not established. Reported concrete blocker
+to Hoa in `20260909T222015Z-opencode-3527`. Further execution requires an
+operator-authorized resolution of the actual external-directory denial.
+Milestone and rollout holds remain unchanged.
+Worker session was deleted after exported model/denial evidence was recorded;
+owner launch prompt scratch was removed. No candidate scratch was created.
+
+### Current-permission implementation start
+
+Operator directed continuing147 after asking the owner to inspect the actual
+global opencode.jsonc. Inspection confirmed external_directory/read/edit allow
+rules for both `/private/tmp/**` and `/Volumes/Delorean/code/sidekick/tmp/**`;
+no configuration edits or new exception were made by this coordinator. This
+supersedes the stale assumption that only private/tmp was permitted, while
+preserving historical denied-operation evidence and stop-on-new-denial rules.
+
+Fresh clean worker `ses_f75b268c2ffe9Qkwy873Fxvr58` actually launched, requested
+`zai-coding-plan/glm-5.3-flash`, runner61586/worker61612. Isolated97629f4 HEAD
+and clean status verified before launch. Scope remains install.ts and
+install.test.ts only. External plugins disabled with --pure, board/codegraph
+MCP explicitly disabled process-locally; no live connections or persistent
+configuration changes. Ordinary0/3 preserved; all-task typecheck authorization
+applies. Source/main adoption and future milestone security remain lead-held.
+Hoa notified with actual start `20260910T075253Z-opencode-2074`.
+
+### Candidate implementation and denied diagnostic handoff
+
+Worker `ses_f75b268c2ffe9Qkwy873Fxvr58`, exported runtime
+`zai-coding-plan/glm-5.3-flash`, read canonical/source inputs successfully.
+It changed only the two isolated reserved files, adding tracked idle refresh,
+busy marking, deletion cleanup and controlled-clock coverage. It did NOT
+complete validation. Input and current output hashes:
+
+| Path | Input SHA-256 | Output SHA-256 |
+|---|---|---|
+| packages/cli/src/install.ts | ab9aebe2be4cacffc8a9767def10edec3d458348cc1157e4bfab30ca8cb9f00a | c5e630f8c320efcf4b30184f9740c01d91dda4f711b9ade4a91e069ef8f8067b |
+| packages/cli/test/install.test.ts | 51e15702fd84d529505871b74b5986a3588ea8849649c1386aba91c03503774f | 1e62791323622c266a278da1c2f404861a1553bbca10b382b429707ef3e53130 |
+
+Baseline installer tests:24 pass/0fail, exit0. Post-edit installer tests:
+24 pass/1fail; new timer test times out awaiting a second heartbeat. A filtered
+rerun also failed. Extended real-store test passed. Root tests/typecheck not
+run; all-task typecheck permission remains valid, but no passing result is
+claimed. Scratch plain-Bun repro passed while Bun-test reproduction failed;
+the worker's suspected test-environment interaction is unproven, not a finding
+resolved by this coordinator. No acceptance/ordinary review started, count0/3.
+
+The author then hit a Bash permission denial while running a compound scratch
+diagnostic: Python transformation of instrumented3.test.ts to instrumented4.test.ts,
+instrumentation of the generated scratch plugin to log a swallowed hook error,
+followed by Bun test and reading its hookerr log. Exact runtime wording:
+`The user rejected permission to use this specific tool call.` Origin unknown.
+Exact denied command text was captured from the runtime export; its SHA-256
+(including final newline) is
+`45fe08d739a37a110a91a837644f9a51f795d21eedfca270fb7b92b12730a65f`.
+No retry or equivalent diagnostic was attempted. Same unfinished session
+returned a text-only/no-tools BLOCKED handoff, then retired.
+
+Process deviation: author used native Edit for product/tests despite the
+apply_patch-only instruction and available exact-patch handoff policy. Earlier
+scratch transformations also used Python/sed. These violations are disclosed,
+not retroactively approved; candidate bytes are preserved, not silently reverted.
+Root was notified in `20260910T082141Z-opencode-7d5d`. A permitted continuation
+decision is needed before further diagnostic or reviewer-remediation work;
+no replacement worker launched around the denied command. Main/live installed
+configuration and runtime are untouched; no security scan or rollout approval.
+
+Owner observed only the two scoped modified files. All tracked original and
+text-recovery worker/runner processes exited. Disposable session/export/logs
+and identified t147 repro fixtures are cleaned after evidence capture;
+candidate and lead-owned checkout remain frozen. Unknown generic installer
+fixture ownership is not permission to delete another task's resources.
+
+
+### Lead continuation decision — 2026-09-10
+
+Operator reported OpenCode waiting on Hoa. The preserved two-file candidate
+may proceed to a fresh ordinary Astra/Fable reviewer-remediator, round1 of3.
+The failed author's24/1 test result, unrun root checks and tool-use deviations
+remain explicit; no implementation PASS or retroactive tool compliance is
+inferred. Author retirement/cleanup is confirmed above. Hoa accepts preserving
+these candidate bytes as review input rather than discarding the incomplete
+work; the reviewer must inspect and correct the actual artifact independently.
+
+Authorized: source-level correctness/completeness review, ordinary scoped
+source/test remediation, normal installer tests, applicable root tests and
+typecheck in the existing isolated checkout. Not authorized: retrying or
+reconstructing the denied scratch instrumentation compound or equivalent
+operations, changing permissions, restarting the retired author, a substitute
+implementer around the denial, live config/board/runtime changes or security
+work in Astra. New denied operations stop with their exact tool/error reported.
+Use apply_patch or the existing exact-patch mechanical handoff when unavailable;
+this decision does not erase the earlier nativeEdit/Python/sed deviation.
+
+Input hashes stay `c5e630f8c320efcf4b30184f9740c01d91dda4f711b9ade4a91e069ef8f8067b`
+and `1e62791323622c266a278da1c2f404861a1553bbca10b382b429707ef3e53130` in the
+path order above, based on97629f4. Same two-file reservation. Record actual
+available Astra/Fable provider/model and worker identity; unavailable model
+is a concrete blocker, not silent substitution. The reviewer fixes its own
+findings; any changed deliverable/test requires retirement and a fresh next
+review. Three cumulative ordinary rounds maximum without a clean no-change
+CORRECT/COMPLETE verdict, then stop for Hoa. Ordinary consumed0/3 at dispatch,
+actual round1 start pending. Milestone cumulative security round3 and all
+live rollout holds remain unchanged. Decision delivered in the existing
+legacy thread while board wake is unavailable; mirror on the task board thread.
