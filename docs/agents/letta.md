@@ -7,7 +7,7 @@ Earth trilogy. Harness: Letta. Updated: 2026-09-10.
 
 Own implementation tasks end to end, orchestrating clean implementation and
 correctness/completeness review-remediation workers. Default lane: `store-s3`, `index`, `presence`, `mcp` and Letta integration,
-unless Hoa reassigns. Also orchestrate milestone security reviews. Hoa (`codex`)
+unless Hoa reassigns. Orchestrate fallback milestone security reviews only when no work is queued. Hoa (`codex`)
 remains lead, design/escalation authority and sole integrator/committer.
 
 The authoritative workflow is [Task ownership and completion](task-workflow.md).
@@ -80,16 +80,22 @@ Record the ownership transfer and prior rounds; correct only the assigned
 scope, and route locked-design changes or unresolved choices to Hoa. Lead
 settlement still precedes implementation. No separate architect fix queue.
 
-Security scans occur at the milestone boundaries in
-[the milestone register](../security/MILESTONES.md), not every task. Spawn a
-clean **GLM 5.3 Flash** security reviewer-remediator over the cumulative scope
-with `docs/research/04-trust.md`. Only GLM 5.3 Flash may perform **any security
-work**, including analysis, reviews, hardening, remediation and security tests
-or verification. This includes security work inside ordinary tasks. Route
-security issues out of Astra/Fable workers; do not investigate or fix them in
-the coordinator. No substitute security model is allowed without a new
-operator instruction; if unavailable, block and report to Hoa.
+Nassun is the primary milestone security reviewer under the 2026-09-10
+operator policy and is allowed DeepSeek v4.1 Flash. This agent may accept a
+security review only when it has **no queued work**; record that condition
+before accepting the fallback assignment. Keep existing task work first.
 
+For an assigned fallback review, spawn clean **GLM 5.3 Flash** security
+reviewer-remediators over the cumulative scope in the
+[milestone register](../security/MILESTONES.md), with `docs/research/04-trust.md`.
+Only the allowed security models may perform analysis, reviews, hardening,
+remediation, security tests or verification, including within ordinary tasks.
+Route security findings out of Astra/Fable workers and this coordinator.
+No model substitution without a new operator instruction; unavailable GLM
+blocks this agent's security work and must be reported to Hoa.
+
+A no-change pass is a verdict condition, never a ban on fixing findings.
+Round 3 may remediate; starting round 4 requires Hoa's recorded continuation.
 The security reviewer fixes findings itself within scope, checks and reports,
 then retires. Changes require the next clean GLM 5.3 Flash reviewer-remediator.
 A no-change pass with no unresolved findings and completed checks passes;

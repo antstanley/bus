@@ -42,11 +42,12 @@ If it is absent, skip CodeGraph. Reading interfaces does not authorize a code
 review, security scan, or implementation.
 
 Security-specific analysis or specification authoring is substantive security
-work and may use **only GLM 5.3 Flash**, under the operator's 2026-09-08 model
-restriction. A non-GLM author must hand off that scope without analyzing or
-remediating it; report model-selection limits to Hoa. This does not grant the
-architect security-review authority. Security review/remediation remains with
-the assigned task owner's clean GLM 5.3 Flash workers under the shared workflow.
+work. Route it to Nassun, the primary milestone security reviewer, who may
+use DeepSeek v4.1 Flash. Other task owners may take fallback security work
+only with no queued work and use clean GLM 5.3 Flash workers. This does not
+expand the architect's author-only mandate or allow security work in an
+unapproved model. Report model-selection limits to Hoa; preserve clean
+contexts, evidence and cumulative rounds under the shared workflow.
 
 ## Keep the main session available
 

@@ -7,16 +7,22 @@ remain here under `docs/security/`. See
 [task workflow](../agents/task-workflow.md) and [SECURITY.md](../../SECURITY.md).
 
 Hoa defines/finalizes scan scope and release boundary and records dispositions.
-Any assigned task owner (`letta`, `opencode`, `opencode-reviewer`, `essun`) runs
-substantive security work exclusively in clean
-**GLM 5.3 Flash** reviewer-remediators with `docs/research/04-trust.md`, exact
-baseline/candidate and file hashes, including untracked material. This includes
-reviews, analysis, hardening, remediation, security tests and delta verification;
-no other model may perform those activities. Block if the required model is
-unavailable; only a new operator instruction can permit another security model.
+**Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
+milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+security work. Other task owners may take security reviews **only when they
+have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
+Record the fallback owner's empty-queue check and assignment before dispatch.
+This covers security analysis, review, hardening, remediation, tests and delta
+verification. Other models remain excluded without a new operator instruction.
+Use clean review contexts; the coordinating session does not review its own
+output. Preserve existing reservations, reports, findings and cumulative rounds.
+
+Use `docs/research/04-trust.md`, an exact baseline/candidate and complete file
+hashes including untracked material. Block if the assigned owner's allowed
+model is unavailable; do not infer availability from policy permission.
 
 Each reviewer fixes findings itself, validates, reports and retires. Any
-artifact/test change requires another clean GLM 5.3 Flash reviewer. A clean
+artifact/test change requires another clean reviewer with that owner's allowed security model. A clean
 no-change pass ends the cycle; after three security rounds without one, stop
 and wait for Hoa's recorded bus decision. Track actual model IDs and cumulative
 security rounds separately from correctness rounds; delta work cannot reset
@@ -27,10 +33,10 @@ reports cover their historical bytes only. No scan is claimed by this register.
 
 | Milestone | Parent deliverables / cumulative scope | Scan coordination | Boundary and current state |
 |---|---|---|---|
-| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pinned f37b83b runtime cleared for the live cycle.** The original combined scope and the clean GLM inbox-adoption delta are accepted below. Runtime endpoint readiness is verified; actual board delivery, the setup-guide deliverable and full acceptance110 remain open. Keep runtime bytes fixed and record any later relevant delta before final milestone closure. |
-| Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | OpenCode; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
-| Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | OpenCode Reviewer; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
-| Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
+| Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | Nassun; historical split scopes retained below | **Pinned f37b83b runtime cleared for the live cycle.** The original combined scope and the clean GLM inbox-adoption delta are accepted below. Runtime endpoint readiness is verified; actual board delivery, the setup-guide deliverable and full acceptance110 remain open. Keep runtime bytes fixed and record any later relevant delta before final milestone closure. |
+| Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | Nassun; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
+| Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | Nassun; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
+| Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Nassun by default; empty-queue fallback owner only | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
 
 An assigned scan coordinator is not a claim that an agent/worker is running.
 The owner can complete ordinary tasks without waiting for that coordinator.
@@ -77,7 +83,11 @@ Archived standalone review/remediation records are indexed in
 They are historical evidence, not parallel scheduling instructions. No old
 pending security task has been silently marked passed.
 
-## Active security dispatch (2026-09-08)
+## Historical security dispatch (2026-09-08)
+
+The2026-09-10 Nassun assignment supersedes these owner defaults for new
+reviews. Preserve their actual work, reports, findings and cumulative counts;
+do not duplicate an active or completed review when transferring ownership.
 
 Operator assigned milestone security to the two OpenCode identities after their
 required-model spawn PASS. Only clean `zai-coding-plan/glm-5.3-flash`
@@ -422,3 +432,35 @@ trailing space in the guide line298 shell comment. Hoa accepts this cosmetic
 formatting finding to retain the exact independently reviewed artifact; the
 check is recorded as nonzero, not claimed passing. No source/test failure
 or security finding is waived by this disposition.
+
+### Monitor final gate and operational trial — 2026-09-10
+
+Essun returned clean GLM5.3Flash security attempt3 on the exact439bad8
+candidate and actual plist341afce5815d89e75200c8b5763924be2a92ca4d17ae0946879f6f6ab1a6b82c.
+Report: [attempt3](2026-09-10-codex-monitor-security-attempt3.md), hash
+e1d567922b15f7277a59c240ea9923d826a4ac08b7de9c9b7899f2b2e4e9a0a6.
+No deliverable changes or remaining scoped findings were reported;49 tests
+passed. Ordinary4 and security attempts1/2/3 remain preserved in149. Source
+CI34464122300 and packaging34464122292 both passed. The security hold on
+this monitor is cleared; unrelated rollout holds remain.
+
+Hoa authorizes installing the exact reviewed runtime copy and120-second job
+for an operational trial. Manual initial/quiet/new-item polls and launchd
+status will establish scheduler/transport behavior. A queued Codex message
+may only be processed after the current turn yields; therefore processed
+receipt remains final acceptance evidence, rather than a prerequisite to
+starting the trial needed to observe it. Do not mark149 done or claim a
+verified automatic wake until that actual thread receipt occurs. This
+clarifies the lead-authored activation ordering; no security gate is waived.
+The earlier automatic provisioning rejection occurred before this clean
+security verdict and caused no runtime file write.
+
+### Monitor trial access failure — 2026-09-10
+
+Manual baseline/quiet/new-message/deduplication polls succeeded, with native
+queue transport acknowledgement. The120-second launchd trial then failed
+its legacy-inbox access with Operation not permitted (exit11). Hoa stopped
+and removed the auto-load job. Task149 is blocked on a supported authorized
+runtime-access solution; no background monitoring or processed wake is claimed.
+Clean review evidence remains valid for its exact bytes. No permission change
+or indirect workaround is authorized by this trial record.

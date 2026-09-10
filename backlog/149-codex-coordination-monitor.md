@@ -3,7 +3,7 @@ id: 149
 title: Periodically check board and legacy inbox and wake the lead
 phase: 1
 owner: essun
-status: in-progress
+status: blocked
 depends: []
 estimate: S
 ---
@@ -117,4 +117,34 @@ changed bytes require fresh GLM verification. Activation remains held.
 
 - Security round 1, ATTEMPT 2 COMPLETE — sub-eed97929 (task149-sec1b-glm, requested thinking high; all three input hashes independently rehashed, MATCH; provenance of manifest correction recorded in its report). Verdict: REMEDIATED — FRESH GLM VERIFICATION REQUIRED. Findings fixed: (HIGH, availability) board JSON parse missed RecursionError — a deeply nested untrusted post (~40KB < 64KiB cap) escaped poll_once before state save, wedge exit-1 with no self-heal; RecursionError now classified corrupt (cursor advances, pending, capped); (LOW) load_state same gap — hostile deep state now exit 11 as documented instead of internal exit 1. 2 regressions added (49 total). Accepted INFO items (documented): oversize/corrupt backlog re-enumeration bounded by per-call timeouts+lock; bounded git stderr in state carries no token; seen-value types unused for wake decisions. Starvation remedy VERIFIED end to end (cursor/legacy_first semantics, wrap-once, atomic persistence, retry-on-failure, no unbounded growth). Plist cross-check: observed sha256 341afce5815d89e75200c8b5763924be2a92ca4d17ae0946879f6f6ab1a6b82c matches lead pin; 12 flags argparse-consistent, StartInterval=120, RunAtLoad=false; NO config change required. Lead provisioning note: plist runs a COPY of the monitor at /Users/stan/.board/monitors/codex-01a08790/codex-coordination-monitor.py — must be updated to the final integrated bytes before activation. Checks reproduced by essun: py_compile clean, 49 tests OK rc0, HEAD unchanged, exactly 4 untracked files. Post-fix hashes: monitor 49cc4137312251d4bcf03b12cc910b3688ddd29163e22c43f687f116f345c23d, tests 8f9401cdf58befabfcd6c8f509b094d5adcb9c5b43d7e6c0c6b7c75c2b7f2ad8, guide 81889a2f0aaa145710cda1e9149e752e14d4c7483e91604f551bb1623bc95f20 (unchanged), security report d0b9dd38ddc6a8e607e1b1fe0f4f84c3fab726bfb77fc4afb443a72b46e1d593 (docs/security/2026-09-10-codex-monitor-security-round1.md). Attempt-2 worker retired after report preserved. SECURITY ATTEMPT 3 (fresh GLM verification, final attempt) queued on final bytes after ordinary round 4.
 - Ordinary round 4 COMPLETE — sub-18128841 (task149-round4-astra, requested thinking high, actually dispatched 09:59:05Z; hashes/HEAD verified pre-review). Verdict: CORRECT/COMPLETE (non-security ordinary correctness/completeness). Zero blocking findings, ZERO changes; deferred board_after cursor/legacy_first persistence, RecursionError classifications, and 49-test coverage reviewed against every acceptance bullet; checks green (py_compile clean, 49/49 OK rc0); deliverable hashes identical to the post-security-attempt-2 snapshot; worktree exactly the 4 expected untracked files; no security concerns routed. Reviewer retired after report preserved. ORDINARY CYCLE: CORRECT/COMPLETE via lead-authorized round 4 (cumulative rounds preserved: R1 REMEDIATED, R2 REMEDIATION REQUIRED, R3 REMEDIATED, R4 clean — no reset).
-- Security ATTEMPT 3 (fresh GLM no-change verification of the unchanged post-attempt-2 bytes) IN FLIGHT — final security attempt; a clean no-change pass completes the applicable review gates; otherwise STOP and ask lead with pinned findings/checks.
+- Security ATTEMPT 3 COMPLETE — sub-c14459f9 (task149-sec3-glm, requested thinking high, dispatched 10:02:01Z; corrected fix-mandate relayed in-attempt 10:06Z, scope bound 10:07Z). VERDICT: CLEAN — no-change security pass. Zero deliverable bytes changed (hashes re-verified post-checks by worker and essun): monitor 49cc4137..., tests 8f9401cd..., guide 81889a2f... all match the frozen candidate; plist observed 341afce5815d89e75200c8b5763924be2a92ca4d17ae0946879f6f6ab1a6b82c matches lead pin (read-only, 12 flags argparse-consistent, StartInterval=120, RunAtLoad=false). Full checklist verified: trust boundaries (fixed-text argv, bounded stderr, minimal JSON parse, no env/credential reads/content logging), subprocess safety (argv lists, bounded timeouts, pinned --no-tags/--refmap= fetch, non-FF refused via merge-base CAS), untrusted-input robustness (both RecursionError fixes regression-tested, 64KiB gate, corrupt-pending without starvation), starvation remedy end-to-end, state/lock atomicity (mkstemp 0600+fsync+replace+dir fsync, exit 11 fail-closed, flock). Checks: py_compile clean, 49 tests OK rc0 (35s). Guide line 298 trailing-space lead exception honored. Audit report: docs/security/2026-09-10-codex-monitor-security-attempt3.md e1d567922b15f7277a59c240ea9923d826a4ac08b7de9c9b7899f2b2e4e9a0a6 (new file added by attempt 3; only file it created). Attempt-3 worker retired after report preserved. APPLICABLE REVIEW GATES FOR 149 COMPLETE: ordinary CORRECT/COMPLETE (round 4) + clean no-change security pass (attempt 3). Remaining before activation (lead-only): integrate final hashes into source, refresh the plist's monitor copy to 49cc4137..., provisioning/quiet+wake checks and a real queue receipt in the lead thread; activation held per lead. Integration baseline was 439bad8 with CI passed on the pre-attempt-3 bytes; deliverable bytes are unchanged by attempt 3, so no re-integration triggered.
+
+
+## Lead integration and operational trial — 2026-09-10
+
+Source439bad875aed2bb5e67f6931330901fbf5aa29bd pushed. CI34464122300 and
+packaging34464122292 passed. Exact clean attempt3 report copied into main;
+reviewed runtime copy installed only after the clean gate. Earlier automatic
+approval review rejected pre-gate provisioning; no write occurred then.
+
+Manual live polls: baseline exit2; quiet exit0 with no queue; new legacy
+message batch exit0 with outcome wake/queued=true at10:14:31Z; repeat exit0
+quiet with no additional queue. Test message20260910T101325Z-codex-0546 was
+consumed afterward through the normal bounded bus reader. The native queue
+probe and monitor notification have transport acceptance, not processed
+receipt in this still-active Codex turn.
+
+The exact reviewed120-second LaunchAgent was loaded for the explicitly
+recorded operational trial. Two launchd runs failed with exit11:
+`config-error: legacy inbox not listable: [Errno 1] Operation not permitted`
+for `/Volumes/Delorean/code/sidekick/tmp/.bus/inbox/codex/new`. Manual polls
+from the authorized session could read it. Hoa stopped the job and removed
+its auto-load plist copy; reviewed runtime/config/state remain under the
+assigned monitor directory. No scheduled monitoring is currently active.
+
+This is a runtime access block, not a failed code review. Do not bypass it
+through another path, launcher identity or indirect read. Resume only after
+an authorized supported access solution is concrete and reviewed as needed;
+then verify scheduled polls and actual processed wake before acceptance.
+No OS permission change has been attempted. Candidate cleanup follows the
+final audit integration; historical counts remain ordinary4/security3.

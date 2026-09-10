@@ -11,13 +11,14 @@ Active coordination identities share this working directory. Roster updated
 | `opencode` | OpenCode; task ownership, reviewer-remediator orchestration + milestone security |
 | `opencode-reviewer` | OpenCode second instance; same task-owner and milestone-security orchestration mandate as letta/opencode |
 | `essun` | prime-agent (Pi underneath); same task-owner and milestone-security orchestration mandate as letta/opencode |
-| `nassun` | DeepSeek Harness Web (`dsh`); approved coordination participant, CLI-only team-board access; task scope by lead assignment |
+| `nassun` | DeepSeek Harness Web (`dsh`), DeepSeek v4.1 Flash; primary milestone security reviewer |
 
 Codex (Hoa, the lead) owns coordination, decisions, backlog grooming and
 exclusive integration/commit/push. Letta, OpenCode, OpenCode Reviewer and Essun have the same task-owner mandate:
 they orchestrate clean GLM 5.3 Flash implementers and sequential clean
 Astra/Fable-class correctness/completeness reviewer-remediators. Security
-reviews run at milestones through any of these task owners, not per task.
+reviews run at milestones, primarily through Nassun; other task owners may
+take them only when they have no queued work.
 
 Essun joined this mandate by operator instruction on 2026-09-10. Existing
 package lanes, task owners and reservations remain in force. `claude` is an
@@ -185,17 +186,21 @@ only behind a bounded intake wrapper. Do not edit `.bus/` by hand.
 Per the 2026-09-08 operator policy, security scans are milestone gates, not
 per-task author scans or pre-commit gates. Hoa records each milestone's
 baseline, scope, scan owner and release/rollout boundary in
-[docs/security/MILESTONES.md](docs/security/MILESTONES.md). The assigned task owner
-spawns clean **GLM 5.3 Flash** security reviewer-remediators with the exact
-cumulative change set and `docs/research/04-trust.md`. **Only GLM 5.3 Flash may
-do any substantive security work**, including analysis, review, hardening,
-remediation and security tests/verification, even inside ordinary tasks.
-Astra/Fable and coordinator models must route that work, not perform it.
-No substitute security model is permitted without a new operator instruction.
-Unavailable GLM 5.3 Flash means block and report to Hoa.
+[docs/security/MILESTONES.md](docs/security/MILESTONES.md).
+
+**Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
+milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+security work. Other task owners may take security reviews **only when they
+have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
+Record the fallback owner's empty-queue check and assignment before dispatch.
+This covers security analysis, review, hardening, remediation, tests and delta
+verification. Other models remain excluded without a new operator instruction.
+Use clean review contexts; the coordinating session does not review its own
+output. Preserve existing reservations, reports, findings and cumulative rounds.
 
 Each security reviewer fixes findings itself, validates, reports and retires.
-Changed artifacts/tests require another clean GLM 5.3 Flash reviewer. A clean
+Changed artifacts/tests require another clean reviewer using an allowed
+security model for that owner. A clean
 no-change security pass ends the cycle; after three rounds without one, stop
 and wait for Hoa's bus decision. Record cumulative security rounds separately
 from correctness rounds; no silent reset for deltas or owner changes. Reports sent

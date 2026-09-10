@@ -65,18 +65,19 @@ model/class, report the limitation to Hoa before substituting; do not silently
 run a cheaper reviewer or claim a model that was not used. These documents
 set policy; they do not configure providers or prove model availability.
 
-**Security exception (operator, 2026-09-08): GLM 5.3 Flash is the only
-permitted model for any substantive security work.** This includes security
-analysis, reviews/scans, threat modelling, hardening, security remediation and
-its tests/verification, including security work inside an otherwise ordinary
-task. Astra/Fable workers handle ordinary correctness/completeness only; they
-must leave security assessment and fixes to clean GLM 5.3 Flash workers. A
-suspected security issue is a scoped handoff, not permission for another model
-to investigate or fix it. Coordinators may route work, preserve reports and
-record lead decisions; that does not authorize substantive security work in
-their own model. If GLM 5.3 Flash is unavailable, block security work and report
-to Hoa. Hoa may decide scheduling/continuation, but cannot substitute another
-security model without a new operator instruction.
+**Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
+milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+security work. Other task owners may take security reviews **only when they
+have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
+Record the fallback owner's empty-queue check and assignment before dispatch.
+This covers security analysis, review, hardening, remediation, tests and delta
+verification. Other models remain excluded without a new operator instruction.
+Use clean review contexts; the coordinating session does not review its own
+output. Preserve existing reservations, reports, findings and cumulative rounds.
+
+Astra/Fable workers handle ordinary correctness only and route security
+findings to the assigned allowed-model security reviewer. Model unavailability
+blocks that owner's security work; report it to Hoa rather than substituting.
 
 A compact handoff contains: task and acceptance criteria; baseline revision;
 changed/reserved paths and final file hashes (including untracked files);
@@ -115,22 +116,31 @@ and remove their own scratch/processes; preserve handoffs and audit evidence.
 
 ## Security at milestones
 
-Any task owner orchestrates security work **only through clean GLM 5.3
-Flash reviewer-remediators** over the cumulative milestone scope, with
-`docs/research/04-trust.md`. The same model restriction covers early focused
-checks, security fixes in parent tasks and all delta verification. Codex and
-other models do not perform substantive security work. No mandatory per-task
-scan is introduced; existing findings still require disposition.
+**Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
+milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+security work. Other task owners may take security reviews **only when they
+have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
+Record the fallback owner's empty-queue check and assignment before dispatch.
+This covers security analysis, review, hardening, remediation, tests and delta
+verification. Other models remain excluded without a new operator instruction.
+Use clean review contexts; the coordinating session does not review its own
+output. Preserve existing reservations, reports, findings and cumulative rounds.
 
-For each security review, use the same clean review/remediate lifecycle:
+Review the cumulative milestone scope with `docs/research/04-trust.md`.
+No mandatory per-task scan is introduced; existing findings need disposition.
 
-1. Spawn a clean GLM 5.3 Flash security reviewer-remediator on the recorded
+For each security review, use the same clean review/remediate lifecycle.
+A no-change pass is a verdict condition, not a read-only worker mandate.
+The third reviewer may fix findings within its round; the cap prevents starting
+an unapproved fourth context, not remediation inside the third round:
+
+1. Spawn a clean security reviewer-remediator using the owner's allowed model on the recorded
    snapshot. It reviews, fixes findings itself within the reserved scope,
    runs relevant checks and records its actual model, input/output hashes,
    findings, fixes, checks and verdict. Do not send security fixes to an
    Astra/Fable reviewer or back to the retired implementer.
 2. Preserve the report and retire that worker. If it changed the artifact or
-   tests, spawn another clean GLM 5.3 Flash reviewer-remediator to verify the
+   tests, spawn another clean reviewer-remediator using that owner's allowed security model to verify the
    new snapshot. Serialize all workers touching that scope. A clean security
    pass requires no artifact/test changes, completed applicable checks and no
    unresolved findings; self-checked fixes require fresh review.
@@ -145,7 +155,8 @@ No additional review/remediation task IDs. Reports remain in `docs/security/`
 and fixes/evidence in the relevant parent tasks. Lead acceptance of a residual
 finding is an explicit exception, not a clean security verdict. Subsequent
 ordinary correctness checks may assess non-security behavior, but assessment
-or remediation of security findings remains GLM 5.3 Flash-only.
+or remediation of security findings remains restricted to the allowed security
+models above.
 
 Hoa defines the milestone boundary, scope/baseline and scan owner in
 [the milestone register](../security/MILESTONES.md). Gate before the relevant

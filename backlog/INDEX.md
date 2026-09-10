@@ -54,7 +54,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 147 | [keep idle OpenCode delivery presence current](147-keep-idle-opencode-delivery-presence-current.md) | opencode | gated | S |
 | 148 | [handle filename-less watch events and stabilize hint readiness](done/148-handle-filename-less-watch-events.md) | opencode | done | S |
 
-| 149 | [Periodically check board and legacy inbox and wake the lead](149-codex-coordination-monitor.md) | essun | in-progress | S |
+| 149 | [Periodically check board and legacy inbox and wake the lead](149-codex-coordination-monitor.md) | essun | blocked | S |
 
 ## Phase 2
 

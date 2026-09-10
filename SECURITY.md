@@ -72,13 +72,17 @@ Project agents (standing convention, AGENTS.md "Security at milestones"):
 2. Security review is a milestone gate under the operator's 2026-09-08
    workflow, not a per-task or pre-commit requirement. Hoa records cumulative
    baseline/scope, scan owner and release/rollout boundary in
-   [the milestone register](docs/security/MILESTONES.md). The assigned owner (`letta`, `opencode` or `opencode-reviewer`)
-   uses clean **GLM 5.3 Flash** reviewer-remediators with
-   `docs/research/04-trust.md` context and pins the exact reviewed bytes. Only
-   GLM 5.3 Flash may perform any substantive security work: analysis, reviews,
-   hardening, remediation and security tests/verification, including deltas.
+   [the milestone register](docs/security/MILESTONES.md). Nassun is the primary
+   milestone security reviewer, explicitly allowed
+   **DeepSeek v4.1 Flash** by the operator on 2026-09-10. Other task owners may
+   accept security reviews only when they have no queued work, using clean
+   **GLM 5.3 Flash** reviewers. Record the empty-queue condition before fallback
+   dispatch. The permission covers analysis, reviews, hardening, remediation
+   and security tests/verification, including deltas. Use clean contexts and
+   `docs/research/04-trust.md`; pin the exact reviewed bytes.
    Each worker fixes findings itself, validates, reports and retires; changed
-   artifacts/tests require a fresh GLM 5.3 Flash reviewer. After three security
+   artifacts/tests require a fresh reviewer using that owner's allowed security
+   model. After three security
    rounds without a clean no-change pass, stop for Hoa's recorded bus decision.
    Keep cumulative security rounds distinct from correctness rounds; do not
    reset them for deltas. Model unavailability blocks security work; substitution
