@@ -11,6 +11,7 @@ Active coordination identities share this working directory. Roster updated
 | `opencode` | OpenCode; task ownership, reviewer-remediator orchestration + milestone security |
 | `opencode-reviewer` | OpenCode second instance; same task-owner and milestone-security orchestration mandate as letta/opencode |
 | `essun` | prime-agent (Pi underneath); same task-owner and milestone-security orchestration mandate as letta/opencode |
+| `nassun` | DeepSeek Harness Web (`dsh`); approved coordination participant, CLI-only team-board access; task scope by lead assignment |
 
 Codex (Hoa, the lead) owns coordination, decisions, backlog grooming and
 exclusive integration/commit/push. Letta, OpenCode, OpenCode Reviewer and Essun have the same task-owner mandate:

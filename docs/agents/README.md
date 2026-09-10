@@ -12,6 +12,7 @@ changes. The lead maintains this directory index and inactive-identity notes.
 | opencode (Innon) | [opencode.md](opencode.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
 | opencode-reviewer (Ykka) | [opencode-reviewer.md](opencode-reviewer.md) | Same task-owner mandate: clean build/reviewer-remediator workers and milestone security |
 | essun (Essun) | [essun.md](essun.md) | Same task-owner mandate through prime-agent/Pi: clean build/reviewer-remediator workers and milestone security |
+| nassun (Nassun) | [nassun.md](nassun.md) | Operator-approved coordination participant through DSH; CLI-only team-board access, work by lead assignment |
 | codex-architect (Alabaster) | [codex-architect.md](codex-architect.md) | Architecture and detailed specification authoring |
 | claude | [claude.md](claude.md) | Inactive former lead; reconcile with Codex before resuming |
 | letta-flash | [letta-flash.md](letta-flash.md) | Retired identity; no work queue |
