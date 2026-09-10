@@ -192,3 +192,53 @@ as well as external plugins. Only the isolated contract-net document writable;
 no implementation/live/config/git or security work. Prior ordinary1 and
 correction220 preserved; this is ordinary2/3, with3 required after edits.
 Security referrals go to primary Nassun; no security round launched here.
+
+### Ordinary round2: unchanged, blocked on missing reference input
+
+Fresh reviewer `ses_f751eff6bffeva47sk5pxQ90ws`, actual exported runtime
+`openai/gpt-6-astra`, returned **BLOCKED**, no artifact edits. About4.4 minutes.
+Read all1621 lines; verified prior P2-1 retained-ID comparison sequencing and
+P2-2 append-only slot identity versus publication priority throughout rules
+and replay cases. No additional ordinary contract defect found. Request-response
+and task203 recorded hashes matched. No security assessment or verdict.
+
+Actual doc checks:18 local-link occurrences, with one missing target;
+CN-01 through CN-36 unique/complete;19 outcome-code mappings complete; four
+TypeScript declaration blocks syntax-parsed using Bun.Transpiler (not executed
+or typechecked); sections1-20 and fences/whitespace passed. Eight external URLs
+syntax-checked only, no network or remote-anchor checks. No product tests.
+
+Blocker: `docs/protocols/contract-net.md:29` links to
+`../design/agent-enrollment.md`, absent in isolatedfe382d3. Cited enrollment
+sections4,8.1-8.2,12 at lines1335-1338 could not be validated. Reviewer did not
+substitute a snapshot or create an out-of-scope file. Owner confirmed a main-root
+file exists with SHA256
+`339d983a0bdfc37459e8cdd204d7774a0f60ab2ed885d87e99bd01e3936bb233`
+as metadata only; no content/security assessment or copy to candidate. Hoa must
+supply the cited frozen read-only input or record disposition of the validation
+gap before further review. This is not a security finding against enrollment.
+
+Input/output unchanged: `ce898918ee38c8062ab5e595ec82a040174b17f14665364254ce0ba5ad0bc662`,
+115356bytes/1621lines, owner-rehashed. Ordinary rounds consumed2/3; no clean
+pass or count reset, no round3 launched around the missing input. Board handoff
+`01M25EH4ZFNDZ4WMYRSH9M1BDP` on `01M25E54DP4026XEG7TY49ZZ47`, mentioning
+codex, records exact gap and frozen output. Worker reported no scratch/changes,
+retired after handoff; owner removes disposable session and runner/log. Candidate
+and parent history preserved. Aggregate usage/cost unavailable. Migration/live
+and security holds unchanged; security remains Nassun's milestone scope.
+
+
+### Lead missing-input resolution — 2026-09-10
+
+Hoa supplied the exact frozen enrollment draft to the isolated checkout at
+`docs/design/agent-enrollment.md`, read-only. SHA256
+`339d983a0bdfc37459e8cdd204d7774a0f60ab2ed885d87e99bd01e3936bb233`,
+200745 bytes, matches parent308's retained handoff. This is a frozen reference,
+not enrollment approval or integration; parent308's blocks remain. OpenCode
+may now dispatch the already-budgeted fresh ordinary round3, scoped only to
+contract-net ordinary correctness/completeness, including the previously
+missing cited sections. Enrollment is read-only; preserve its bytes and route
+its substantive security work to Nassun. Preserve rounds1/2; round2 remains
+BLOCKED, not a pass. Round3 fixes its own in-scope findings and retires; edits
+require fresh review and therefore a new lead continuation after the cap.
+No implementation or live negotiation is authorized.

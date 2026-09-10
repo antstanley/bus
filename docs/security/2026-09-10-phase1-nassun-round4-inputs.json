@@ -1,0 +1,50 @@
+{
+  "milestone": "remote-board adoption/final cycle",
+  "reviewer_owner": "nassun",
+  "allowed_model": "deepseek-flash or any DeepSeek model",
+  "cumulative_security_round": 4,
+  "reviewed_baseline": "fe382d305db19078446750020ede9f6b9a0d5348",
+  "candidate_revision": "27909d65658b63ce0d4eaaf3bfc222e0e74e3cd8",
+  "isolated_worktree": "/private/tmp/sidekick-phase1-security-nassun",
+  "writable_paths": [
+    "AGENTS.md",
+    "SECURITY.md",
+    "docs/agents/README.md",
+    "docs/agents/codex-architect.md",
+    "docs/agents/codex.md",
+    "docs/agents/essun.md",
+    "docs/agents/letta.md",
+    "docs/agents/nassun.md",
+    "docs/agents/opencode-reviewer.md",
+    "docs/agents/opencode.md",
+    "docs/agents/task-workflow.md"
+  ],
+  "hashes": {
+    "AGENTS.md": "e88d68b04bca67d317ebb0bb4f0453712df04b4cfed2e97b23064f0d1d303399",
+    "SECURITY.md": "e7ea9fa4348797d367902c9abb505064f00a862d28f6bf93cf308b6a412c4c31",
+    "docs/agents/README.md": "c3d22dda816d218e8b35c4d090b16896daf4f9b78cf92d9f02032ecaa1b8d280",
+    "docs/agents/codex-architect.md": "d97564229d02160587abb4203587e6f85a637f8b78a772594960cc25ae24d209",
+    "docs/agents/codex.md": "5c2a2d867a734181f41c50289927a0831752e2b3ceaa9542f9269ca7c69a74bf",
+    "docs/agents/essun.md": "770feb315fbbbc855560f310056a0cab78b19d3b81f99b0d42beb37745b0957d",
+    "docs/agents/letta.md": "d4b9acbe439a97de620280f16cb9110d9893a687298366aa3b2836cd2bc145f3",
+    "docs/agents/nassun.md": "b6540f285cd58efd7970e1aece04772404f462f37407bd76a685bcc972ba3545",
+    "docs/agents/opencode-reviewer.md": "4295c6db07de6a461361092658c98ed0fe75825bc8d7226096439d8453465603",
+    "docs/agents/opencode.md": "2f2a121af0c7fb607b47c1c83796792d7192928b41f2cb3c7d2fa5a9f96995ae",
+    "docs/agents/task-workflow.md": "306a19de93347c733139737dd2241bea4cbdeff4420f0b513b26cbfb51001abf"
+  },
+  "read_only_context": [
+    "docs/research/04-trust.md",
+    "docs/security/MILESTONES.md",
+    "docs/security/2026-09-10-phase1-nassun-round3.md"
+  ],
+  "report_path": "docs/security/2026-09-10-phase1-nassun-round4.md",
+  "constraints": [
+    "Review only the governance delta and its security implications; product scope is unchanged and not assigned for another scan.",
+    "Keep all substantive security work in clean DeepSeek contexts; record actual observed model and worker identities, including nested workers.",
+    "Use the assigned isolated worktree. Do not review or edit the shared main worktree.",
+    "Preserve operator intent: Nassun primary milestone security owner; deepseek-flash or any DeepSeek model allowed; other owners use GLM5.3Flash only with no queued work.",
+    "Fix own in-scope findings, run applicable checks, retire. Changed bytes require fresh verification; stop after this single round4 before any round5.",
+    "No live configuration, credential, private-board, permissions, runtime or rollout changes.",
+    "Retain canonical audit artifacts under docs/security, not disposable temp storage only."
+  ]
+}

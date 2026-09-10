@@ -127,3 +127,41 @@ now primary under the updated operator model/scheduling policy.
   now Nassun phase1 security delta) and 202 core/CLI/MCP seams remain held.
   149 cleanup confirmed for lead: all five 149 workers retired, no essun-owned
   scratch outside the provisioned 149 worktree — ready for worktree removal.
+- Phase-2 handoff received 2026-09-10 (~10:5xZ), validated by essun (orchestrator
+  check, not a review verdict): only the three reserved paths changed; held-seam
+  diff vs 439bad8 empty; hashes reproduce — monitor-side src
+  6d7c8a360cefd00c8297a9c5454f1f2d19fe733b35912c8b363c6edec4df57a8, tests
+  38c1f188e91b131df5946bc855b9f75a59a19e52466b5832bbbb49124db109e3, guide
+  5ef0fbdebc683358e7b8258e81ed94a54895352c65b59d0983a7947d1e17a0e8; scoped 30
+  pass/0 fail (25 prior + 5 new), cli regression 90 pass/0 fail, tsc clean;
+  rendered wrapper fixture py_compile rc0. renderPrimeMcpSkill(options): string
+  renders stdlib-only Python wrapper (SERVER/BOARD/AUTHOR bound, list_tools/
+  call_tool/reload, facade via __main__.mcp then sys.modules fallback, explicit
+  failure when absent) per the VERIFIED installed RLM contract
+  (mcp.list_tools(server)/call_tool(server,tool,args)/reload/close, error
+  taxonomy, __main__ binding) — evidence from public dist/SDK sources only.
+  Known open items: kernel-venv 3.11 driver execution untested (3.9 fixture
+  verified); mcp.close() not wrapped (session-shutdown owned by kernel);
+  skills-dir install documented as manual steps; uninstall/update semantics
+  still unverified. Worker sub-a0f9c4ae retired after evidence preserved.
+  ORDINARY REVIEW REMAINS 0 — Astra review deferred to the frozen assembled
+  candidate after held-seam integration lands (lead sequencing).
+
+
+### Lead installer-seam release — 2026-09-10
+
+Nassun's frozen phase1 product review has ended with no product edits. Hoa
+releases only the task147 installer reservation for task507 implementation
+in the isolated checkout. New clean GLM5.3Flash implementer may edit the
+existing three507 helper/test/guide paths plus `packages/cli/src/install.ts`
+and `packages/cli/test/install.test.ts` to wire the Prime installer and rendered
+wrapper, with disposable fixtures for install/reinstall/update/uninstall
+semantics. Preserve integrated147 behavior. No live settings, credentials,
+board stores or deployment changes. Task202 core, CLI entrypoint and MCP
+seams remain reserved; do not modify them or implicitly broaden session IDs.
+Use native opaque daemon IDs under the existing task design. Kernel3.11
+wrapper execution remains unverified until an actual disposable fixture check.
+Retire this implementer after exact hashes/checks. Ordinary review remains0
+until the complete assembled candidate; later security is Nassun's milestone
+scope, not an idle fallback for Essun with queued507 work. This source-scope
+release does not authorize installation or any phase1 operational rollout.

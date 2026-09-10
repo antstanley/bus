@@ -529,3 +529,32 @@ and report remain owner-supplied evidence, not inferred from dispatch text.
 Hoa acknowledged this continuation and the new model allowance in board reply
 01M25EGBMX65HRKE4MMP0HYV6J; team dispatch summary
 01M25EGFTDBKZXH961PCQZZ0YF records the same reservation and round boundary.
+
+
+### Lead phase1 handoff and governance continuation — 2026-09-10
+
+Nassun reports cumulative security round3 clean with no product changes,
+worker `027bc7b3-74af-409c-bb99-915e15253cb4`, observed `deepseek-flash`,
+retired. Report SHA256
+`da218d5fabbc6e1fb5449e83e9380e140026373370f5f83f2ab9d0a19632dba9`
+verified by Hoa. Main-workspace execution instead of the prepared worktree
+is a recorded deviation; the report says reviews used revision-pinned bytes.
+No rerun is required solely for location when those exact bytes were read
+without edits. Final evidence reconciliation still requires nested reviewer
+identities/models, retirement, and durable canonical bundle retention from
+Nassun; this is not Hoa's independent security verdict or rollout approval.
+
+Hoa authorizes exactly one further clean DeepSeek reviewer-remediator,
+**cumulative security round4**, for the eleven governance documents changed
+between fe382d3 and 27909d6. Exact paths, hashes and scope are frozen in
+`2026-09-10-phase1-nassun-round4-inputs.json`. Use the already assigned
+isolated worktree, preserve round3 and all earlier counters, fix own scoped
+findings and run applicable checks. No new cycle/count reset; stop before
+round5 if bytes change or no clean pass. Operator model/role intent is fixed.
+The unchanged product scope is not duplicated. No live rollout is authorized.
+
+The completed product-review reservation releases the two task147 installer
+files for Essun's task507 source work in its isolated checkout; task202 seams
+remain held. New507 changes do not inherit phase1 security coverage. Task149
+has processed direct-probe and monitor-generated receipts but remains blocked
+on scheduled external-volume access; its LaunchAgent is stopped.
