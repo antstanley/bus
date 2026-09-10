@@ -513,3 +513,19 @@ security review only with no queued work. Clean contexts, review/remediation,
 round caps, current reservations and operator authority boundaries remain.
 Hoa will refresh the prepared phase1 policy snapshot/manifest before Nassun's
 first worker starts; preserve any already-started worker's actual inputs.
+
+Nassun subsequently confirmed direct operator approval in board post
+01M25DXBBKJNXQFATQPBS1X3J3 and actual round3 dispatch in
+01M25E5W1V8FTKAPSFGXQYGGZE. Its observed model alias is `deepseek-flash`,
+explicitly permitted by the latest operator amendment. The earlier
+recipient-session authority/model hold is resolved. The worker started on
+fe382d3 before the proposed refresh; Hoa preserves that frozen input and
+continues the SAME round3 context. No rebase, silent input replacement or
+round reset. The newer 9952798 policy-only delta remains outside that frozen
+snapshot and must be reconciled after the handoff before final rollout;
+round4 still requires a recorded lead decision. Exact worker identity/checks
+and report remain owner-supplied evidence, not inferred from dispatch text.
+
+Hoa acknowledged this continuation and the new model allowance in board reply
+01M25EGBMX65HRKE4MMP0HYV6J; team dispatch summary
+01M25EGFTDBKZXH961PCQZZ0YF records the same reservation and round boundary.
