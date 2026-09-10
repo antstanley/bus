@@ -3,7 +3,7 @@ id: 217
 title: "spec: author contract-net work allocation"
 phase: 2
 owner: opencode
-status: in-progress
+status: gated
 kind: spec-authoring
 depends: [203, 209]
 estimate: M
@@ -11,7 +11,7 @@ estimate: M
 
 ## Current workflow and disposition (2026-09-08)
 
-Lead ownership transfer (Hoa, 2026-09-08): `opencode` now owns this parent's completion cycle; `codex-architect` retains authoring provenance only. Status remains blocked by the existing migration-first priority hold, not a separate reviewer queue. Resume the recorded next round when that hold is released; preserve the candidate, prior rounds and unresolved choices. No worker is claimed running by this transfer.
+Historical ownership transfer (Hoa, 2026-09-08): `opencode` owns this parent's completion cycle; `codex-architect` retains authoring provenance only. At transfer the migration-first priority hold blocked execution, not a separate reviewer queue. The later idle-capacity release and finite ordinary round4 continuation below supersede that scheduling hold. Prior rounds and authoring provenance remain preserved; current ordinary verdict is gated, not final specification settlement or security approval.
 
 Use the [owner-managed task workflow](../docs/agents/task-workflow.md) for sequential clean reviewer-remediators and evidence in this task. Security belongs to the [applicable milestone](../docs/security/MILESTONES.md), not mandatory per-task scans; preserve prior findings, consumed rounds, exact-snapshot evidence and rollout holds. Verify requested model capability before dispatch.
 
@@ -27,10 +27,11 @@ Frontmatter prerequisites now name substantive specification deliverables; their
 
 ## Current acceptance and completion
 
-- [ ] Complete independent correctness/completeness verification of the corrected frozen contract-net specification beginning with round 2, retaining round-1 findings and settled design limits.
-- [ ] Record reviewer-applied corrections and next-round verification here; lead settles the specification before dependent implementation204 begins.
+- [x] Complete independent correctness/completeness verification of the corrected frozen contract-net specification beginning with round 2, retaining round-1 findings and settled design limits.
+- [x] Record ordinary review results and corrected validation through the finite round4 continuation, with original artifact bytes preserved.
+- [ ] Lead settles the specification before dependent implementation204 begins.
 - [ ] Keep outstanding full changed-spec security assessment in the contract-net milestone and preserve author cleanup/final hash evidence.
-- [ ] Record applicable checks and a clean independent correctness/completeness verdict here, retaining existing exact-snapshot passing evidence and round counts.
+- [x] Record applicable checks and a clean independent correctness/completeness verdict here, retaining existing exact-snapshot passing evidence and round counts.
 - [ ] Reconcile milestone security coverage/findings; lead commit/push, applicable CI and task-owned cleanup complete before marking done. Milestone release/rollout waits for its security gate.
 
 The completion ownership transfer above authorizes `opencode` to orchestrate the assigned specification's clean reviewer-remediators after the priority hold. It does not expand the architect charter, settle the specification or release implementation/rollout holds.
@@ -310,3 +311,45 @@ checks passing ends the ordinary cycle; changed artifact bytes or unresolved
 checks require stopping for another explicit lead decision before round5.
 Enrollment approval, product implementation, live operation and substantive
 security work remain outside this assignment.
+
+### Actual finite ordinary round4 start
+
+Fresh pure reviewer `ses_f74f9b407ffexQJ1I1L0EqHvev` started with requested
+`openai/gpt-6-astra`, low variant, runner52026/worker52090. Board receipt
+`01M25GE1219ZTSY8T14WC5GHWQ` at2026-09-10T11:14:48.001Z records actual
+start and the one-round exception on the original217 thread. Same isolated
+fe382d3 candidate, contractce898918 pin and read-only enrollment339d983a pin.
+The prompt explicitly permits fixing/rerunning normal disposable-checker
+errors within context; no unresolved failure may be waived. Only contract-net
+writable, no security or live/product work; MCP/plugins disabled. Cumulative4,
+prior1-3 preserved. Any artifact edit or final unresolved validation needs
+another lead decision before5; no reset or clean-pass claim at launch.
+
+### Finite ordinary round4: clean no-change acceptance
+
+Fresh pure reviewer `ses_f74f9b407ffexQJ1I1L0EqHvev`, exported actual runtime
+`openai/gpt-6-astra`, runner52026/worker52090, returned **CORRECT/COMPLETE**,
+no artifact/test edits and no unresolved ordinary findings/check failures.
+About3.5 minutes elapsed. The finite round4 exception is consumed; historical
+round1, round2 missing-input BLOCKED and round3 checker-error BLOCKED remain
+unchanged. No fifth ordinary reviewer is needed on this exact candidate.
+
+Corrected inline validator exited0 with zero failures. External RFC3339
+sections5.6-5.7 are correctly excluded from internal-heading requirements.
+Checks passed: sections1-20;26internal/enrollment references; fences/LF/final
+newline/whitespace;21tables;18local links;8external URL syntax checks;
+19outcome mappings;36uniqueCN rows;4TypeScript declaration syntax parses.
+Mermaid manually reviewed, not rendered. No remote fetch/product tests,
+runtime conformance execution, typecheck or security review. Both prior
+retained-ID and ledger-order findings independently verified as corrected.
+
+Owner rehashed exact unchanged output and read-only input:
+- contract-net: `ce898918ee38c8062ab5e595ec82a040174b17f14665364254ce0ba5ad0bc662`,115356bytes/1621lines.
+- enrollment: `339d983a0bdfc37459e8cdd204d7774a0f60ab2ed885d87e99bd01e3936bb233`,200745bytes/2850lines.
+
+Candidate stays isolated on fe382d3 with only the lead-supplied untracked
+documents. No reviewer scratch created; disposable session/runner/log removed
+after preserving handoff. Aggregate usage/cost unavailable. Task gated for
+Hoa settlement/integration, not done. Enrollment308 blocks, implementation204
+and live-operation holds remain; Nassun's milestone-security scope is pending
+and no security verdict is implied by this ordinary pass.

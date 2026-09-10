@@ -165,3 +165,59 @@ Retire this implementer after exact hashes/checks. Ordinary review remains0
 until the complete assembled candidate; later security is Nassun's milestone
 scope, not an idle fallback for Essun with queued507 work. This source-scope
 release does not authorize installation or any phase1 operational rollout.
+- Installer-phase implementation: dispatched; worker start receipt — clean
+  GLM5.3Flash implementer sub-485b0600 (task507-impl3-glm, requested thinking
+  high), started 2026-09-10T10:58:31Z on worktree @ fe382d3. Scope: released
+  installer source only (install.ts/install.test.ts) + the three reserved
+  paths — prime-agent runtime case wired through addPrimeMcpServer +
+  renderPrimeMcpSkill with install/reinstall/update/uninstall fixture
+  coverage; integrated task147 behavior preservation is a hard gate (existing
+  installer tests unmodified + green); task202 core/CLI entrypoint/MCP seams
+  remain held; native opaque daemon IDs only; no live settings/stores/
+  deployment; kernel-3.11 best-effort fixture check requested. Handoff with
+  hashes/checks pending; ordinary review remains 0 until the complete
+  assembled candidate is frozen.
+  (Bookkeeping note: this receipt was first mis-spliced at byte 94 during a
+  concurrent-edit anchor mismatch — self-caught, file restored byte-exact,
+  then re-inserted here; verified head/frontmatter/tail integrity.)
+- Installer-phase handoff received 2026-09-10 (~11:1xZ), validated by essun
+  (orchestrator check, not a review verdict): all five hashes reproduce;
+  scoped 30/30 + full cli regression 94/94 + tsc clean; held 202 seams
+  (index.ts, core, mcp) byte-identical to 439bad8. Installer wiring: prime-agent
+  runtime case (addPrimeMcpServer with author-scoped board-<author> server
+  name + renderPrimeMcpSkill skills-dir install), idempotent reinstall,
+  add-only MCP update with owned-wrapper re-render, uninstall removes
+  board-owned wrapper only, dry-run read-only, foreign-wrapper refusal before
+  any mutation. task147 preservation: 26 pre-existing installer tests unmodified
+  (insertions only), usage-error held-behavior test green. Wrapper
+  execution-verified on CPython 3.9.6/3.10/3.11.16/3.12/3.13/3.14 fixtures;
+  kernel facade wiring on 3.11 remains live-acceptance. Open lead choices:
+  CLI usage/isInstallRuntime listings fold into task202 release; MCP
+  update/remove semantics ruling (add-only by construction); board-<author>
+  server-name scheme vs free-name scan; user skills-dir caveat documented.
+  Implementer sub-485b0600 retired after evidence preserved. 507-scoped
+  implementation COMPLETE — assembled candidate frozen pending lead decision
+  on ordinary review timing (202 seams are task202 scope).
+
+
+### Lead assembly sequencing — 2026-09-10
+
+Installer handoff is received; complete task507 acceptance is not yet met.
+Ordinary review remains deferred until the CLI listing/runtime selection and
+watch-delivery wiring can be assembled after task202 releases its paths.
+Do not treat the five-file partial candidate as full-task CORRECT/COMPLETE.
+Keep task202's active core/CLI/MCP reservation intact.
+
+Use the stable author-scoped `board-<author>` server name consistently in the
+installer and rendered wrapper; discover that exact configured name rather
+than silently assuming a free-name scan convention. Add-only MCP setup is
+an explicitly limited current behavior, not verified update/remove support.
+Hoa authorizes a fresh clean GLM5.3Flash build worker, within the existing
+five paths only, to establish update/remove and skills-directory behavior
+using public installed harness code/help and disposable homes/settings/daemon
+fixtures, implement supported behavior or document a precise unsupported case,
+and add relevant fixture coverage. No live settings/credentials, direct
+production configuration writes or unverified force/remove operations. Preserve
+prior hashes/evidence and retire after handoff. A remaining material acceptance
+gap must be reported before full assembly, not silently waived. Ordinary count
+remains0; no independent approval is inferred from build verification.

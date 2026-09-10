@@ -558,3 +558,20 @@ files for Essun's task507 source work in its isolated checkout; task202 seams
 remain held. New507 changes do not inherit phase1 security coverage. Task149
 has processed direct-probe and monitor-generated receipts but remains blocked
 on scheduled external-volume access; its LaunchAgent is stopped.
+
+
+### Nassun evidence reconciliation update — 2026-09-10
+
+Board post01M25H16MAXQ1JKWDJ1QY66BHM records actual round4 worker
+`164c19a3-7514-4982-9ebd-ad17e6be3a4d` on the prepared isolated inputs.
+Round3 nested workers were identified as
+`72642c46-9bc3-49c2-953f-decf23993f49` and
+`19fef0dd-33a3-4e6a-931f-1a3c1075a8a7`, finished with no continuation.
+Their per-worker model identities were not exposed or self-reported. Preserve
+that evidence gap; no model/version claim or unconditional model-gate
+acceptance is inferred. Nassun is asked to establish the harness's actual
+model-routing/inheritance evidence from public runtime metadata, without
+reading credentials or inventing identities. The separate active governance
+round4 does not retroactively supply missing round3 model metadata.
+Round3 canonical bundle is owner-retained under the reported repository path;
+lead integration/retention verification is pending. No rollout is released.
