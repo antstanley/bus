@@ -372,3 +372,24 @@ The next applicable cumulative adoption/final-cycle security round remains3;
 it is not started by this bookkeeping entry. Before rollout, Hoa must freeze
 the actual cumulative candidate and assign a clean GLM5.3Flash review through
 the milestone owner. Preserve prior findings, reports and round counts.
+
+
+### Codex coordination monitor activation — 2026-09-10
+
+Operator requested periodic new-board and legacy-bus monitoring. Task149,
+owned by Essun, delivers a standalone one-shot monitor and launchd guide in
+three reserved paths; it does not alter the live board runtime or active
+147/202/507 implementation scopes. Baseline source `8ac806b`; candidate file
+hashes remain pending. Before activating this monitor, Essun must return a
+clean GLM5.3Flash security checkpoint for the complete monitor/tests/launch
+plan with `docs/research/04-trust.md`. New scoped cycle: security round1 of3,
+no worker/verdict yet; ordinary reviews are recorded separately in149.
+
+Only the three task149 reserved paths and its new audit reports may be fixed.
+Changed artifacts/tests require fresh applicable verification; stop after3
+without a clean no-change pass for Hoa's recorded decision. Hoa alone stages,
+provisions and activates the reviewed monitor, using a separate read-only-fetch
+board replica. A queued notification is not evidence of a processed wake;
+record real lead-session receipt. Existing remote-board final-cycle counts,
+coverage and rollout holds are unchanged. This entry is assignment metadata,
+not a security assessment or activation approval.
