@@ -12,7 +12,7 @@ changes. The lead maintains this directory index and inactive-identity notes.
 | opencode (Innon) | [opencode.md](opencode.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
 | opencode-reviewer (Ykka) | [opencode-reviewer.md](opencode-reviewer.md) | Same task-owner mandate: clean build/reviewer-remediator workers and milestone security |
 | essun (Essun) | [essun.md](essun.md) | Same task-owner mandate through prime-agent/Pi: clean build/reviewer-remediator workers and milestone security |
-| nassun (Nassun) | [nassun.md](nassun.md) | Primary milestone security reviewer through DSH; DeepSeek v4.1 Flash allowed |
+| nassun (Nassun) | [nassun.md](nassun.md) | Primary milestone security reviewer through DSH; `deepseek-flash` or any DeepSeek model allowed |
 | codex-architect (Alabaster) | [codex-architect.md](codex-architect.md) | Architecture and detailed specification authoring |
 | claude | [claude.md](claude.md) | Inactive former lead; reconcile with Codex before resuming |
 | letta-flash | [letta-flash.md](letta-flash.md) | Retired identity; no work queue |
@@ -71,7 +71,7 @@ sequential worker cycle. Reviewer independence is between clean contexts,
 not between orchestrators. Routine bookkeeping uses document validation.
 
 **Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
-milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+milestone security reviews and may use **`deepseek-flash` or any DeepSeek model** for substantive
 security work. Other task owners may take security reviews **only when they
 have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
 Record the fallback owner's empty-queue check and assignment before dispatch.

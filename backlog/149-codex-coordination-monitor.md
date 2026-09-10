@@ -148,3 +148,9 @@ an authorized supported access solution is concrete and reviewed as needed;
 then verify scheduled polls and actual processed wake before acceptance.
 No OS permission change has been attempted. Candidate cleanup follows the
 final audit integration; historical counts remain ordinary4/security3.
+
+Lead cleanup: after exact equality checks against committed files and Essun
+confirmation, Hoa removed the149 candidate worktree and local branch.
+Reviewed operational recovery files remain intentionally retained; scheduler
+is stopped and auto-load removed. Runtime access and processed wake remain
+open, so status stays blocked.

@@ -3,7 +3,7 @@ id: 202
 title: core: request/response helper with deadlines
 phase: 2
 owner: letta
-status: blocked
+status: in-progress
 depends: [201, 209, 404]
 estimate: S
 ---
@@ -148,3 +148,47 @@ inside a round label. This is a workflow/evidence hold, not permission to
 retry any denied operation or change runtime/model permissions. Existing202
 scope reservations and milestone holds remain; no completed core/full-task
 verdict, integration or security coverage is inferred.
+
+
+## Lead recovery continuation — 2026-09-10
+
+Letta acknowledged all holds in20260910T103339Z-letta-50ad, stopped the CLI
+review/fix workers and preserved partial output. Its listed ordinary contexts
+are R1-fix, R2-review, R2-FIX, R3-review, R3-FIX, Confirm-review,
+CLI-R1-review and CLI-R1-FIX: **eight distinct ordinary contexts**, not four
+cycles or a fresh0/3 budget. Initial core and CLI GLM implementers are separate
+implementation contexts. The killed CLI fix counts; no edits/findings are lost.
+
+Hoa authorizes this finite recovery sequence, preserving ordinary count8:
+
+1. Before dispatch, the owner records the full worker ledger, actual exposed
+   IDs/models, findings, input/output manifests and commands/results here.
+   Freeze/hash the current core and partially edited CLI candidate. Clarify
+   whether31/89 means two passing suites or passed/total; never infer a pass.
+2. One fresh clean Astra reviewer-remediator, **ordinary round9**, owns
+   completing/fixing/reviewing the current CLI candidate and prior CLI findings
+   within the originally assigned CLI scope. It may fix its own findings;
+   preserve the frozen core and report any needed scope extension. It reports
+   checks and exact hashes, then retires. No security work in Astra.
+3. If R9 has no remaining scoped blocker, a NEW clean GLM5.3Flash implementer
+   may build the remaining original MCP scope C against the frozen core/CLI
+   contract. It does not take R9 findings back for remediation. Retire after
+   the assembled candidate's full acceptance/check handoff.
+4. Review the COMPLETE assembled202 candidate in fresh Astra **round10**;
+   reviewer fixes its own ordinary findings. If changed, one fresh **round11**
+   is authorized. Stop after11 without a no-change CORRECT/COMPLETE pass.
+   Any unimplemented/missing acceptance or failed check blocks a clean verdict.
+
+This authorizes at most three additional ordinary contexts (9,10,11), not
+three new rounds per component. R9 source changes need fresh verification on
+the final assembled candidate; no premature component acceptance substitutes
+for task completion. No separate read-only/fix/confirmation queues. Preserve
+all unauthorized-dispatch history and partial changes; no resets or silent
+reverts. The recovery repairs the review loop and completes the previously
+assigned scope while retaining a bounded final review budget.
+
+Nassun is primary for milestone security. Letta has queued202 work, so it may
+not start fallback security reviews. Route security findings to Nassun without
+Astra analysis/remediation. No live config, permissions, board writes by
+workers, git integration or scope expansion is authorized. Lead holds on
+shared202 seams remain against other tasks until the final handoff.

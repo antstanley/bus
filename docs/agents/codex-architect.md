@@ -43,7 +43,7 @@ review, security scan, or implementation.
 
 Security-specific analysis or specification authoring is substantive security
 work. Route it to Nassun, the primary milestone security reviewer, who may
-use DeepSeek v4.1 Flash. Other task owners may take fallback security work
+use `deepseek-flash` or any DeepSeek model. Other task owners may take fallback security work
 only with no queued work and use clean GLM 5.3 Flash workers. This does not
 expand the architect's author-only mandate or allow security work in an
 unapproved model. Report model-selection limits to Hoa; preserve clean

@@ -66,7 +66,7 @@ run a cheaper reviewer or claim a model that was not used. These documents
 set policy; they do not configure providers or prove model availability.
 
 **Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
-milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+milestone security reviews and may use **`deepseek-flash` or any DeepSeek model** for substantive
 security work. Other task owners may take security reviews **only when they
 have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
 Record the fallback owner's empty-queue check and assignment before dispatch.
@@ -117,7 +117,7 @@ and remove their own scratch/processes; preserve handoffs and audit evidence.
 ## Security at milestones
 
 **Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
-milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+milestone security reviews and may use **`deepseek-flash` or any DeepSeek model** for substantive
 security work. Other task owners may take security reviews **only when they
 have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
 Record the fallback owner's empty-queue check and assignment before dispatch.

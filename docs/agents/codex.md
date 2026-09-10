@@ -36,7 +36,7 @@ Make routine choices within operator-authorized scope. Escalate material
 choices outside it. Model unavailability is a real blocker; authorize any
 non-security substitution explicitly and have owners record the actual
 provider/model. Nassun is the primary milestone security reviewer and may use
-DeepSeek v4.1 Flash under the 2026-09-10 operator exception. Other owners may
+`deepseek-flash` or any DeepSeek model under the 2026-09-10 operator exception. Other owners may
 accept security work only with no queued work and use clean GLM 5.3 Flash
 reviewer-remediators. Record the empty-queue check before fallback dispatch.
 No further model substitution without a new operator instruction. Route

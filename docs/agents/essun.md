@@ -107,7 +107,7 @@ scope, and route locked-design changes or unresolved choices to Hoa. Lead
 settlement still precedes implementation. No separate architect fix queue.
 
 Nassun is the primary milestone security reviewer under the 2026-09-10
-operator policy and is allowed DeepSeek v4.1 Flash. This agent may accept a
+operator policy and is allowed `deepseek-flash` or any DeepSeek model. This agent may accept a
 security review only when it has **no queued work**; record that condition
 before accepting the fallback assignment. Keep existing task work first.
 

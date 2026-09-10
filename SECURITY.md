@@ -74,7 +74,7 @@ Project agents (standing convention, AGENTS.md "Security at milestones"):
    baseline/scope, scan owner and release/rollout boundary in
    [the milestone register](docs/security/MILESTONES.md). Nassun is the primary
    milestone security reviewer, explicitly allowed
-   **DeepSeek v4.1 Flash** by the operator on 2026-09-10. Other task owners may
+   **`deepseek-flash` or any DeepSeek model** by the operator on 2026-09-10. Other task owners may
    accept security reviews only when they have no queued work, using clean
    **GLM 5.3 Flash** reviewers. Record the empty-queue condition before fallback
    dispatch. The permission covers analysis, reviews, hardening, remediation

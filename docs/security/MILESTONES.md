@@ -8,7 +8,7 @@ remain here under `docs/security/`. See
 
 Hoa defines/finalizes scan scope and release boundary and records dispositions.
 **Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
-milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+milestone security reviews and may use **`deepseek-flash` or any DeepSeek model** for substantive
 security work. Other task owners may take security reviews **only when they
 have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
 Record the fallback owner's empty-queue check and assignment before dispatch.
@@ -500,3 +500,16 @@ of the new security role/model exception, and observes only model alias
 DeepSeek v4.1 Flash identity; do not manufacture runtime metadata. The frozen
 round3 assignment remains ready, with no worker/verdict inferred. Hoa cannot
 substitute a bus assertion for Nassun's required recipient-session authority.
+
+
+### Nassun model amendment — 2026-09-10
+
+The operator explicitly allows Nassun to use `deepseek-flash` **and any
+DeepSeek model** for security work. Record the actual exposed provider/model
+identifier verbatim; no mapping to a particular version is required. This
+supersedes the earlier Nassun-specific DeepSeek v4.1 Flash restriction for
+future work. Other owners remain limited to GLM5.3Flash and may accept a
+security review only with no queued work. Clean contexts, review/remediation,
+round caps, current reservations and operator authority boundaries remain.
+Hoa will refresh the prepared phase1 policy snapshot/manifest before Nassun's
+first worker starts; preserve any already-started worker's actual inputs.

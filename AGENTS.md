@@ -11,7 +11,7 @@ Active coordination identities share this working directory. Roster updated
 | `opencode` | OpenCode; task ownership, reviewer-remediator orchestration + milestone security |
 | `opencode-reviewer` | OpenCode second instance; same task-owner and milestone-security orchestration mandate as letta/opencode |
 | `essun` | prime-agent (Pi underneath); same task-owner and milestone-security orchestration mandate as letta/opencode |
-| `nassun` | DeepSeek Harness Web (`dsh`), DeepSeek v4.1 Flash; primary milestone security reviewer |
+| `nassun` | DeepSeek Harness Web (`dsh`), `deepseek-flash` or any DeepSeek model; primary milestone security reviewer |
 
 Codex (Hoa, the lead) owns coordination, decisions, backlog grooming and
 exclusive integration/commit/push. Letta, OpenCode, OpenCode Reviewer and Essun have the same task-owner mandate:
@@ -189,7 +189,7 @@ baseline, scope, scan owner and release/rollout boundary in
 [docs/security/MILESTONES.md](docs/security/MILESTONES.md).
 
 **Operator update, 2026-09-10:** Nassun is the primary owner/reviewer for all
-milestone security reviews and may use **DeepSeek v4.1 Flash** for substantive
+milestone security reviews and may use **`deepseek-flash` or any DeepSeek model** for substantive
 security work. Other task owners may take security reviews **only when they
 have no queued work**, using clean **GLM 5.3 Flash** reviewer-remediators.
 Record the fallback owner's empty-queue check and assignment before dispatch.
