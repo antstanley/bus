@@ -192,3 +192,18 @@ not start fallback security reviews. Route security findings to Nassun without
 Astra analysis/remediation. No live config, permissions, board writes by
 workers, git integration or scope expansion is authorized. Lead holds on
 shared202 seams remain against other tasks until the final handoff.
+
+
+### Lead quota interruption disposition — 2026-09-10
+
+Letta reports MCP builder C retired with incomplete output, then ordinary R10
+agent-92a43566/task_15 remediated MCP bytes before its Astra route hit a usage
+limit. No R10 verdict exists. Preserve that consumed context, its partial
+changes, exact error and owner-run passing checks; do not relabel or reset it.
+The already authorized fresh R11 is next on the complete assembled candidate,
+using an available Astra/Fable route with actual model evidence. OpenCode's
+pure openai/gpt-6-astra route recently completed217; owner checks availability
+before dispatch. No GLM/DeepSeek ordinary-review substitution is granted.
+R11 fixes its own findings and retires; changed/unclean output stops beforeR12.
+Report route failure precisely if no permitted model is available. Retained
+scratch denials do not authorize retries through another process/path.

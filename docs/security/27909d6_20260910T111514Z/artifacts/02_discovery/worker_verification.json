@@ -1,0 +1,103 @@
+{
+  "manifestSha256": "06aee1505806aaf236fe68be4de29264af4a78b1cc6d70f04fdd4c236baf3ab5",
+  "ancestorCheck": true,
+  "commitCount": 5,
+  "hashVerification": [
+    {
+      "path": "AGENTS.md",
+      "expected": "e88d68b04bca67d317ebb0bb4f0453712df04b4cfed2e97b23064f0d1d303399",
+      "worktreeSha256": "e88d68b04bca67d317ebb0bb4f0453712df04b4cfed2e97b23064f0d1d303399",
+      "revisionSha256": "e88d68b04bca67d317ebb0bb4f0453712df04b4cfed2e97b23064f0d1d303399",
+      "match": true
+    },
+    {
+      "path": "SECURITY.md",
+      "expected": "e7ea9fa4348797d367902c9abb505064f00a862d28f6bf93cf308b6a412c4c31",
+      "worktreeSha256": "e7ea9fa4348797d367902c9abb505064f00a862d28f6bf93cf308b6a412c4c31",
+      "revisionSha256": "e7ea9fa4348797d367902c9abb505064f00a862d28f6bf93cf308b6a412c4c31",
+      "match": true
+    },
+    {
+      "path": "docs/agents/README.md",
+      "expected": "c3d22dda816d218e8b35c4d090b16896daf4f9b78cf92d9f02032ecaa1b8d280",
+      "worktreeSha256": "c3d22dda816d218e8b35c4d090b16896daf4f9b78cf92d9f02032ecaa1b8d280",
+      "revisionSha256": "c3d22dda816d218e8b35c4d090b16896daf4f9b78cf92d9f02032ecaa1b8d280",
+      "match": true
+    },
+    {
+      "path": "docs/agents/codex-architect.md",
+      "expected": "d97564229d02160587abb4203587e6f85a637f8b78a772594960cc25ae24d209",
+      "worktreeSha256": "d97564229d02160587abb4203587e6f85a637f8b78a772594960cc25ae24d209",
+      "revisionSha256": "d97564229d02160587abb4203587e6f85a637f8b78a772594960cc25ae24d209",
+      "match": true
+    },
+    {
+      "path": "docs/agents/codex.md",
+      "expected": "5c2a2d867a734181f41c50289927a0831752e2b3ceaa9542f9269ca7c69a74bf",
+      "worktreeSha256": "5c2a2d867a734181f41c50289927a0831752e2b3ceaa9542f9269ca7c69a74bf",
+      "revisionSha256": "5c2a2d867a734181f41c50289927a0831752e2b3ceaa9542f9269ca7c69a74bf",
+      "match": true
+    },
+    {
+      "path": "docs/agents/essun.md",
+      "expected": "770feb315fbbbc855560f310056a0cab78b19d3b81f99b0d42beb37745b0957d",
+      "worktreeSha256": "770feb315fbbbc855560f310056a0cab78b19d3b81f99b0d42beb37745b0957d",
+      "revisionSha256": "770feb315fbbbc855560f310056a0cab78b19d3b81f99b0d42beb37745b0957d",
+      "match": true
+    },
+    {
+      "path": "docs/agents/letta.md",
+      "expected": "d4b9acbe439a97de620280f16cb9110d9893a687298366aa3b2836cd2bc145f3",
+      "worktreeSha256": "d4b9acbe439a97de620280f16cb9110d9893a687298366aa3b2836cd2bc145f3",
+      "revisionSha256": "d4b9acbe439a97de620280f16cb9110d9893a687298366aa3b2836cd2bc145f3",
+      "match": true
+    },
+    {
+      "path": "docs/agents/nassun.md",
+      "expected": "b6540f285cd58efd7970e1aece04772404f462f37407bd76a685bcc972ba3545",
+      "worktreeSha256": "b6540f285cd58efd7970e1aece04772404f462f37407bd76a685bcc972ba3545",
+      "revisionSha256": "b6540f285cd58efd7970e1aece04772404f462f37407bd76a685bcc972ba3545",
+      "match": true
+    },
+    {
+      "path": "docs/agents/opencode-reviewer.md",
+      "expected": "4295c6db07de6a461361092658c98ed0fe75825bc8d7226096439d8453465603",
+      "worktreeSha256": "4295c6db07de6a461361092658c98ed0fe75825bc8d7226096439d8453465603",
+      "revisionSha256": "4295c6db07de6a461361092658c98ed0fe75825bc8d7226096439d8453465603",
+      "match": true
+    },
+    {
+      "path": "docs/agents/opencode.md",
+      "expected": "2f2a121af0c7fb607b47c1c83796792d7192928b41f2cb3c7d2fa5a9f96995ae",
+      "worktreeSha256": "2f2a121af0c7fb607b47c1c83796792d7192928b41f2cb3c7d2fa5a9f96995ae",
+      "revisionSha256": "2f2a121af0c7fb607b47c1c83796792d7192928b41f2cb3c7d2fa5a9f96995ae",
+      "match": true
+    },
+    {
+      "path": "docs/agents/task-workflow.md",
+      "expected": "306a19de93347c733139737dd2241bea4cbdeff4420f0b513b26cbfb51001abf",
+      "worktreeSha256": "306a19de93347c733139737dd2241bea4cbdeff4420f0b513b26cbfb51001abf",
+      "revisionSha256": "306a19de93347c733139737dd2241bea4cbdeff4420f0b513b26cbfb51001abf",
+      "match": true
+    }
+  ],
+  "changedPathCount": 18,
+  "extensionHistogram": {
+    ".md": 17,
+    ".json": 1
+  },
+  "sourceCodeChangedPaths": [],
+  "helperStdout": "Wrote 0 rows to /var/folders/ft/6fdqp3c914xfdlk47w5cblzc0000gn/T/dsh-worker-rank-probe.jsonl",
+  "worklistRowCount": 0,
+  "exclusionFacts": {
+    "mdInTextCodeExtensions": false,
+    "docsInExcludedDirs": true,
+    "readmeMdInExcludedFilenames": true,
+    "securityMdInExcludedFilenames": true,
+    "filterConditionLine": "if path_is_excluded(rel) or path.suffix.lower() not in TEXT_CODE_EXTENSIONS:"
+  },
+  "gitStatusShort": "?? docs/security/2026-09-10-phase1-nassun-round3.md\n?? docs/security/2026-09-10-phase1-nassun-round4-inputs.json",
+  "anyPinnedPathModified": false,
+  "nestedWorkersSpawned": 0,
+  "notes": "All 11 pinned hashes match exactly in both the working tree and revision 27909d6; manifest sha256 matches. Baseline fe382d3 is an ancestor of 27909d6 with 5 commits in range. All 18 changed paths are documentation: 17 .md + 1 .json, and the .json is under docs/, so there are no source-code changes. The rank-input helper emitted 0 rows because .md is not in TEXT_CODE_EXTENSIONS and every changed path lives under an excluded directory (docs/, backlog/ is not excluded but its files are .md); the only .json changed path (docs/security/2026-09-10-phase1-nassun-inputs.json) is filtered by the docs/ EXCLUDED_DIRS check. git status --short shows only two untracked files (round3 report and round4 inputs manifest); no pinned path is modified. No files in the target repo were written."
+}

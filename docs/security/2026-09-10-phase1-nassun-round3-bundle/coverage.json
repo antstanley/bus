@@ -1,0 +1,124 @@
+{
+  "completeness": "complete",
+  "deferred": [],
+  "documentType": "security.coverage",
+  "excludePaths": [
+    "scripts/codex-coordination-monitor.py",
+    "scripts/test-codex-coordination-monitor.py",
+    "docs/acceptance/team-board-setup.md",
+    "backlog/**",
+    "docs/security/**"
+  ],
+  "explicitExclusions": [
+    {
+      "pattern": "scripts/codex-coordination-monitor.py",
+      "reason": "Out of the frozen input package's assigned/writable scope; bytes byte-identical to the separately gated task149 candidate 439bad8 (sha256 49cc4137...), so re-review would duplicate an unchanged completed gate."
+    },
+    {
+      "pattern": "scripts/test-codex-coordination-monitor.py",
+      "reason": "Same as the monitor: separate clean exact-byte gate at 439bad8 (sha256 8f9401cd...); no duplicate review."
+    },
+    {
+      "pattern": "docs/acceptance/team-board-setup.md",
+      "reason": "Carried coverage: byte-identical (78491cd2...) to the artifact accepted in remote-board adoption/final-cycle security round 2."
+    },
+    {
+      "pattern": "backlog/**",
+      "reason": "Coordination/task records are untrusted documentation, not product surfaces; no executable behaviour."
+    },
+    {
+      "pattern": "docs/security/**",
+      "reason": "Prior security reports and the milestone register are evidence and bookkeeping artifacts, not new product bytes."
+    }
+  ],
+  "includePaths": [
+    "packages/cli/src/install.ts",
+    "packages/store-fs/src/index.ts",
+    "packages/cli/test/install.test.ts",
+    "packages/store-fs/test/store-fs.test.ts",
+    "packages/store-git/test/store-git.test.ts",
+    "AGENTS.md",
+    "SECURITY.md",
+    "docs/agents/README.md",
+    "docs/agents/task-workflow.md",
+    "docs/agents/nassun.md",
+    "docs/agents/codex.md",
+    "docs/agents/codex-architect.md",
+    "docs/agents/letta.md",
+    "docs/agents/opencode.md",
+    "docs/agents/opencode-reviewer.md",
+    "docs/agents/essun.md"
+  ],
+  "inventoryStrategy": "diff",
+  "mode": "diff",
+  "scanId": "fe382d3_20260910T103604Z",
+  "schemaVersion": "1.0",
+  "surfaces": [
+    {
+      "disposition": "rejected",
+      "id": "surface-install-opencode-plugin",
+      "label": "packages/cli/src/install.ts \u2014 generated OpenCode plugin presence/lifecycle",
+      "notes": "cand-01 and cand-02 raised and suppressed at validation; the delta adds an unref'd idle refresh, a 10s subprocess timeout with kill, per-instance session tracking, and deletion/exit cleanup. Independent clean-context file review added cand-04 (pre-existing system-channel board delivery, suppressed as not delta-introduced; report-only recommendation).",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl",
+        "artifacts/05_findings/cand-01/candidate_ledger.jsonl",
+        "artifacts/05_findings/cand-02/candidate_ledger.jsonl",
+        "artifacts/02_discovery/raw_candidates.jsonl",
+        "artifacts/05_findings/cand-04/candidate_ledger.jsonl"
+      ],
+      "riskArea": "local presence and routing integrity; spawned-hook lifetime"
+    },
+    {
+      "disposition": "rejected",
+      "id": "surface-storefs-hint-filter",
+      "label": "packages/store-fs/src/index.ts \u2014 watcher hint filter",
+      "notes": "cand-03 raised and suppressed; the change only widens the filename type and makes isGitMetadata return false for undefined, removing a TypeError crash path.",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl",
+        "artifacts/05_findings/cand-03/candidate_ledger.jsonl",
+        "artifacts/02_discovery/raw_candidates.jsonl"
+      ],
+      "riskArea": "resource exhaustion / crash resistance"
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "surface-changed-tests",
+      "label": "Changed regression tests (install, store-fs, store-git)",
+      "notes": "No product sink; store-fs invokes the exact fs.watch callback and store-git observes real watcher readiness rather than sleeping.",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl"
+      ],
+      "riskArea": "test-only code"
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "surface-governance-policy",
+      "label": "Governance policy delta (AGENTS.md, SECURITY.md, docs/agents/*)",
+      "notes": "Gate language, cumulative-round discipline and hygiene caps preserved; the primary reviewer's model allowance is widened under a recorded operator instruction without granting scopes to other models.",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl"
+      ],
+      "riskArea": "security-gate integrity and model policy"
+    },
+    {
+      "disposition": "not_applicable",
+      "id": "surface-team-board-guide",
+      "label": "docs/acceptance/team-board-setup.md",
+      "notes": "Byte-identical (78491cd2...) to the artifact accepted in adoption/final-cycle security round 2; not re-reviewed.",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl"
+      ],
+      "riskArea": "operator provisioning guidance"
+    },
+    {
+      "disposition": "not_applicable",
+      "id": "surface-task149-monitor",
+      "label": "scripts/codex-coordination-monitor.py and its test",
+      "notes": "Outside the frozen package's assigned scope; bytes byte-identical to the separately gated task149 candidate 439bad8 and covered by its clean attempt3 gate.",
+      "receiptRefs": [
+        "artifacts/02_discovery/work_ledger.jsonl"
+      ],
+      "riskArea": "monitor runtime"
+    }
+  ]
+}

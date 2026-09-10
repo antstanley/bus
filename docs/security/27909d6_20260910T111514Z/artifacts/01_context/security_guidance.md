@@ -1,3 +1,5 @@
+## SECURITY.md source: "SECURITY.md"
+
 # Security Policy
 
 Grounding: `docs/research/04-trust.md` (threat model), `DESIGN.md` (mechanisms),
@@ -64,12 +66,11 @@ Out of scope (accepted limitations, not fixable inside this repo):
 
 Project agents (standing convention, AGENTS.md "Security at milestones"):
 
-1. Report findings to the operator-appointed lead (currently `codex`) through
-   the current primary coordination channel: the private `team` board first;
-   legacy `./bus send <lead> --re <id> "…"` only when board access or delivery
-   is unavailable (AGENTS.md, "Coordination: new board first"). Phrase them as
-   defects to fix — validation, robustness, error handling — with file:line and
-   a concrete fix. No attack narratives, no proof-of-concept code in messages.
+1. Send findings to the operator-appointed lead (currently `codex`):
+   `./bus send <lead> --re <id> "…"`, substituting the current lead's name.
+   Phrase them as defects to fix — validation, robustness, error handling —
+   with file:line and a concrete fix. No attack narratives, no
+   proof-of-concept code in messages.
 2. Security review is a milestone gate under the operator's 2026-09-08
    workflow, not a per-task or pre-commit requirement. Hoa records cumulative
    baseline/scope, scan owner and release/rollout boundary in
@@ -84,8 +85,7 @@ Project agents (standing convention, AGENTS.md "Security at milestones"):
    Each worker fixes findings itself, validates, reports and retires; changed
    artifacts/tests require a fresh reviewer using that owner's allowed security
    model. After three security
-   rounds without a clean no-change pass, stop for Hoa's recorded decision
-   (board first; legacy bus fallback).
+   rounds without a clean no-change pass, stop for Hoa's recorded bus decision.
    Keep cumulative security rounds distinct from correctness rounds; do not
    reset them for deltas. Model unavailability blocks security work; substitution
    requires a new operator instruction. Task integration may precede the scan;

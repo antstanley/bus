@@ -1,0 +1,105 @@
+{
+  "completeness": "partial",
+  "deferred": [
+    {
+      "id": "deferred_governance_delta_round4",
+      "paths": [
+        "AGENTS.md",
+        "SECURITY.md",
+        "backlog/149-codex-coordination-monitor.md",
+        "backlog/202-core-request-response-helper-with-deadlines.md",
+        "backlog/217-spec-contract-net.md",
+        "backlog/507-prime-agent-adapter-daemon-send-wake.md",
+        "backlog/INDEX.md",
+        "docs/agents/README.md",
+        "docs/agents/codex-architect.md",
+        "docs/agents/codex.md",
+        "docs/agents/essun.md",
+        "docs/agents/letta.md",
+        "docs/agents/nassun.md",
+        "docs/agents/opencode-reviewer.md",
+        "docs/agents/opencode.md",
+        "docs/agents/task-workflow.md",
+        "docs/security/2026-09-10-phase1-nassun-inputs.json",
+        "docs/security/MILESTONES.md"
+      ],
+      "reason": "The entire fe382d3..27909d6 change set is documentation/coordination content. security-diff-scan scopes diff discovery through deep_review_input.jsonl, which is populated only from deterministically selected changed source-like files; that worklist is empty for this range (0 of 18 paths selected). Reviewing the governance Markdown by hand would substitute a different mechanism for the workflow's own deterministic scope, which the assigned task expressly prohibits. Security coverage of this delta is therefore deferred pending a lead decision on an authorized review mechanism.",
+      "surfaceIds": [
+        "surface_diff_worklist",
+        "surface_governance_policy_delta"
+      ]
+    }
+  ],
+  "documentType": "security.coverage",
+  "excludePaths": [],
+  "explicitExclusions": [
+    {
+      "pattern": "**/*.md",
+      "reason": "Markdown is not a member of TEXT_CODE_EXTENSIONS in rank_preview.py, so the deterministic diff-scoped worklist generator (make_diff_rank_input) drops every changed Markdown file before deep review. All 17 Markdown files in this range were excluded by this rule."
+    },
+    {
+      "pattern": "docs/**",
+      "reason": "docs is a member of EXCLUDED_DIRS in generate_rank_input.py, so any changed file whose path contains a docs segment is dropped from the diff-scoped worklist. The single changed JSON file docs/security/2026-09-10-phase1-nassun-inputs.json was excluded by this rule."
+    },
+    {
+      "pattern": "packages/**",
+      "reason": "Product/package scope is unchanged in this range and was explicitly not assigned for this round; no product file changed between fe382d3 and 27909d6."
+    }
+  ],
+  "includePaths": [
+    "AGENTS.md",
+    "SECURITY.md",
+    "backlog/149-codex-coordination-monitor.md",
+    "backlog/202-core-request-response-helper-with-deadlines.md",
+    "backlog/217-spec-contract-net.md",
+    "backlog/507-prime-agent-adapter-daemon-send-wake.md",
+    "backlog/INDEX.md",
+    "docs/agents/README.md",
+    "docs/agents/codex-architect.md",
+    "docs/agents/codex.md",
+    "docs/agents/essun.md",
+    "docs/agents/letta.md",
+    "docs/agents/nassun.md",
+    "docs/agents/opencode-reviewer.md",
+    "docs/agents/opencode.md",
+    "docs/agents/task-workflow.md",
+    "docs/security/2026-09-10-phase1-nassun-inputs.json",
+    "docs/security/MILESTONES.md"
+  ],
+  "inventoryStrategy": "diff",
+  "mode": "diff",
+  "openQuestions": [
+    {
+      "followUpPrompt": "For the range fe382d305db19078446750020ede9f6b9a0d5348..27909d65658b63ce0d4eaaf3bfc222e0e74e3cd8, the security-diff-scan worklist is empty because .md is not in TEXT_CODE_EXTENSIONS and docs is in EXCLUDED_DIRS. Decide and record whether to authorize a governance-document review mechanism (or an explicit lead acceptance) for this delta before final milestone rollout.",
+      "question": "Which authorized mechanism should provide security coverage for a governance/policy-only Git delta, given that the security-diff-scan diff-scoped worklist excludes documentation extensions and the docs directory?"
+    },
+    {
+      "followUpPrompt": "Review docs/agents/nassun.md 'Reviewer subagent permissions' (added in commit 9952798, in range fe382d3..27909d6): confirm the operator provenance of the danger-full-access mandate, reconcile it with the observed workspace-write/no-approval session policy and with the repo's least-privilege conventions, and record a lead disposition. This is an unresolved governance question, not a validated finding.",
+      "question": "The delta adds a normative 'Reviewer subagent permissions' rule to docs/agents/nassun.md that directs reviewer subagents to run with sandbox danger-full-access. This was read while pinning the target; it was not produced, validated or severity-calibrated by any workflow phase, and no remediation was applied. The observed session policy in this environment is workspace-write with approvals disabled, and the same section notes a parent cannot widen a child's permission. Should the lead route this policy text for governance-authority review, clarify its operator provenance, or accept it in writing?"
+    }
+  ],
+  "scanId": "27909d6_20260910T111514Z",
+  "schemaVersion": "1.0",
+  "surfaces": [
+    {
+      "disposition": "needs_follow_up",
+      "id": "surface_diff_worklist",
+      "label": "Diff-scoped discovery worklist for fe382d3..27909d6",
+      "notes": "generate_rank_input.py make-diff-rank-input selected 0 of the 18 changed paths: 17 Markdown files are excluded because .md is not in TEXT_CODE_EXTENSIONS, and the single changed JSON file is excluded because docs is in EXCLUDED_DIRS. No file entered deep review, so no candidate finding exists and validation and attack-path analysis were not run. The reviewed governance delta therefore has no security coverage from this workflow.",
+      "receiptRefs": [
+        "artifacts/02_discovery/finding_discovery_report.md"
+      ],
+      "riskArea": "Diff-scoped finding discovery / coverage mechanism"
+    },
+    {
+      "disposition": "needs_follow_up",
+      "id": "surface_governance_policy_delta",
+      "label": "Governance/policy documentation delta (11 pinned paths plus 7 other changed records)",
+      "notes": "All 18 changed paths in the range are documentation or coordination records. The workflow as written offers no sanctioned way to place documentation-only changed files into a diff-scoped worklist, and no substitute mechanism was improvised. A governance-appropriate review or an explicit lead decision is required before this delta can be treated as security-reviewed.",
+      "receiptRefs": [
+        "artifacts/02_discovery/finding_discovery_report.md"
+      ],
+      "riskArea": "Agent authority, model authorization and sandbox/permission policy"
+    }
+  ]
+}

@@ -568,3 +568,208 @@ can complete preparation concurrently. Installation/operational launch follows
 Hoa's recorded gate disposition and the concrete preflight, without re-asking
 the operator for already granted board-use authorization. Task149's stopped
 background monitor is not an assumption of readiness or a new monitor request.
+
+### Actual joint readiness worker start
+
+Owner read both renewed parent scopes and board dispatch
+`01M25HS1GTSA3QYZAGVBQASDNX`. Source HEAD observed
+`3bf054056362c663b0a925c599036740778e7c8a`. Fresh operational GLM worker
+`ses_f74de0c84ffe7PK61t0JydmaPn` started, requested
+`zai-coding-plan/glm-5.3-flash`, runner29076/worker29111. Board receipt
+`01M25J5413AQM6XCZ4B89YHPTF` at11:44:53.283Z records actual start mentioning
+codex. External plugins and live board/codegraph MCP connections disabled.
+
+One joint109/110 worker, not duplicate author/reviewer cycles: read-only
+sanitized readiness observations, existing permitted dry-run, exact proposed
+install/reload/observer sequence and genuine pending-deliverable acceptance
+plan. No live application/restart, credentials/private-settings dump, product
+edits, board initialization, new monitor or202/507 interference. No security
+review; Nassun's governance5 proceeds independently. No rounds reset or old
+failed-trial evidence erased. Actual results/model verification follow handoff.
+
+### Operational readiness handoff (observations, not live-entry approval)
+
+One clean session `ses_f74de0c84ffe7PK61t0JydmaPn`, exported runtime
+`zai-coding-plan/glm-5.3-flash`, completed the pass and final text handoff.
+Source snapshot was `3bf054056362c663b0a925c599036740778e7c8a`; observations
+were gathered approximately11:46-11:50Z on2026-09-10 and require refreshing
+at actual entry. Worker requested model, actual metadata and finish=stop were
+verified. It did not apply/install/reload, edit product/configuration, initialize
+a board or start a watcher/monitor. No security review or acceptance occurred.
+
+Observed routes and state, sanitized:
+- Owner TUI PID67829: explicit original owner session
+  `ses_f80b03ca4ffevsFv2RTOzgxUVY`, loopback127.0.0.1:4096 listener observed;
+  read-only health returnedHTTP200/healthy/version1.18.29, session metadata
+  reachable. These are administrative endpoint observations, not board wake.
+- Owner MCP PID67926 still used source `.board-data`, explicit private remote
+  and branch=board-data, authoropencode/team, index `~/.board/opencode.sqlite`.
+  Codex MCP PIDs27267/23402/62786 shared that checkout and `~/.board/codex.sqlite`.
+  Existing Essun MCP used its separate mcp/essun-33372 replica/index; its
+  branch/marker were not independently verified by this pass. No interference.
+- Owner sequential CLI replica remained the assigned dedicated
+  sidekick-109-owner-board-8pkb84us checkout: actual branchboard-data,
+  expected private origin, board.store=true, clean at observation. It must
+  NOT be repurposed for MCP/plugin use. Shared checkout also had explicit
+  board-data/marker/origin. Their different local tips do not prove remote
+  divergence or parity; no fetch was authorized/performed by the worker.
+- Provisioned per-role paths existed, but path existence is not proof that
+  current processes use them. No watcher/deliverer process was observed;
+  stopped149 remains stopped, not an assumed fallback service.
+- Installed project config remained SHA256
+  `3835b0ff256525089c0cec06d417e1e6d1710101e41b87cd47946ce5ec951a3f`;
+  installed plugin remained `656b229eb0f9783c5d8fa4dca002223a2f785dbef28fbc3460f984858c53ffec`.
+  Both are the old09-09 inputs. The installed plugin lacks integrated147's
+  periodic idle refresh and lifecycle changes. Loaded-byte identity in the
+  running TUI was inferred, not cryptographically established.
+- Registry recorded the owner at11:31:00.570Z. A local presence snapshot also
+  had idle ts11:31:00.655Z; this is older than120s at the observation window,
+  NOT fresh as one worker summary label asserted. Current remote presence
+  freshness is unverified. Saved registry entries are not delivery proof.
+
+Executed dry-run (exit0), for divergence evidence ONLY:
+`bun packages/cli/src/index.ts install opencode --store
+'git:/private/tmp/sidekick-109-owner-board-8pkb84us/board,remote=https://github.com/antstanley/bus-board.git,branch=board-data'
+--as opencode --board team --dry-run`.
+It proposed both updating the old plugin and rebinding MCP to that CLI store.
+Do NOT apply this demonstration command: the CLI replica is exclusively for
+sequential owner commands. Source inspection confirmed dry-run's no-write gate;
+the intended post-run hash/recheck command was denied, so no executed post-run
+hash proof is claimed. Current source per-file hashes remain uncollected;
+the observed full source commit and existing installed-file pins are retained.
+
+Actual denials and correction of earlier attribution:
+1. A compound Bash source/doc `shasum` command followed by
+   `rm -f /tmp/oc-sessions.json` was rejected.
+2. Same unfinished session was asked to finish other preparation; it then
+   attempted a compound header read of tasks402/505 followed by the same rm
+   suffix, also rejected. No402/505 contents were obtained or reconstructed.
+Both returned `The user rejected permission to use this specific tool call.`
+The exact denied subcommand/origin is unknown. Owner initially misidentified
+the first as presence inspection from progress text; runtime export corrected
+that. The repeated cleanup suffix IS a reattempt, contrary to the worker's
+later "nothing retried" wording. No successful deletion is claimed. A final
+same-session TEXT-ONLY/no-tools handoff completed; no further retries/equivalent
+access or permission changes. Board correction `01M25K7DPCFG84KT1DN7XA0QDJ`
+preserves the facts. `/tmp/oc-sessions.json` is worker-owned scratch with
+deletion denied/unconfirmed; leave it pending a permitted cleanup decision.
+
+### Concrete entry plan and decisions required
+
+This is a proposal for Hoa's gate/preflight disposition, not executed steps.
+Preparation remains in progress; missing observations are not a permission to
+reuse stale bindings or begin the live cycle.
+1. Record Nassun governance5 outcome and Hoa's exact runtime/governance entry
+   disposition; retain round4's zero-Markdown-coverage BLOCKED result. Freeze
+   the chosen source commit, participant identities and applicable evidence.
+2. Confirm separate exclusive CLI, MCP, hook, watcher and independent-observer
+   replicas/indexes, each with complete private remote/branch=board-data specs,
+   actual branch/origin/marker checks and current assignment. Preserve202/507.
+   Existing single-store installer cannot itself express MCP versus hook
+   separation. Hoa must settle a permitted configuration split and serialized
+   hook use or a separately scoped installer gap; no invented flags or source
+   edits in this readiness pass. Existing owner CLI store stays CLI-only.
+3. Use existing installer dry-run with the MCP-designated store only after
+   those assignments; inspect exact intended changes, then apply/reload only
+   under recorded authorization. If a manual store split is selected, do NOT
+   expect an unchanged dry-run from the same single-store installer afterward:
+   it would propose restoring its one-store layout. That worker-plan claim was
+   inconsistent with observed installer behavior and is not accepted.
+4. Operator-controlled OpenCode resume uses the existing supported template
+   `opencode "$PROJECT_ROOT" --session "$OWNER_SESSION" --hostname 127.0.0.1 --port 4096`.
+   No worker kills/duplicates the current TUI. Verify actual new child argv,
+   installed pins, registry/session/listener/health, separate bindings and idle
+   freshness across the120s boundary without timer-induced model work. Codex
+   co-tenant MCP bindings must also be settled before entry. Any missing route
+   remains a preflight gap, not a fabricated heartbeat or processed reply.
+5. Hoa chooses the existing dedicated watcher/delivery route and observer
+   provisioning after release; no new149 monitor is requested. Commands must
+   use explicit store/board/as/runtime/session/index assignments and existing
+   supported flags. Record transport acknowledgement separately from an actual
+   administrative reply before the live-launch boundary.
+6. Freeze an actual pending deliverable and worker/observer scope before the
+   real board request. The previously completed setup guide is not reusable
+   as a fabricated new implementation. Task408 was only a worker proposal:
+   owner checked its canonical metadata and found dependency401 stilltodo,
+   with405done; the worker's "both done" statement is not accepted.
+   A better concrete proposal is a bounded task605 CHANGELOG.md/Unreleased
+   slice covering the frozen integrated features. Canonical605 is opencode/
+   todo with no dependencies, and no root CHANGELOG file was found. This is
+   a genuine pending changelog component, not full605 completion, a version
+   tag or docs-site launch. Its record requires an explicit scoped lead handoff;
+   no605 claim/authoring starts from this proposal. Scope must avoid202/507.
+
+### Joint110 measurement protocol (proposed)
+
+Hoa is requester/acceptor; OpenCode is owner; newly created pure GLM5.3Flash
+author and independent Astra/Fable reviewer-remediators act only on the selected
+deliverable. A separately assigned clean read-only observer uses a fresh
+lead-provisioned remote replica/index. Actual worker/observer session IDs are
+TBD, never prefilled as proof. Historical109 guide4 and other parent/security
+counts stay intact; the selected deliverable's own cumulative count governs.
+
+- At the declared launch boundary record source/config pins, active process/
+  session routes, approved milestone reference and clock assumptions. Capture
+  real request/claim/ready/review/accept IDs only after their underlying work
+  occurs. No synthesized stages; helper limits remain real constraints.
+- Capture command start/end/exit, local post timestamp and commit, push/remote
+  observation time and commit, queue/HTTP acknowledgement, and actual recipient
+  processing receipt separately. Request-to-claim and stage gaps include work/
+  coordination; they are not isolated network/wake latency. Report stage and
+  non-stage message counts and per-actor counts from bounded evidence.
+- Independent observer verifies exact post bytes/IDs/order and remote commit
+  after authorized fetch/read; it does not rely solely on owner stdout, a
+  presence label or an HTTP204. Observation failures remain explicit gaps.
+- Track HUMAN UI/relay events, direct administrative API recoveries, and normal
+  automatic board-driven API transport as THREE categories. Normal watcher API
+  delivery is not itself a human relay or fallback. A post-launch human relay
+  fails the zero-human criterion; direct administrative recovery separately
+  fails an automatic-board-only claim. Worker wording that any API call fails
+  zero-human was overbroad and is not accepted. Permission prompts are recorded
+  with their actual human/automatic handling, not inferred from user-role text.
+- On timeout/exit3/uncertain publication: retain exact argv/IDs/bytes/status,
+  inspect local and independent remote state before any permitted action; do
+  not blindly repost. Recover an existing ID only under explicit disposition.
+  Extra ordinary rounds that the helper cannot represent remain honest thread/
+  parent evidence, not false helper round numbers or an invented accept.
+- PASS needs actual completed work and clean applicable review, all genuine
+  stages, corroborated runtime models and remote evidence, satisfied live-entry
+  gate, and accurate zero-human/automatic-delivery accounting. Integration with
+  pending security is not approval to enter a held live cycle. Any missing gate,
+  relay or evidence gap means FAIL/BLOCKED for that criterion, never a silent
+  waiver. Preserve the failed first trial and retained bus fallback.
+- Retire workers after evidence, clean owned temporary observer/test resources
+  after authorized handoff, and preserve lead operational replicas/configuration.
+  Update phase-1 acceptance evidence only with measured results. No such new
+  results or launch are claimed by this planning record.
+
+Worker's original final text SHA256 (including final newline):
+`486d36d9c47d533b2c35818656300cba75c81ca234e3ade43300420965ab14cb`.
+Its unaccepted claims are explicitly corrected above; this record is owner
+coordination, not a new security review. Original-trial timings/counts remain
+authoritative in110; do not inherit the worker summary's mixed handoff timestamps
+or its erroneous blanket description of ordinary rounds1-3 as remediations.
+
+
+### Lead configuration-preparation decision — 2026-09-10
+
+Governance remediation/verification is being integrated with an explicit
+round6 accounting exception; see the current milestone register. The old
+single-store dry-run remains unsuitable for live apply. OpenCode prepares a
+new concrete config-only candidate using existing installRuntime dry-run
+outputs: MCP-designated store/index for the MCP config, hook-designated
+store/index for the generated plugin. Do not blindly apply either whole plan
+or modify product source to combine them. Preserve non-board settings and
+record exact output hashes, bindings and changed paths in local scratch.
+
+Use a fresh clean GLM operational worker to verify this composition and the
+hook concurrency constraint with disposable fixtures. All heartbeat/inject
+children sharing a hook replica must be serialized, not merely idle timer
+writes. A single owner and --pure workers are the intended live topology;
+any unsupported overlap or required product change is a concrete blocker to
+report before applying. Also identify the existing supported per-process MCP
+launcher, if present, and prepare the Codex co-tenant migration/quiescence
+plan. Do not terminate user sessions or auto-retry denied cleanup operations.
+No config is applied/reloaded by this preparation and no second monitor starts.
+The pending605 Unreleased-only changelog slice is selected for the future real
+cycle; freeze its exact scope after readiness, without starting authoring yet.

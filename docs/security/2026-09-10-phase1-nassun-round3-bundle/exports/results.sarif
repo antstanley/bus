@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "fe382d3_20260910T103604Z"
+      },
+      "properties": {
+        "securitySchemaVersion": "1.0",
+        "securityTargetKind": "git_diff"
+      },
+      "results": [],
+      "tool": {
+        "driver": {
+          "name": "Security Scan",
+          "rules": [],
+          "version": "1.0"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

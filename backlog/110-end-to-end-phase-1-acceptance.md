@@ -272,3 +272,41 @@ can complete preparation concurrently. Installation/operational launch follows
 Hoa's recorded gate disposition and the concrete preflight, without re-asking
 the operator for already granted board-use authorization. Task149's stopped
 background monitor is not an assumption of readiness or a new monitor request.
+
+### Joint readiness planning worker started
+
+Shared with109: actual fresh operational worker
+`ses_f74de0c84ffe7PK61t0JydmaPn`, requested `zai-coding-plan/glm-5.3-flash`,
+runner29076/worker29111, pure with live MCP connections disabled. Start receipt
+`01M25J5413AQM6XCZ4B89YHPTF` on the new109/110 board assignment thread.
+It prepares actual-session/route/replica readiness and the genuine joint-cycle
+measurement/observer/fallback plan, not a live acceptance attempt. No worker
+live posts or product/config edits, no new review count. The prior failed
+cycle remains evidence; final entry requires Hoa's gate and concrete preflight
+disposition. Full operational evidence will be retained in109 and cross-linked
+here after the same worker's handoff.
+
+### Readiness report and live-cycle plan retained
+
+The joint worker `ses_f74de0c84ffe7PK61t0JydmaPn` returned its operational
+handoff; actual exported runtime was `zai-coding-plan/glm-5.3-flash`.
+Detailed observed bindings, source/installed divergence, denied operations,
+uncertainties, corrected plan and measurement protocol are recorded under109's
+"Operational readiness handoff" and following sections. No live cycle ran.
+
+Current entry gaps are concrete: old installed plugin/shared MCP checkout
+bindings, no observed deliverer, unverified current remote/idle readiness,
+single-store installer separation decision, and Hoa's governance5/preflight
+disposition. The denied compound hash/cleanup calls were not successful
+verification; scratch deletion remains denied/unconfirmed. No source/config
+edits, restart, board init, monitor creation or202/507 interference occurred.
+
+Proposed genuine deliverable is a lead-scoped task605 Unreleased changelog
+slice (605todo/no dependencies; no CHANGELOG found), not the completed guide.
+No605 claim or full-task/tag completion is authorized by the proposal. Worker
+task408 proposal is not treated as eligible because401 remains unfinished.
+Actual roles, request/stage IDs, timings, observer replica and acceptance
+boundary must be frozen before launch. Human relays, administrative API
+fallbacks and normal automatic API transport are distinct accounting categories.
+Existing failed-trial evidence and cumulative rounds are preserved. Stay
+in-progress on preparation; no acceptance or rollout claim.

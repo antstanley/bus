@@ -30,7 +30,8 @@ are not active assignments. Use `essun` for Prime Agent coordination.
 fixes its own findings within the assigned scope; any deliverable/test change
 requires a new clean reviewer. A no-change CORRECT/COMPLETE verdict passes.
 Stop after three review rounds without a clean pass and wait for Hoa's
-recorded bus decision. Retire each worker after its handoff. No separate
+recorded decision (board first; legacy bus fallback). Retire each worker after
+its handoff. No separate
 review/remediation tasks or cross-agent review queues. This supersedes the
 older author-return loop, per-task scans and separate review-task policy.
 
@@ -202,7 +203,8 @@ Each security reviewer fixes findings itself, validates, reports and retires.
 Changed artifacts/tests require another clean reviewer using an allowed
 security model for that owner. A clean
 no-change security pass ends the cycle; after three rounds without one, stop
-and wait for Hoa's bus decision. Record cumulative security rounds separately
+and wait for Hoa's recorded decision (board first; legacy bus fallback). Record
+cumulative security rounds separately
 from correctness rounds; no silent reset for deltas or owner changes. Reports sent
 to Codex describe defects and concrete fixes, without attack narratives or
 proof-of-concept code.

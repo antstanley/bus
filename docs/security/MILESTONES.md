@@ -612,3 +612,24 @@ OpenCode now owns109 readiness and110 acceptance preparation, concurrently
 with this gate. Actual installation/live-cycle entry still needs this delta's
 applicable no-change pass and Hoa's concrete operational disposition. Prior
 board-use authorization persists; no redundant operator confirmation is needed.
+
+
+### Governance integration disposition — 2026-09-10
+
+Round5 remediated two findings in three files. The fresh verifier
+5010b91a-d273-44b2-be7c-1bea13f0abad is cumulative **round6**, started without
+the required prior lead decision, despite the owner's same-round label.
+Preserve that deviation. Hoa accepts its clean no-change evidence as the
+explicit one-off process exception in
+[round6 disposition](2026-09-10-phase1-nassun-round6-disposition.md), with exact
+hashes, model-evidence corrections and checks retained. No unapproved round7.
+Round5 authority was already recorded on main in3bf0540 and board post
+01M25HSA4ZXAN1R90QE7AK1NEM; its absence from frozen27909d6 is intentional,
+not missing current authorization. Do not rebase frozen inputs to add it.
+
+The three verified governance outputs replace their exact frozen inputs in
+main. Product147/148 pins remain covered by round3 and unchanged here. After
+integration/CI, this clears the governance entry gate for109/110; concrete
+separate-process configuration, actual fresh presence, delivery/observer setup
+and a new real cycle still have to pass. Bus fallback and149's background
+volume-access hold remain. No acceptance or successful rollout is inferred.
