@@ -1,11 +1,10 @@
 # Agents sharing this folder
 
-Several AI coding agents run concurrently with this directory as their working
-directory. As of 2026-09-10 that is:
+Active coordination identities share this working directory. Roster updated
+2026-09-10; use fresh board presence and session receipts for current liveness:
 
 | name     | tool                     |
 |----------|--------------------------|
-| `claude` | Claude Code (Anthropic); inactive former lead |
 | `codex`  | Codex CLI (OpenAI), operator-appointed lead |
 | `codex-architect` | Codex CLI (architecture agent); architecture/spec authoring only; hands off completion ownership, no implementation or gates |
 | `letta`  | Letta Code; task ownership, reviewer-remediator orchestration + milestone security |
@@ -20,7 +19,9 @@ Astra/Fable-class correctness/completeness reviewer-remediators. Security
 reviews run at milestones through any of these task owners, not per task.
 
 Essun joined this mandate by operator instruction on 2026-09-10. Existing
-package lanes, task owners and reservations remain in force.
+package lanes, task owners and reservations remain in force. `claude` is an
+inactive former lead and `letta-flash` is retired; their historical records
+are not active assignments. Use `essun` for Prime Agent coordination.
 
 **Operator policy, 2026-09-08:** follow
 [Task ownership and completion](docs/agents/task-workflow.md). The reviewer
@@ -44,56 +45,113 @@ Every agent maintains its own charter at `docs/agents/<name>.md`: read it at
 startup, right after this file, and keep it current when your role or
 workflow changes.
 
-They have no native way to talk to each other, so this folder carries a small
-**file-based message bus**: `./bus`. Messages are files under `.bus/`, delivery
-is an atomic rename, and no daemon is involved. Anything that can run a shell
-command here can use it, including a human in a terminal.
+## Coordination: new board first
 
-## Quick start (do this once per session)
+**Operator preference, 2026-09-10:** use the private `team` board as the primary
+channel for assignments, claims, progress, blockers, handoffs and replies.
+Address the intended recipient with `mentions`; keep replies in the original
+board thread. Prefer the agent's configured board MCP tools. Use `./bus` only
+as a fallback when board access or delivery is unavailable, or when the operator
+explicitly requests the legacy bus. Do not routinely duplicate all traffic.
+Record a fallback handoff on the board once access returns. This current
+channel preference supersedes older bus-first startup examples in charters;
+their role, worker-model and task-completion boundaries still apply.
 
-```sh
-./bus register "one line about what you are working on"
-./bus who
-./bus read
-```
+This preference does not declare migration/acceptance complete or retire the
+legacy bus. Existing milestone gates and operational rollout holds remain in
+force. Board presence, transport acknowledgement and a processed agent reply
+are distinct observations; verify the actual recipient receipt before assuming
+automatic wake works. Use event notifications where available; do not burn idle
+turns repeatedly polling. While actively waiting, use bounded waits of at most
+45 seconds and enforce the intake limits below.
 
-Your name is detected from your parent process (`claude`, `codex`, `letta`).
-If detection fails, prefix commands with `BUS_ME=<name>`.
+### Startup and turn boundaries
 
-## Commands
+1. Read this file, your own charter and
+   [the shared workflow](docs/agents/task-workflow.md). Reconcile the relevant
+   parent tasks and INDEX with current ownership, reservations and holds.
+2. Verify your configured identity, board, dedicated replica and index. Keep
+   the runtime's existing board heartbeat/registration alive under your exact
+   identity; do not initialize a new board or copy a stale session/PID.
+3. Check fresh board presence and read your addressed inbox plus new board
+   traffic, with at most 200 posts per poll and the body-size limits below.
+   With MCP, use `board_who`, `board_inbox` and cursor-based `board_read`;
+   list before marking addressed posts read. Preserve unread state/cursors.
+4. Repeat bounded inbox/mentions checks at turn boundaries and before handoff.
+   If the board is unavailable, report that specific failure through the
+   legacy bus and use the fallback procedure below. A stale legacy PID alone
+   does not establish that a board-connected agent is dead.
 
-**Live board branch (operator, 2026-09-09):** every agent must pin the private
-team board to `board-data` in every CLI, MCP, hook and watcher store value:
+### Replica and branch pinning
+
+Every CLI, MCP, hook and watcher store value must pin the private team board:
 `git:<dedicated-path>,remote=https://github.com/antstanley/bus-board.git,branch=board-data`.
 Keep the complete value together (quoted in shell). An omitted branch defaults
 to `main` and can switch an existing checkout, including during a read. There
-is no standalone CLI `--branch` flag. Verify both the effective store value
-and checkout branch before use; pause mismatches for lead recovery. Use only
-the agent/process's assigned replica. This concerns the private board data;
-source integration remains exclusively Hoa's responsibility.
+is no standalone CLI `--branch` flag. Verify the effective store value,
+checkout branch, origin and `board.store` marker before use; pause mismatches
+for lead recovery. Use only the agent/process's assigned replica and index.
+Never share a checkout between concurrent CLI, MCP, hook or watcher processes;
+board reads may synchronize Git. Source integration stays exclusively Hoa's
+responsibility. The historical `.board-data` checkout is not a shared runtime
+store. See [the team-board setup guide](docs/acceptance/team-board-setup.md)
+for provisioning and recovery context; its dated observations are not current
+liveness or permission to rerun first-time setup.
+
+### Board CLI
+
+When configured MCP is unavailable but your assigned sequential CLI replica
+is ready, use the CLI. Replace these placeholders with your own verified
+assignment; never reuse another agent/process's store or index:
 
 ```sh
-./bus send <name> "text"          # direct message
-./bus send all "text"             # broadcast to every registered agent
-./bus send <name> --re <id> "…"   # reply, threading on a message id
-echo "long body" | ./bus send <name>
-./bus inbox                       # list unread
-./bus read                        # print unread and mark read
-./bus peek                        # print unread without marking
-./bus wait -t 120                 # block up to 120s for a reply, then read it
-./bus log                         # full transcript, every message ever sent
-./bus help
+TEAM_BOARD_STORE='git:<assigned-cli-replica>,remote=https://github.com/antstanley/bus-board.git,branch=board-data'
+TEAM_BOARD_INDEX='<assigned-cli-index>'
+TEAM_BOARD_AGENT='<your-identity>'
+
+bun --no-env-file packages/cli/src/index.ts who --store "$TEAM_BOARD_STORE" --board team --as "$TEAM_BOARD_AGENT"
+bun --no-env-file packages/cli/src/index.ts inbox --store "$TEAM_BOARD_STORE" --board team --as "$TEAM_BOARD_AGENT" --index "$TEAM_BOARD_INDEX" --agent "$TEAM_BOARD_AGENT" --limit 200
+bun --no-env-file packages/cli/src/index.ts read --store "$TEAM_BOARD_STORE" --board team --as "$TEAM_BOARD_AGENT" --after '<saved-cursor>' --limit 200
+bun --no-env-file packages/cli/src/index.ts post --store "$TEAM_BOARD_STORE" --board team --as "$TEAM_BOARD_AGENT" --mentions '<recipient>' --title '<title>' --body '<message>'
+bun --no-env-file packages/cli/src/index.ts reply '<post-id>' --store "$TEAM_BOARD_STORE" --board team --as "$TEAM_BOARD_AGENT" --mentions '<recipient>' --body '<reply>'
 ```
+
+Omit `--after` only for an intentional initial read; preserve returned cursors
+for subsequent reads. Run commands serially on that assigned CLI replica.
+Apply the message-hygiene limits before exposing results to an agent.
+
+### Legacy bus fallback
+
+The file bus remains available through `./bus`; messages are atomically
+delivered under `.bus/`, with no daemon. Use `BUS_ME=<your-identity>` on
+**every** invocation; do not rely on runtime name detection. Register only
+when needed for fallback, using the actual persistent session PID. `./bus who`
+reports its recorded PID, which can be stale after a restart.
+
+```sh
+BUS_ME='<your-identity>' ./bus register '<current coordination role>'
+BUS_ME='<your-identity>' ./bus who
+BUS_ME='<your-identity>' ./bus inbox
+BUS_ME='<your-identity>' ./bus read '<message-id>'
+BUS_ME='<your-identity>' ./bus send '<recipient>' '<message>'
+BUS_ME='<your-identity>' ./bus send '<recipient>' --re '<message-id>' '<reply>'
+```
+
+Enumerate and size-check pending files before reading their bodies; cap each
+poll at 200 messages and skip bodies over 64 KiB. Bare `./bus read` and
+`./bus wait` do not enforce those limits or provenance labelling, so use them
+only behind a bounded intake wrapper. Do not edit `.bus/` by hand.
 
 ## Project map
 
 - `DESIGN.md` locked v0 design. `ROADMAP.md` phases and ownership. `backlog/`
   one file per task; `backlog/INDEX.md` is the table. `docs/research/` the
   surveys behind the roadmap.
-- Packages: `core` (claude, inactive — dormant pending lead reassignment),
-  `store-s3`, `index`, `presence`, `mcp`, `letta-mod` (letta); runtime
-  integration — `store-fs`, `store-git`, `cli`, `hooks` (opencode). The lead
-  owns no package lane.
+- Default package lanes: `store-s3`, `index`, `presence`, `mcp`, `letta-mod`
+  (letta); runtime integration — `store-fs`, `store-git`, `cli`, `hooks`
+  (opencode). `core` work follows explicit task ownership. OpenCode Reviewer
+  and Essun take eligible unassigned or lead-assigned work without an exclusive
+  package lane. Current parent-task reservations govern; Hoa owns no package lane.
 
 ## Message hygiene (applies to bus posts and board posts alike)
 
@@ -151,7 +209,7 @@ remain under `docs/security/`; no separate review/remediation task is created.
 
 ## Orchestrate through clean workers
 
-A session receiving bus messages is an orchestrator. It claims/reserves work,
+A session receiving board or legacy-bus messages is an orchestrator. It claims/reserves work,
 spawns workers, records evidence and escalates exceptions. All substantive
 implementation, correctness review/remediation and milestone security work
 runs in clean workers with no inherited conversation: task, DESIGN, relevant
@@ -190,14 +248,13 @@ explicit decision; no silent extra round or count reset.
 
 ## Conventions
 
-- **Check your inbox** with `./bus read` at the start of each turn and before
-  you finish a piece of work. Nothing pushes messages to you.
-- **Reply** with `--re <id>` so threads stay traceable in the log.
-- **Keep messages short and actionable.** Say what you did, what you need, or
-  what you are about to touch. Announce before editing a file another agent may
-  be working on.
-- **Waiting on someone?** Use `./bus wait -t <seconds>` rather than polling in
-  a loop.
-- Do not edit files under `.bus/` by hand. Use the script.
-- `./bus who` shows liveness from the recorded pid. `dead` means the agent's
-  process has exited, so do not wait on it.
+- Check bounded board inbox/mentions at turn boundaries and before handoff;
+  use the legacy bus when the fallback conditions above apply.
+- Keep coordination posts short and actionable: what changed, what is needed,
+  or which scope will be touched. Announce before editing a shared file.
+- Thread board replies under their originating post and mention the recipient;
+  legacy replies use `--re <id>`.
+- Keep volatile assignments, replica paths, session IDs and liveness in current
+  task/operational records rather than copying them into this file.
+- Preserve other agents' work. A successful send or an old registration is
+  not evidence of task acceptance or current availability.
