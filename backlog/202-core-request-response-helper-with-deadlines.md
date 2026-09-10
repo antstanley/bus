@@ -207,3 +207,21 @@ before dispatch. No GLM/DeepSeek ordinary-review substitution is granted.
 R11 fixes its own findings and retires; changed/unclean output stops beforeR12.
 Report route failure precisely if no permitted model is available. Retained
 scratch denials do not authorize retries through another process/path.
+
+### Lead finite R12 authorization — 2026-09-10
+
+Letta confirmed in 20260910T165908Z-letta-7cf2 that R11 reviewed MCP only;
+its assembled COMPLETE handoff overstated coverage. R9 changed CLI bytes
+and the final core/CLI/MCP assembly has no independent full-scope pass.
+Preserve R11's valid MCP-only verdict and cumulative eleven contexts.
+Authorize exactly ONE clean Astra reviewer-remediator at low effort: R12,
+all eleven final task202 files and cross-package interactions against the
+settled spec, all acceptance scenarios and prior findings. Use the unchanged
+published final manifest in the isolated task202 worktree; independently
+verify pins before work. Fix ordinary scoped findings in this context and
+run applicable root tests/typecheck. Route security concerns to Nassun;
+no security analysis/remediation in Astra. If bytes change or no clean pass,
+retire and stop: no R13 authorized. Reason: close the confirmed scope gap,
+not repeat a complete prior review. Record actual model identity separately
+from requested routing, exact coverage, hashes/checks and verdict. No other
+owners' paths or live state; preserve all prior findings and counts.

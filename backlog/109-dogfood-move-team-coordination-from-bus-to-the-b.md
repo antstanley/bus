@@ -773,3 +773,55 @@ plan. Do not terminate user sessions or auto-retry denied cleanup operations.
 No config is applied/reloaded by this preparation and no second monitor starts.
 The pending605 Unreleased-only changelog slice is selected for the future real
 cycle; freeze its exact scope after readiness, without starting authoring yet.
+
+### Pinned runtime and actual config-only worker start
+
+Operator supplied detached runtime checkout
+`/private/tmp/sidekick-phase1-runtime-3c02bda`, pinned to
+`3c02bda76e9abb27a5675f3acd3b3bee90fceef6`, for installRuntime projectRoot
+and all generated hook/MCP/CLI source paths. Do not point candidates at moving
+main while202 integrates. Frozen-lockfile dependency setup is permitted only
+in that checkout, with proof that @board imports resolve there, not to main.
+
+New clean pure worker `ses_f73b50f8cffeKw27k1pL8Vc0yy` actually started,
+requested `zai-coding-plan/glm-5.3-flash`, runner97285/worker97294. Start receipt
+`01M264QVKAM4XM953D9NN3K0QG` at2026-09-10T17:09:41.610Z mentions codex on
+the109/110 thread. MCP connections/plugins disabled; all new scratch and
+disposable fixtures confined to `.task109-config-prep` inside the runtime
+checkout. Only generated config candidates/fixtures, no product or live changes.
+
+Exact-role input gap reported in `01M26493394HEHXEEAC1PSVJCJ`: known MCP
+assignment is team/mcp/opencode-3320, with its board-data store and index,
+but marker still says owner_pid3320/provisioned-not-connected. Current-owner
+slot retention needs lead confirmation; an exact hook store/index assignment
+was not found in the supplied parent or owned assignment markers. Do not
+invent production paths or reuse the exclusive owner CLI replica. Worker may
+proceed with API and clearly fixture-only concurrency checks while missing
+target-specific inputs remain explicit. No target-specific apply-ready claim.
+
+Use two existing dry-run plans, selecting only MCP config from one and plugin
+from the other; preserve non-board settings and hash the generated outputs.
+Verify heartbeat AND inject child serialization using unmodified generated
+plugin/normal disposable transport fixtures, not the denied old scratch
+error-logging instrumentation. If unsupported, report concrete source gap.
+Prepare existing launcher/quiescence and apply/reload/observer steps only;
+no live apply/restart, new monitor, credentials,202/507 edits or605 authoring.
+
+The preceding readiness session was deleted after handoff. Its denied
+`/tmp/oc-sessions.json` cleanup is still not retried; that exception remains
+separate from removal of ordinary owner runner/log/export files.
+
+### Lead runtime assignments — 2026-09-10 17:05 UTC
+
+Prepared separate MCP and hook replicas for OpenCode configuration planning:
+`/private/tmp/sidekick-109-opencode-runtime-20260910/{mcp,hook}/board`.
+Each role uses its sibling `index.sqlite`; each complete store is
+`git:<role-path>/board,remote=https://github.com/antstanley/bus-board.git,branch=board-data`.
+Both were cloned explicitly on board-data and marked board.store=true;
+role assignment.json records owner session ses_f80b03ca4ffevsFv2RTOzgxUVY,
+with current PID to be confirmed before activation. State: provisioned, not
+connected. Do not reuse stale opencode-3320 for this plan or the owner CLI slot.
+All hook children must be proven serialized before activation. No live config
+or restart was performed. Runtime preparation remains pinned to detached
+/private/tmp/sidekick-phase1-runtime-3c02bda at
+3c02bda76e9abb27a5675f3acd3b3bee90fceef6, including resolved package imports.

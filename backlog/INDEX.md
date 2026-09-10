@@ -109,7 +109,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 501 | [A2A gateway](501-a2a-gateway.md) | unassigned | todo | L |
 | 502 | [MCP streamable-HTTP transport and subscriptions/listen](502-mcp-streamable-http-transport-and-subscriptions-.md) | letta | todo | M |
 | 503 | [adapter conformance kit and recipes](503-adapter-conformance-kit-and-recipes.md) | letta | todo | M |
-| 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
+| 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | essun | in-progress | M |
 | 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
 | 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | essun | in-progress | S |
