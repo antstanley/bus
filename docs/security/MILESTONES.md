@@ -404,3 +404,21 @@ test to the uncovered remote-board operational delta already containing148.
 No installed configuration was changed. Applicable cumulative security
 round3 still needs an explicit frozen scope and GLM5.3Flash assignment before
 operational rollout; previous coverage, findings and holds remain.
+
+### Monitor candidate source integration — 2026-09-10
+
+Task149 ordinary round4 returned CORRECT/COMPLETE with no changes and49
+passing standalone tests. Hoa adopted the exact three candidate hashes and
+attempt2 report recorded in the parent. Security attempt1 was blocked at
+input-hash preflight; attempt2 remediated two findings, and attempt3 is the
+required fresh GLM verification on these final bytes plus the unchanged
+prepared plist341afce5815d89e75200c8b5763924be2a92ca4d17ae0946879f6f6ab1a6b82c.
+All identities and cumulative counts remain in149. Source integration and CI
+may proceed; monitor activation remains held until the applicable clean
+verification and lead operational checks. No other rollout hold changes.
+
+Lead integration check disposition: git diff --cached --check reports one
+trailing space in the guide line298 shell comment. Hoa accepts this cosmetic
+formatting finding to retain the exact independently reviewed artifact; the
+check is recorded as nonzero, not claimed passing. No source/test failure
+or security finding is waived by this disposition.
