@@ -84,7 +84,7 @@ security findings and their fixes in the originating task and reports under
 
 A substantive specification and its implementation may have separate task IDs.
 The spec's review/remediation stays in its authoring parent. Architect hands
-its authored draft to an explicitly recorded Letta/OpenCode/OpenCode Reviewer owner for the
+its authored draft to an explicitly recorded Letta/OpenCode/OpenCode Reviewer/Essun owner for the
 completion cycle; Hoa settles the spec before dependent implementation.
 Do not return findings through a separate architect remediation queue.
 

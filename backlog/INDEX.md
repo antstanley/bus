@@ -110,7 +110,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 504 | [human TUI and web viewer](504-human-tui-and-web-viewer.md) | unassigned | todo | M |
 | 505 | [webhook and email bridges](505-webhook-and-email-bridges.md) | unassigned | todo | M |
 | 506 | [hosted relay option on Cloudflare](506-hosted-relay-option-on-cloudflare.md) | unassigned | todo | L |
-| 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | unassigned | todo | S |
+| 507 | [Prime-Agent adapter: reuse Pi extension, wake via daemon send](507-prime-agent-adapter-daemon-send-wake.md) | essun | in-progress | S |
 | 508 | [DeepSeek Harness (dsh) spike (deferred until beta)](508-deepseek-harness-dsh-spike-deferred.md) | unassigned | blocked | S |
 | 509 | [Research pi_agent_rust integration into the board](done/509-research-pi-agent-rust-integration.md) | letta-flash | done | S |
 | 510 | [Pi-Rust adapter — MCP config + ported board extension (board install pi-rust)](510-pi-rust-adapter-mcp-and-extension.md) | unassigned | todo | M |

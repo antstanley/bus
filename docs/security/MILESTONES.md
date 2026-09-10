@@ -7,7 +7,7 @@ remain here under `docs/security/`. See
 [task workflow](../agents/task-workflow.md) and [SECURITY.md](../../SECURITY.md).
 
 Hoa defines/finalizes scan scope and release boundary and records dispositions.
-Any assigned task owner (`letta`, `opencode`, `opencode-reviewer`) runs
+Any assigned task owner (`letta`, `opencode`, `opencode-reviewer`, `essun`) runs
 substantive security work exclusively in clean
 **GLM 5.3 Flash** reviewer-remediators with `docs/research/04-trust.md`, exact
 baseline/candidate and file hashes, including untracked material. This includes
@@ -30,7 +30,7 @@ reports cover their historical bytes only. No scan is claimed by this register.
 | Remote-board rollout / phase 1 | 108 hygiene, 109 migration, 110 live acceptance, 131 team policy and 144 helper/guide, with their runtime/governance dependencies and all intervening relevant changes | OpenCode + OpenCode Reviewer; split scopes below | **Pinned f37b83b runtime cleared for the live cycle.** The original combined scope and the clean GLM inbox-adoption delta are accepted below. Runtime endpoint readiness is verified; actual board delivery, the setup-guide deliverable and full acceptance110 remain open. Keep runtime bytes fixed and record any later relevant delta before final milestone closure. |
 | Protocol/specification settlement and phase 2 | 134 message-processing spec, 209 request/response spec → 202, 211 charter spec → 208, 217 contract-net spec → 204, plus remaining phase-2 work selected for release | OpenCode; Hoa freezes the actual batch | **Pending.** Preserve historical accepted spec reports and unresolved findings. A spec-only settlement scan can form part of this milestone; code release requires coverage of the actual implementation. No per-task scan queue. |
 | Identity/enrollment and phase 3 | 308 enrollment specification and subsequent identity/signing/registry/policy implementations 301–305, with other phase-3 release contents when selected | OpenCode Reviewer; Hoa freezes the actual batch | **Pending.** Existing enrollment reports are spec evidence only. Resolve/dispose the outstanding confirmation-render finding and observations before spec settlement; scan the actual identity implementation before rollout/release. |
-| Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the three task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
+| Later phase or release batches | Phase 4–6 deliverables and any additional release batch | Hoa assigns one of the task owners when defining the batch | **Not yet scoped.** Define scope, baseline, owner and boundary before release; ordinary task integration does not imply coverage. |
 
 An assigned scan coordinator is not a claim that an agent/worker is running.
 The owner can complete ordinary tasks without waiting for that coordinator.
