@@ -242,3 +242,71 @@ its substantive security work to Nassun. Preserve rounds1/2; round2 remains
 BLOCKED, not a pass. Round3 fixes its own in-scope findings and retires; edits
 require fresh review and therefore a new lead continuation after the cap.
 No implementation or live negotiation is authorized.
+
+### Actual ordinary round3 start
+
+Owner verified unchanged contract-net ce898918 full pin and supplied read-only
+enrollment339d983a full pin in the isolated checkout. Fresh pure reviewer
+`ses_f7506890effeOQgEsKaYIbCEDn` started, requested `openai/gpt-6-astra`, low
+variant, runner72291/worker72299. Actual start posted on the team task thread
+as `01M25FN9YJAJN69PD3H088ZRNF` at2026-09-10T11:01:17.906Z, mentioning codex.
+Only contract-net writable, live MCP/plugins disabled. Cumulative ordinary3/3,
+no reset or retroactive round2 pass. Enrollment remains read-only/unapproved,
+308 holds unchanged; no security work. Changed output or unmet checks requires
+STOP for another explicit lead decision before any further ordinary reviewer.
+
+### Ordinary round3: checker false positive and cap stop
+
+Fresh reviewer `ses_f7506890effeOQgEsKaYIbCEDn`, actual exported runtime
+`openai/gpt-6-astra`, returned **BLOCKED**, no artifact changes. About2.8 minutes.
+Reviewed full contract spec and verified supplied enrollment sections4,8.1-8.2,
+12 as ordinary reference correspondence. The earlier enrollment hash is clearly
+historical authoring provenance. Prior ordinary findings remain corrected;
+no additional ordinary specification defect found and no security assessment.
+
+Inline document validator exited1 solely because it incorrectly classified
+the external RFC3339 sections5.6-5.7 citation at contract-net line307 as an
+internal reference. Read/Grep inspection identified that checker defect. No
+corrected rerun occurred: the owner's overly strict "any unclean check" prompt
+caused the reviewer to stop on a fixable validation-tool false positive.
+This owner instruction defect is disclosed, not blamed on the specification.
+Normal checker defects should be corrected within an active authorized review;
+final unresolved checks or artifact changes still govern the cap/verdict.
+
+Other checks passed: fences/LF/final-newline/whitespace; sections1-20;
+36unique replay rows;19outcome mappings;4TypeScript syntax parses;21table
+column checks;18local links;8external URL syntax checks; enrollment headings.
+Mermaid manually reviewed, no renderer/remote fetch/product tests/typecheck.
+Both input/output hashes and bytes unchanged and owner-reverified: contract
+ce898918 full pin/115356bytes, enrollment339d983a full pin/200745bytes.
+
+Ordinary3/3 now consumed, no fourth review or relabelled clean pass. Board
+`01M25FY5NTCF8F2H1EXKK05GKN` on the original217 thread requests explicit
+lead disposition, recommending one bounded fresh validation continuation on
+the unchanged document with the checker classification corrected. Enrollment
+and implementation/live/security holds remain; no new substantive scope.
+Worker retired after handoff; no scratch or edits reported, session/runner/log
+removed after evidence capture. Candidate/reference retained exactly. Aggregate
+usage/cost unavailable.
+
+
+### Lead finite continuation after round3 — 2026-09-10
+
+Hoa inspected the recorded round3 report/check results and independently
+reproduced both unchanged input hashes. The only reported failed check is a
+validator classification defect, not an artifact defect; the owner's stop
+wording prevented its correction during that round. Round3 remains BLOCKED
+and consumed. Hoa authorizes exactly ONE fresh ordinary round4 in the same
+isolated checkout, with the frozen enrollment reference read-only and only
+contract-net writable. Correct the disposable reference validator so external
+RFC3339 section citations are not treated as internal headings, rerun required
+document validation, and review/fix ordinary in-scope findings if any. This is
+not a read-only mandate or permission to waive missing/failed checks. A normal
+checker error may be repaired and rerun within this authorized context.
+
+Preserve rounds1-3, findings, outputs and actual worker/model evidence. Retire
+round4 after its report. A no-change CORRECT/COMPLETE verdict with required
+checks passing ends the ordinary cycle; changed artifact bytes or unresolved
+checks require stopping for another explicit lead decision before round5.
+Enrollment approval, product implementation, live operation and substantive
+security work remain outside this assignment.
