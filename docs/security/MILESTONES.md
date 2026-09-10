@@ -661,3 +661,66 @@ integration, ordinary correctness and full assembly/relevant delta gates
 remain outstanding. Six reports: 2026-09-10-prime-adapter-round1.md through
 round6.md. See task507 final full hashes and round6 decision for scoped
 non-defect dispositions; no live install/restart/release.
+
+### Lead runtime delta dispatch — 2026-09-10
+
+OpenCode fixture c4c1c64743060b43ae8fc0229d8d37e8f9de1891ff6af8855c70b82f0864c515
+reports injection/heartbeat overlap (max2) on the same generated-hook replica;
+heartbeat-only max1. Source/test pins equal integrated147 and main; live
+activation stays held. Reopen147 scoped delta within the same parent; owner
+OpenCode retains task ownership and109/110 readiness. Nassun is the available
+primary milestone security owner for this reported integrity/availability gap.
+
+Nassun: clean permitted DeepSeek security reviewer-remediator, phase1 cumulative
+R7 (prior6 preserved; separate Prime adapter cycle also stays6). Exactly
+packages/cli/src/install.ts and packages/cli/test/install.test.ts on isolated
+/private/tmp/sidekick-task147-security-nassun, branch task147-hook-serialization,
+baseline3c02bda. Manifest docs/security/2026-09-10-phase1-round7-hook-concurrency-inputs.json.
+Verify reported overlap and fix scoped defects so ALL generated-hook children
+using this one replica serialize, including injection and heartbeats, without
+breaking lifecycle/idle refresh/error recovery. Add meaningful regression
+checks; preserve prior147 evidence and report checks/hashes/actual model.
+No live config/board/permissions/restart, no task202 or507 edits. Dispose
+of speculative concerns by evidence; no broad installer migration changes.
+Publish docs/security/2026-09-10-phase1-nassun-round7.md and retire.
+
+After R7 handoff, OpenCode owns clean ordinary R3, non-security behavior only,
+fix mandate; previous ordinary2 preserved. Security findings stay with Nassun.
+R8 is explicitly reserved as one fresh security verification after ordinary
+handoff and final hashes, NOT an automatic nested verifier. No R9 or ordinary
+R4 is authorized; if changed/no clean pass at the respective cap, stop and
+report. Existing policy gate remains valid for unchanged bytes; this runtime
+delta requires its own recorded disposition before phase1 activation.
+
+### Viewer milestone queue — 2026-09-10
+
+Task504 ordinaryR1 reported two potential security concerns, without a security
+verdict: untrusted line breaks in terminal cells and caller-supplied days in
+web rendering. Preserve both in the parent; Nassun owns their triage in the
+future frozen whole-viewer scope. OrdinaryR2 is active, so no overlapping
+security worker is dispatched. Freeze all21 outputs after owner handoff;
+entrypoint/lockfile/assembly seams remain outstanding and require applicable
+review. No release approval. Task147 phase1 runtime blocker takes priority.
+
+### Lead viewer milestone fallback dispatch — 2026-09-10
+
+Nassun remains primary and is assigned the higher-priority phase1 task147
+runtime delta. Essun may take this fallback only after recording no actionable
+ordinary work queued:149 blocked on OS access,507 and504 assembly seams blocked
+on202; ordinary504 workers retired. If another eligible ordinary assignment
+exists, report and do not dispatch security. This applies the operator's idle
+fallback rule, not a permanent security reassignment.
+
+New viewer prerelease security cycle, R1 with cap3, separate from Prime6 and
+phase1 cycles. Clean GLM5.3Flash reviewer-remediator, scope exactly21 current
+candidate files in docs/security/2026-09-10-viewer-inputs.json, baseline51738b7,
+same isolated504worktree. Independently rehash before work; review whole scope
+including docs/tests/package metadata and both routed R1 concerns, with DESIGN
+and docs/research/04-trust.md. Fix scoped findings yourself, validate, record
+full hashes/actual model/checks, report docs/security/2026-09-10-viewer-round1.md,
+and retire. New changed bytes need fresh GLM context; max3 then stop if not clean.
+No live settings/board/export/deployment/permissions, no task202/507 or root
+entrypoint/lockfile edits. Applicable ordinary and final assembly checks remain;
+no full task completion is inferred. Restore final ordinary21-file manifest
+from the review evidence in parent504: handoff said present but current parent
+lacks the full table. Preserve history and distinguish test pass/skip totals.

@@ -310,3 +310,24 @@ boundary must be frozen before launch. Human relays, administrative API
 fallbacks and normal automatic API transport are distinct accounting categories.
 Existing failed-trial evidence and cumulative rounds are preserved. Stay
 in-progress on preparation; no acceptance or rollout claim.
+
+### Config-only preparation outcome
+
+New GLM worker `ses_f73b50f8cffeKw27k1pL8Vc0yy` used the detached3c02bda
+runtime and direct fresh MCP/hook store/index assignments. Parent109 records
+the two generated outputs, exact hashes, source/dependency observations and
+process deviations. Live application and this trial have NOT started.
+
+The required fixture property failed: heartbeat children serialize, but an
+inject and heartbeat overlap on the same hook replica (max2). Old-source-path
+migration also yields a duplicate MCP entry or plugin refusal; guards were not
+bypassed. The hook output retains a fixture registry home and is not suitable
+for production application. No whole-plan B-then-A application is approved.
+Codex per-process launcher/quiescence remains unverified beyond pinned-source
+lookup. These are concrete entry gaps for Hoa, not permission to edit product
+source in this operational pass.
+
+Future605 Unreleased-only changelog slice is selected by Hoa; no authoring or
+new request/stage has begun. Prior failed cycle, counts, human/API accounting
+and rollout conditions remain intact. Config-only handoff publication
+`01M266RJEWXR0Y98PAM8MAJJJH` is coordination evidence, not live acceptance.

@@ -811,6 +811,91 @@ The preceding readiness session was deleted after handoff. Its denied
 `/tmp/oc-sessions.json` cleanup is still not retried; that exception remains
 separate from removal of ordinary owner runner/log/export files.
 
+### Exact assignments received and config-only result
+
+Direct Hoa wake supplied both fresh role pairs, superseding the old3320
+assignment input without another external read:
+- MCP: `git:/private/tmp/sidekick-109-opencode-runtime-20260910/mcp/board,remote=https://github.com/antstanley/bus-board.git,branch=board-data`;
+  index `/private/tmp/sidekick-109-opencode-runtime-20260910/mcp/index.sqlite`.
+- Hook: `git:/private/tmp/sidekick-109-opencode-runtime-20260910/hook/board,remote=https://github.com/antstanley/bus-board.git,branch=board-data`;
+  index `/private/tmp/sidekick-109-opencode-runtime-20260910/hook/index.sqlite`.
+They are lead-provisioned/not-connected and assigned to the owner session.
+Board `team` and author `opencode` were already assigned, not an open question.
+Runtime activation verification remains separate. Owner PID67829 was observed.
+
+The standalone worker had no verified in-flight input channel. At an exported
+tool-free boundary, owner interrupted only its disposable CLI PID50407, observed
+it and runner50390 exit, then resumed the SAME unfinished session with the
+exact strings (worker10872/runner10803). No user TUI/live service restart,
+duplicate context or permission change. Receipt `01M265QSK6GN2P9K1EAXQCF2A7`
+records the control action. The initial denied old-assignment Bash command was
+not retried or read via another route.
+
+Final worker `ses_f73b50f8cffeKw27k1pL8Vc0yy` exported runtime identity is
+`zai-coding-plan/glm-5.3-flash`, finish=stop. Same operational context across
+the interrupted/continued runs; no review-round count invented. Pinned runtime
+HEAD remained3c02bda, tracked source unchanged. Frozen install added100 packages
+with scripts disabled; lockfile SHA256 stayed
+`4aaf9e41f38b8a890220470949722cfecf155872f6a5f978bae9a3d56dde7d0b`.
+Reported checks resolved/realpathed @board/core, cli, index and presence into
+that checkout; no main-checkout links for those checked imports. Do not expand
+that four-specifier observation into unperformed exhaustive runtime validation.
+
+Generated artifacts retained under the pinned checkout's `.task109-config-prep`:
+| Artifact | SHA-256 | Status |
+|---|---|---|
+| plans/plan-a/opencode.mcp.definition.json | d57b889db7fca5490705a7c30c7255812bd84f94c4d59529a36f56d06463d4ea | MCP fragment only, assigned MCP store/index and pinned mcp entrypoint |
+| plans/plan-b/board.plugin.ts | e26214e619c33b5104dc283e2bbfa18a520c65a40e9d2cb637d3f44b9fa047b2 | Unmodified renderer output, assigned hook store/index, BUT fixture registry home |
+| plans/serialization-result.json | c4c1c64743060b43ae8fc0229d8d37e8f9de1891ff6af8855c70b82f0864c515 | Fake-child transport observations; required all-child serialization failed |
+| plans/migration-gap.meta.json | a33d85969f92c6b95f3a14e4e78797e8568a5ba54f1518cab42dcecca0177a0f | Synthetic old-source ownership migration outcomes |
+
+Owner reproduced those hashes and inspected selected binding/result metadata.
+PlanA selects only MCP output; planB selects only plugin output. Other whole-plan
+outputs were discarded. Both selected source entrypoints point into the pinned
+runtime, not main. PlanB registryDir still points to fixture home under scratch;
+it is NOT production-apply-ready and requires renderer regeneration with the
+approved production home after blockers are resolved. Store/index roles are no
+longer missing. PlanA is a fragment, not a fully merged live configuration.
+
+Concrete ordinary operational gap: the unmodified generated plugin fixture
+recorded18 fake spawns (14 heartbeat,4 inject). Heartbeat/heartbeat maximum
+concurrency1 with monotonic ordering, but heartbeat/inject maximum2; inject
+calls bypass the presence enqueue chain (worker source citation install.ts:601).
+This is fixture evidence, not a live measurement or security assessment.
+It does not satisfy the requirement that all children sharing a hook replica
+serialize. No product fix was made; a scoped lead source/topology decision is
+required before live apply.
+
+Synthetic migration fixtures also showed that an old-main mcpPath is left as
+`mcp.board` while a new `board-bus` entry is added, and an old-main hookPath
+plugin is refused by the existing non-owned-plugin guard. These are guarded
+outcomes, not authorization to overwrite live settings. Live target state was
+not re-read by this pinned worker. The worker's suggested whole-plan B-then-A
+apply sequence is explicitly NOT accepted: it would overwrite the selected
+composition and contradict the two-output instruction. Do not execute it.
+
+Launcher lookup found no per-process launcher in pinned source; availability
+outside that source remains unverified. Separate client processes alone do
+NOT prove separate checkout/index bindings. Codex co-tenant split/quiescence
+still needs an actual supported per-process route/assignment; no reuse of
+OpenCode's hook slot, user-session kills or new monitor is authorized.
+
+Process disclosures: native Write/Edit tools were used for handwritten scratch
+generators/harnesses rather than the requested apply_patch/inline-only route.
+No product files changed. A buggy fixture run also created a stray
+`/private/tmp/.task109-config-prep` outside the promised scratch root; the worker
+reported removing it separately and regenerating outputs within the checkout.
+These deviations are preserved, not relabelled compliant. The old denied
+`/tmp/oc-sessions.json` cleanup remains untouched. No source security work,
+live apply/restart, board init, new monitor or605 authoring occurred.
+
+Final findings/outputs were posted in `01M266RJEWXR0Y98PAM8MAJJJH` on the
+109/110 thread; direct pinned-runtime CLI publication exited0. Candidate plans,
+fixture evidence and hashes are retained for Hoa's decision, not installed.
+Worker retires after handoff. Readiness remains NOT READY pending the
+serialization/migration/production-registry/launcher decisions and fresh live
+preflight; the governance integration does not waive these observed gaps.
+
 ### Lead runtime assignments — 2026-09-10 17:05 UTC
 
 Prepared separate MCP and hook replicas for OpenCode configuration planning:

@@ -1,0 +1,17 @@
+{
+  "baseline": "3c02bda76e9abb27a5675f3acd3b3bee90fceef6",
+  "worktree": "/private/tmp/sidekick-task147-security-nassun",
+  "owner": "nassun",
+  "parent_task": 147,
+  "milestone": "phase1",
+  "prior_security_rounds": 6,
+  "authorized_round": 7,
+  "reserved_verification_round": 8,
+  "allowed_model": "deepseek-flash or any DeepSeek model",
+  "scope": {
+    "packages/cli/src/install.ts": "4eece9efd642dcb9449b46a4276c32e7169031224bf16b69280beaf34026e6d3",
+    "packages/cli/test/install.test.ts": "7e1200cb7c61141e234931dc4f9d881626dc02671a5def999b66a53ef5f47473"
+  },
+  "reported_fixture_sha256": "c4c1c64743060b43ae8fc0229d8d37e8f9de1891ff6af8855c70b82f0864c515",
+  "hold": "Round8 only after OpenCode ordinary round3 handoff; no live changes or overlapping202/507 edits."
+}

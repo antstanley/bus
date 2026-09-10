@@ -1,0 +1,183 @@
+{
+  "pluginSha256": "e26214e619c33b5104dc283e2bbfa18a520c65a40e9d2cb637d3f44b9fa047b2",
+  "transport": "fake Bun.spawn child (unmodified plugin file)",
+  "totals": {
+    "spawns": 18,
+    "heartbeat": 14,
+    "inject": 4
+  },
+  "maxConcurrency": {
+    "overall": 2,
+    "heartbeatVsHeartbeat": 1,
+    "heartbeatWithInjectInFlight": 2,
+    "injectWithHeartbeatInFlight": 2,
+    "injectVsInject": 1
+  },
+  "heartbeatStartIds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10,
+    12,
+    13,
+    14,
+    15,
+    17,
+    18
+  ],
+  "heartbeatStartOrderMonotonic": true,
+  "injectOverlappedHeartbeat": true,
+  "gaps": [
+    "inject children are NOT routed through the plugin's enqueue chain (source: experimental.chat.system.transform calls invokeBoardHook directly, generated plugin line ~216 / install.ts:601), so inject runs concurrently with in-flight heartbeat children on the same hook replica"
+  ],
+  "timeline": [
+    {
+      "id": 1,
+      "cmd": "heartbeat",
+      "start": 1789061530225,
+      "end": 1789061530256,
+      "othersInFlightAtStart": 0,
+      "phase": "S1-concurrent-heartbeats"
+    },
+    {
+      "id": 2,
+      "cmd": "heartbeat",
+      "start": 1789061530256,
+      "end": 1789061530287,
+      "othersInFlightAtStart": 0,
+      "phase": "S1-concurrent-heartbeats"
+    },
+    {
+      "id": 3,
+      "cmd": "heartbeat",
+      "start": 1789061530288,
+      "end": 1789061530319,
+      "othersInFlightAtStart": 0,
+      "phase": "S1-concurrent-heartbeats"
+    },
+    {
+      "id": 4,
+      "cmd": "heartbeat",
+      "start": 1789061530320,
+      "end": 1789061530351,
+      "othersInFlightAtStart": 0,
+      "phase": "S1-concurrent-heartbeats"
+    },
+    {
+      "id": 5,
+      "cmd": "heartbeat",
+      "start": 1789061530351,
+      "end": 1789061530382,
+      "othersInFlightAtStart": 0,
+      "phase": "S2-inject-during-heartbeat"
+    },
+    {
+      "id": 6,
+      "cmd": "heartbeat",
+      "start": 1789061530383,
+      "end": 1789061530413,
+      "othersInFlightAtStart": 0,
+      "phase": "S2-inject-during-heartbeat"
+    },
+    {
+      "id": 7,
+      "cmd": "inject",
+      "start": 1789061530414,
+      "end": 1789061530445,
+      "othersInFlightAtStart": 0,
+      "phase": "S2-inject-during-heartbeat"
+    },
+    {
+      "id": 8,
+      "cmd": "heartbeat",
+      "start": 1789061530445,
+      "end": 1789061530476,
+      "othersInFlightAtStart": 0,
+      "phase": "S3-concurrent-injects"
+    },
+    {
+      "id": 9,
+      "cmd": "inject",
+      "start": 1789061530476,
+      "end": 1789061530507,
+      "othersInFlightAtStart": 0,
+      "phase": "S3-concurrent-injects"
+    },
+    {
+      "id": 10,
+      "cmd": "heartbeat",
+      "start": 1789061530477,
+      "end": 1789061530507,
+      "othersInFlightAtStart": 1,
+      "phase": "S3-concurrent-injects"
+    },
+    {
+      "id": 11,
+      "cmd": "inject",
+      "start": 1789061530507,
+      "end": 1789061530538,
+      "othersInFlightAtStart": 0,
+      "phase": "S3-concurrent-injects"
+    },
+    {
+      "id": 12,
+      "cmd": "heartbeat",
+      "start": 1789061530540,
+      "end": 1789061530571,
+      "othersInFlightAtStart": 0,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 13,
+      "cmd": "heartbeat",
+      "start": 1789061530571,
+      "end": 1789061530601,
+      "othersInFlightAtStart": 0,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 14,
+      "cmd": "heartbeat",
+      "start": 1789061530601,
+      "end": 1789061530632,
+      "othersInFlightAtStart": 0,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 15,
+      "cmd": "heartbeat",
+      "start": 1789061530633,
+      "end": 1789061530664,
+      "othersInFlightAtStart": 0,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 16,
+      "cmd": "inject",
+      "start": 1789061530664,
+      "end": 1789061530695,
+      "othersInFlightAtStart": 0,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 17,
+      "cmd": "heartbeat",
+      "start": 1789061530664,
+      "end": 1789061530695,
+      "othersInFlightAtStart": 1,
+      "phase": "S4-refresh+inject+new-session"
+    },
+    {
+      "id": 18,
+      "cmd": "heartbeat",
+      "start": 1789061530695,
+      "end": 1789061530726,
+      "othersInFlightAtStart": 0,
+      "phase": "S5-delete-during-heartbeat"
+    }
+  ]
+}

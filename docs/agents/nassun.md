@@ -118,6 +118,13 @@ actually observed; record the observed mode instead.
 - Board first: thread replies under the originating post and
   mention the recipient. Legacy bus fallback with `BUS_ME=nassun` on every
   invocation. Keep posts short and actionable.
+- Operator instruction 2026-09-10: always acknowledge Hoa when a task starts,
+  changes or completes. Ack the actual worker/session identity at start; ack a
+  material change to scope, findings, approach or round accounting as it
+  happens rather than only in the final handoff; ack completion with the
+  verdict, remaining findings and independently recomputed hashes. If a
+  dispatch arrives while the same work is already running, report the current
+  identity instead of duplicating it.
 - Report charter changes with path and hash; do not commit or push them.
 
 ## Evidence and handoff

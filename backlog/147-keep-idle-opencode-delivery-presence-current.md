@@ -4,7 +4,7 @@ title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
 owner: opencode
-status: gated
+status: in-progress
 depends: [113]
 parent: 109
 related: [106, 110]
@@ -416,3 +416,33 @@ Lead cleanup complete: after owner confirmation and exact equality checks
 against9219b76, Hoa removed the isolated task147 worktree and local branch.
 Source integration, CI and cleanup are complete; status remains gated solely
 for the recorded operational acceptance/milestone boundary.
+
+### Lead runtime delta dispatch — 2026-09-10
+
+OpenCode fixture c4c1c64743060b43ae8fc0229d8d37e8f9de1891ff6af8855c70b82f0864c515
+reports injection/heartbeat overlap (max2) on the same generated-hook replica;
+heartbeat-only max1. Source/test pins equal integrated147 and main; live
+activation stays held. Reopen147 scoped delta within the same parent; owner
+OpenCode retains task ownership and109/110 readiness. Nassun is the available
+primary milestone security owner for this reported integrity/availability gap.
+
+Nassun: clean permitted DeepSeek security reviewer-remediator, phase1 cumulative
+R7 (prior6 preserved; separate Prime adapter cycle also stays6). Exactly
+packages/cli/src/install.ts and packages/cli/test/install.test.ts on isolated
+/private/tmp/sidekick-task147-security-nassun, branch task147-hook-serialization,
+baseline3c02bda. Manifest docs/security/2026-09-10-phase1-round7-hook-concurrency-inputs.json.
+Verify reported overlap and fix scoped defects so ALL generated-hook children
+using this one replica serialize, including injection and heartbeats, without
+breaking lifecycle/idle refresh/error recovery. Add meaningful regression
+checks; preserve prior147 evidence and report checks/hashes/actual model.
+No live config/board/permissions/restart, no task202 or507 edits. Dispose
+of speculative concerns by evidence; no broad installer migration changes.
+Publish docs/security/2026-09-10-phase1-nassun-round7.md and retire.
+
+After R7 handoff, OpenCode owns clean ordinary R3, non-security behavior only,
+fix mandate; previous ordinary2 preserved. Security findings stay with Nassun.
+R8 is explicitly reserved as one fresh security verification after ordinary
+handoff and final hashes, NOT an automatic nested verifier. No R9 or ordinary
+R4 is authorized; if changed/no clean pass at the respective cap, stop and
+report. Existing policy gate remains valid for unchanged bytes; this runtime
+delta requires its own recorded disposition before phase1 activation.
