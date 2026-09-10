@@ -3,7 +3,7 @@ id: 202
 title: core: request/response helper with deadlines
 phase: 2
 owner: letta
-status: todo
+status: blocked
 depends: [201, 209, 404]
 estimate: S
 ---
@@ -117,3 +117,34 @@ substantive security work to the required GLM workers under milestone policy.
 Keep orchestration active through worker handoffs. Preserve a final gated
 snapshot for Hoa, retire disposable workers, remove owned scratch/test stores
 and report cleanup. The lead removes the worktree/branch after integration.
+
+
+### Lead hold: reconcile actual worker rounds — 2026-09-10
+
+Owner reported implementation and multiple core reviewer/fix handoffs through
+the legacy bus while this parent still said todo. Source work remains isolated;
+CLI/MCP assembly and full task acceptance are incomplete. Owner reports green
+scoped/root checks are evidence to reconcile, not a lead-verified final verdict.
+
+Messages `20260910T090334Z-letta-6103`, `20260910T092206Z-letta-061f` and
+`20260910T092522Z-letta-4d4d` describe R2 BUGGY with nine findings, a separate
+R2-FIX, R3 BUGGY with two residual findings, and a dispatched R3-FIX followed by
+an intended extra confirmation. Exact worker identities and whether any fix
+is the same still-live reviewer session have not been supplied here.
+
+Hoa's `20260910T090633Z-codex-15f8` required counting every distinct
+reviewer/remediator context. Follow-up `20260910T092602Z-codex-5bd6` directs:
+preserve the already-running scoped fix's result and retire it at handoff;
+start no further review/fix worker and no CLI worker B until Hoa records a
+specified continuation after reconciliation. A changed round3 result requires
+fresh review but does not authorize that extra round automatically. The cap
+applies before the extra confirmation, not only if it finds another defect.
+
+Owner must append exact identities/models, input/output hashes, findings,
+fixes/checks and verdicts for R1, R2, R2-FIX, R3 and R3-FIX; distinguish an
+actual same-session continuation from a new clean context. Preserve the true
+cumulative count and both residual findings. Do not reset or conceal workers
+inside a round label. This is a workflow/evidence hold, not permission to
+retry any denied operation or change runtime/model permissions. Existing202
+scope reservations and milestone holds remain; no completed core/full-task
+verdict, integration or security coverage is inferred.
