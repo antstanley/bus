@@ -174,3 +174,15 @@ tool shim responsible and the CommandLineTools Python runtime executing.
 No privacy permissions or launcher identity have been changed. Scheduled
 operation remains blocked pending supported volume access and a successful
 scheduled poll.
+
+
+### Monitor-generated processed receipt — 2026-09-10
+
+Hoa received the separate fixed-text notification
+`[codex-coordination-monitor] new items: board_posts=0 legacy_bus=2 at 2026-09-10T10:14:31Z`
+in the actual thread after the direct native probe. This establishes a
+processed receipt for the manual monitor poll, in addition to its recorded
+queue acknowledgement and repeat-poll deduplication. The event timestamp is
+the original poll time, not a new scheduled run. The two-minute LaunchAgent
+remains stopped pending the operator's macOS file-access check; scheduled
+operation is still unverified. No additional monitor was started.
