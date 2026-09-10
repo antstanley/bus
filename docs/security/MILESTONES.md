@@ -724,3 +724,57 @@ entrypoint/lockfile edits. Applicable ordinary and final assembly checks remain;
 no full task completion is inferred. Restore final ordinary21-file manifest
 from the review evidence in parent504: handoff said present but current parent
 lacks the full table. Preserve history and distinguish test pass/skip totals.
+
+### R7 handoff and ordinary R3 release — 2026-09-10
+
+Hoa verified report31949f40f61b6437184733e40f32fc9341a4291ba4294acce4aae548d3c0b824
+and both output pins: install.ts e54b2504c7feeb8050511d6a23e8d20c6f0d1f5c40b6716d628198486f22724d;
+install.test.ts 24a812add64723ebb1544fec628ef002c266b5e1e41fcf92e699961adf863e75.
+R7 retired; source scope is now reserved to OpenCode's clean ordinary R3 in
+/private/tmp/sidekick-task147-security-nassun (same branch/base; no rebase).
+Review non-security correctness/lifecycle/completeness, fix ordinary findings,
+run relevant checks, preserve exact evidence and retire. Route security findings
+to Nassun, not Astra. No other files/live state; no ordinary R4 authorized.
+Nassun R8 remains held until final ordinary handoff and applicable clean pass.
+Report filename accepted: docs/security/2026-09-10-phase1-round7-hook-concurrency-report.md.
+
+The separately reported Pi extension concurrency observation is OPEN and
+unmeasured, not accepted or fixed by this OpenCode scope. No new Pi activation
+is authorized by this readiness tranche. Freeze/triage it separately after
+current reserved installer work; no concurrent Pi edits during R3/R8.
+
+### Reserved security R8 released — 2026-09-10
+
+OpenCode ordinaryR3 ses_f73786da5ffewlv3miKSnZkUU1, observed openai/gpt-6-astra
+low, returned CORRECT/COMPLETE without edits and retired. Owner reran installer
+27pass, root316pass/1skip, typecheck and diffcheck. Hoa reverified unchanged
+R7 pins e54b2504 (install.ts) and24a812ad (install.test.ts) in reserved worktree.
+Release already-authorized phase1 R8 to one fresh clean permitted DeepSeek
+reviewer-remediator under Nassun. Same two-file scope, exact full pins in R7
+handoff, same base/worktree; reservation returns to Nassun. Verify changed
+OpenCode-hook bytes and regressions/lifecycle/error recovery, fix scoped
+findings if necessary, validate and retire. Preserve ordinary3 and phase1
+security1-7; no ordinary4/security9 authorized. Changed/no clean ->stop.
+Pi observation stays open/outside this runtime scope; no Pi edits/livechanges,
+no task202/507 or migration. Clean pass covers this delta, not live acceptance.
+
+### Lead exact integration and R8 acceptance — 2026-09-10
+
+Accepted phase1 cumulativeR8 clean no-change pass (worker7858c781-805d-49ee-83c7-4adcb7fc5df9,
+observed deepseek-flash) after clean ordinaryR3. Full final pins remain
+install.ts e54b2504c7feeb8050511d6a23e8d20c6f0d1f5c40b6716d628198486f22724d,
+install.test.ts24a812add64723ebb1544fec628ef002c266b5e1e41fcf92e699961adf863e75.
+Report488e0a6db36b945eed7f86850f3b379ae8fffee28b680df4a89a79552730e73a verified.
+Hoa copied exactly these two reviewed files onto main; all product paths were
+unchanged from candidate baseline3c02bda, so owner full-root validation applies:
+installer27/0, cli61/0, root316pass/1skip, typecheck0. Integration CI pending.
+No new source edits or new security analysis by lead. No round9/ordinary4.
+
+Accept the reported contention-latency tradeoff for required exclusive
+OpenCode replica access: transforms can wait behind predecessors; the10s
+bound is per child, not an end-to-end queue-latency guarantee. Live109/110
+acceptance must measure actual timing. This is not acceptance of the open Pi
+observation, which remains separate and excluded from new activation here.
+Status gated pending integration CI and operational acceptance; no liveapply,
+restart or new monitor. Retain candidate until output/report retention checks
+and cleanup confirmation. Updated pinned runtime is provisioned after CI.

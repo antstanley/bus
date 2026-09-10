@@ -376,6 +376,89 @@ await appendFile(${JSON.stringify(capturePath)}, JSON.stringify({
     }
   });
 
+  test("the generated OpenCode plugin serializes inject and heartbeat children on one replica", async () => {
+    const home = await fixture();
+    const cwd = await fixture();
+    const project = await fixture();
+    const capturePath = join(cwd, "hook-concurrency.jsonl");
+    const fakeHook = join(project, "packages", "hooks", "src", "board-hook.ts");
+    await put(fakeHook, `
+import { appendFile } from "node:fs/promises";
+const payload = JSON.parse(await Bun.stdin.text());
+const command = process.argv.at(-1);
+const record = (phase) => appendFile(${JSON.stringify(capturePath)}, JSON.stringify({
+  phase, command, session: payload.session_id, at: Date.now(),
+}) + "\\n");
+await record("start");
+await Bun.sleep(120);
+await record("end");
+if (command === "inject") console.log("context for " + payload.session_id);
+if (payload.session_id === "flaky" && command === "heartbeat") process.exit(1);
+`);
+    await installRuntime({ ...options(home, "opencode"), cwd, projectRoot: project });
+    const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
+    const module = await import(`${pathToFileURL(pluginPath).href}?fixture=${Date.now()}`);
+    const plugin = await module.BoardPlugin({
+      serverUrl: new URL("http://127.0.0.1:4096/"),
+      presenceClock: presenceClock(),
+    });
+    pluginCleanups.push(() => plugin.event({ event: { type: "server.instance.disposed" } }));
+    const event = (type: string, properties: Record<string, unknown>) =>
+      plugin.event({ event: { type, properties } });
+    const rows = async (): Promise<Array<{ phase: string; command: string; session?: string }>> =>
+      (await text(capturePath)).trim().split("\n").map((line) => JSON.parse(line));
+
+    // Distinct sessions force inject and heartbeat work to interleave unless
+    // injection shares the enqueue chain that serializes heartbeat children.
+    const outputs = ["a", "b", "c"].map(() => ({ system: [] as string[] }));
+    await Promise.all([
+      ...outputs.map((output, index) =>
+        plugin["experimental.chat.system.transform"]({ sessionID: `inject-${index}` }, output)),
+      event("session.created", { info: { id: "created-d" } }),
+      event("session.status", { sessionID: "status-e", status: { type: "busy" } }),
+    ]);
+
+    let concurrent = 0;
+    let maxConcurrent = 0;
+    let injectOverlappedHeartbeat = 0;
+    const active = new Map<string, number>();
+    const totals: Record<string, number> = { heartbeat: 0, inject: 0 };
+    for (const row of await rows()) {
+      if (row.phase === "start") {
+        const other = row.command === "inject" ? "heartbeat" : "inject";
+        if ((active.get(other) ?? 0) > 0) injectOverlappedHeartbeat++;
+        active.set(row.command, (active.get(row.command) ?? 0) + 1);
+        concurrent++;
+        maxConcurrent = Math.max(maxConcurrent, concurrent);
+        totals[row.command] = (totals[row.command] ?? 0) + 1;
+      } else {
+        active.set(row.command, (active.get(row.command) ?? 0) - 1);
+        concurrent--;
+      }
+    }
+    // Real serialization: no generated-hook child ever runs with another.
+    expect(maxConcurrent).toBe(1);
+    expect(injectOverlappedHeartbeat).toBe(0);
+    expect(totals).toEqual({ heartbeat: 5, inject: 3 });
+    expect(outputs.map((output) => output.system)).toEqual([
+      ["context for inject-0\n"], ["context for inject-1\n"], ["context for inject-2\n"],
+    ]);
+
+    // Error recovery: a failed child must not wedge the serialized chain.
+    const flaky = { system: [] as string[] };
+    await plugin["experimental.chat.system.transform"]({ sessionID: "flaky" }, flaky);
+    const recovered = { system: [] as string[] };
+    await plugin["experimental.chat.system.transform"]({ sessionID: "recovered" }, recovered);
+    expect(flaky.system).toEqual(["context for flaky\n"]);
+    expect(recovered.system).toEqual(["context for recovered\n"]);
+
+    // Lifecycle: disposal stops any further child.
+    await plugin.event({ event: { type: "server.instance.disposed" } });
+    const beforeDisposal = (await rows()).length;
+    await plugin["experimental.chat.system.transform"]({ sessionID: "disposed" }, { system: [] });
+    expect(await rows()).toHaveLength(beforeDisposal);
+  });
+
   test("the generated OpenCode plugin removes its local routing record on process exit", async () => {
     const home = await fixture();
     const cwd = await fixture();

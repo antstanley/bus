@@ -1,0 +1,23 @@
+{
+  "milestone": "phase1",
+  "parent_task": 147,
+  "owner": "nassun",
+  "baseline": "3c02bda76e9abb27a5675f3acd3b3bee90fceef6",
+  "worktree": "/private/tmp/sidekick-task147-security-nassun",
+  "security_round": 8,
+  "prior_security_rounds": 7,
+  "ordinary_rounds": 3,
+  "ordinary_verdict": "CORRECT/COMPLETE no-change",
+  "allowed_model": "deepseek-flash or any DeepSeek model",
+  "scope": {
+    "packages/cli/src/install.ts": "e54b2504c7feeb8050511d6a23e8d20c6f0d1f5c40b6716d628198486f22724d",
+    "packages/cli/test/install.test.ts": "24a812add64723ebb1544fec628ef002c266b5e1e41fcf92e699961adf863e75"
+  },
+  "report_path": "docs/security/2026-09-10-phase1-round8-hook-concurrency-report.md",
+  "instructions": "One fresh clean reviewer-remediator verifies real generated OpenCode enqueue behavior, R7 regression, lifecycle/error recovery; fix scoped findings and validate. Record actual model, full hashes/checks/verdict, retire. Changed or no clean pass means STOP; no round9 or nested verifier.",
+  "exclusions": [
+    "Pi extension observation remains open, unmeasured, separately scoped after this work; no Pi edits/activation",
+    "No task202/507, migration, live config/board/permissions/install/restart changes"
+  ],
+  "authorization": "Already released in main parent147/MILESTONES and board01M268XVNGJ6PH5BGRYNTEX5AC; this manifest formalizes that same R8, not another context."
+}

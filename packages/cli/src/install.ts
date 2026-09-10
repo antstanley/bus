@@ -598,8 +598,12 @@ return {
   ) => {
     if (disposed || typeof sessionID !== "string") return;
     await markSession(sessionID, "busy");
-    const context = await invokeBoardHook("inject", { runtime: "opencode", session_id: sessionID });
-    if (context) output.system.push(context);
+    // Injection shares this replica's enqueue chain: spawning it directly here
+    // lets the inject child overlap an in-flight heartbeat child.
+    await enqueue(async () => {
+      const context = await invokeBoardHook("inject", { runtime: "opencode", session_id: sessionID });
+      if (context) output.system.push(context);
+    });
   },
 };
 };
