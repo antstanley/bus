@@ -3,8 +3,8 @@ id: 110
 title: end-to-end phase 1 acceptance
 phase: 1
 priority: critical
-owner: codex
-status: blocked
+owner: opencode
+status: in-progress
 depends: [104, 106, 109]
 estimate: S
 ---
@@ -234,3 +234,41 @@ outer wrapper; it was not retried or claimed successful. Current helper
 round limits and timeout behavior remain unchanged. Ordinary4 and the GLM
 pass are preserved as actual manual-thread evidence, without a fabricated
 helper pass/accept. Keep the bus fallback and live operational replicas.
+
+
+### Operator-requested restart and ownership — 2026-09-10
+
+The operator asked OpenCode to pick up109/110 rather than remain idle. OpenCode
+owns both parents' completion coordination; Hoa retains final milestone
+release, acceptance and exclusive integration/commit/push. Start109 operational
+readiness and110's joint acceptance plan now. Source repairs147/148 are
+integrated; their old implementation/read-permission blockers are historical,
+not reasons to leave this preparation blocked. Do not reset any ordinary or
+security round counts, erase the failed first trial or claim zero human relay
+from administrative wakes.
+
+First concrete work: a new clean GLM5.3Flash operational worker prepares and
+checks the exact current runtime/source pins, existing participant sessions,
+assigned per-process replicas/indexes, explicit board-data branch/origin/store
+markers, effective MCP/plugin/watcher bindings, and proposed install/reload/
+observer commands. Use read-only metadata and existing dry-run facilities;
+no credentials/private settings content, live application/restart, product
+edits, board initialization or duplicate monitor. Report paths and sanitized
+values needed for review, not entire configuration files. Preserve active
+202/507 workers and their source reservations. Source changes, if required,
+need a concrete scoped handoff rather than edits inside this operational pass.
+
+Select a real pending deliverable and actual clean worker/reviewer/observer
+roles for the joint live cycle. Define the readiness checks, request-to-claim
+and subsequent timing, message IDs/counts, independent remote observation,
+actual runtime model evidence, human/API fallback accounting, pass/fail and
+cleanup criteria. The old completed setup guide must not be fabricated as a
+new implementation cycle. Retain the bus fallback and the unsuccessful trial.
+
+Remaining live-entry gate: Nassun's governance delta has not passed because
+round4's automatic source filter excluded Markdown. Hoa is authorizing an
+explicit-file round5 separately; no zero-coverage result is a pass. OpenCode
+can complete preparation concurrently. Installation/operational launch follows
+Hoa's recorded gate disposition and the concrete preflight, without re-asking
+the operator for already granted board-use authorization. Task149's stopped
+background monitor is not an assumption of readiness or a new monitor request.

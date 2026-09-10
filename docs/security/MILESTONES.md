@@ -575,3 +575,40 @@ reading credentials or inventing identities. The separate active governance
 round4 does not retroactively supply missing round3 model metadata.
 Round3 canonical bundle is owner-retained under the reported repository path;
 lead integration/retention verification is pending. No rollout is released.
+
+
+### Governance filter disposition and finite round5 — 2026-09-10
+
+Round4 is BLOCKED with no target changes: the selected plugin generated zero
+Markdown review inputs. Preserve its report and consumed round; excluded
+content is not security coverage. Hoa authorizes exactly ONE clean DeepSeek
+reviewer-remediator, cumulative round5, to review the explicit eleven paths
+and hashes in the unchanged round4 manifest against fe382d3..27909d6. Use
+manual explicit-file security review; optional phase tools may assist only
+if they retain every assigned file. The source-only automatic selector is
+not an authority to omit the operator-assigned documentation. Do not patch
+the installed plugin, broaden to eighteen unrelated paths, or manufacture a
+sealed-plugin verdict. Record actual full-file coverage, findings, fixes,
+checks, output hashes and verdict under docs/security in the assigned isolated
+checkout. Fix own scoped findings; changed bytes require fresh verification,
+so stop before round6 if changed or not clean. No product or live operations.
+
+Nassun's public routing evidence establishes the observed parent provider
+`deepseek-official` / `deepseek-flash`, shipped default and child fallback
+mechanism without a bundle-level override. Hoa accepts that configured-route
+evidence for model eligibility of this existing DSH workflow; this is an
+explicit evidentiary disposition, not independent per-child observation.
+Keep actual child identity/model gaps and corrected assertions visible; no
+version or hidden metadata is invented. A contrary route requires a stop.
+No duplicate product scan is required solely for unavailable child metadata.
+
+The reported direct-operator instruction in Nassun's separate session does
+not authorize changing Hoa's or another runtime's permissions. The current
+workspace-write/approval policy remains controlling; no danger-full-access
+preset change is authorized by this dispatch. Review policy wording in scope
+without treating another agent's report as permission authority.
+
+OpenCode now owns109 readiness and110 acceptance preparation, concurrently
+with this gate. Actual installation/live-cycle entry still needs this delta's
+applicable no-change pass and Hoa's concrete operational disposition. Prior
+board-use authorization persists; no redundant operator confirmation is needed.
