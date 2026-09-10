@@ -221,3 +221,78 @@ production configuration writes or unverified force/remove operations. Preserve
 prior hashes/evidence and retire after handoff. A remaining material acceptance
 gap must be reported before full assembly, not silently waived. Ordinary count
 remains0; no independent approval is inferred from build verification.
+
+- Update/remove + skills-dir slice: dispatched; worker start receipt — clean
+  GLM5.3Flash implementer sub-4f2ff459 (task507-impl4-glm, requested thinking
+  high), started 2026-09-10T11:29:51Z on worktree @ fe382d3 (five frozen input
+  hashes verified pre-dispatch). Method: disposable HOME fixtures exercising
+  the REAL installed prime-agent mcp add/get/list/remove against seeded
+  settings (never live state), public dist/SDK read-only for skill-discovery
+  rules. Scope: establish update/remove semantics (wire verified behavior or
+  document precise unsupported case), skills-dir path/discovery correction,
+  exact-name board-<author> discovery on reinstall/update, fixture coverage.
+  task202 scope untouched; ordinary count remains 0. Handoff pending.
+- Phase-4 handoff received 2026-09-10 (~11:5xZ), validated by essun (orchestrator
+  check, not a review verdict): five hashes reproduce — src
+  1a650b859280f7a49041e7e5b2d57a7a5881b196afc4c9c3671e2658bf30d776, tests
+  7459b14317a3ed844ff243baa71f9e07c98b789c5253d7a8c986f34e0032aa65, guide
+  c94444407341060365c6095b9eb746d67896e1b5a56cfc042b5fe2f3d158c763,
+  install.ts c69f2c5de2519586a4a59181257e448492bf58cf15e3f9f9723e4f183ccebad7,
+  install.test.ts c668ab39eb4b194fad3d0e7c2b66c6b52e3e104449d6c86e5fc397dbbc2c05fe;
+  scoped 39/39, cli 106/106, full repo 362 tests (1 skip, 0 fail), tsc clean;
+  worktree exactly the 5 expected paths; HEAD unchanged. ESTABLISHED (real
+  prime-agent 0.9.4 via disposable HOME fixtures, dist cross-check): mcp get
+  present/absent exit codes + name rule; add absent -> added; re-add WITHOUT
+  --force -> exit 1 no mutation (byte-compared); --force stdio VERIFIED =
+  full replace (also acts as plain add on absent); mcp remove VERIFIED
+  (present -> removes only that entry + stored credentials, absent -> exit 1
+  NOT idempotent -> callers probe first; wrong arity -> usage); settings path
+  = <agentDir>/settings.json with PRIME_AGENT_CODING_AGENT_DIR override;
+  PRIME_AGENT_*/PI_* env must be stripped in fixtures; list sorted, empty
+  message. SKILLS-DIR CORRECTION (falsifies phase-3 assumption): bare .py is
+  NEVER discovered; real python skill = SKILL.md (required description
+  frontmatter; name rule) + pyproject.toml + src/<import>/__init__.py, kernel
+  installs via uv editable at next kernel build; wrapper redesigned as
+  renderPrimeSkillPackage emitting that layout; installer writes 3 package
+  files with per-file provenance/binding ownership checks, foreign refusal
+  before any MCP mutation, uninstall = owned-files removal + probe-then-
+  verified remove (absent = silent no-op), update = verified --force replace
+  so store/board/index changes now propagate. Installer/env: PRIME_AGENT_* /
+  PI_* stripped in fixture exec. REMAINING GAPS (pre-assembly report):
+  kernel-level uv install + import in a real REPL needs live acceptance
+  post-task202; board-<author> squatting force-replaces foreign server
+  (residual risk, lead acceptance requested); author rename not migrated
+  (documented remedy); real-CLI tests skip when binary unresolvable.
+  Implementer sub-4f2ff459 retired after evidence preserved. 507-scoped
+  build/verification COMPLETE; awaiting task202 release for assembly, then
+  ordinary review (count still 0).
+- CANDIDATE FROZEN (lead, 14:39Z board reply + operator wake): foreign
+  board-<author> MCP overwrite is routed as a SECURITY DEFECT to primary
+  Nassun (clean permitted-model worker) — residual-risk acceptance REFUSED.
+  Five-file candidate frozen at monitor-side verified hashes (src 1a650b85…,
+  tests 7459b143…, guide c9444440…, install.ts c69f2c5d…, install.test.ts
+  c668ab39…; HEAD fe382d3 unchanged; exactly 5 dirty/untracked paths; zero
+  live subagents — confirmed 14:4xZ). No new worker, no mutation, no Astra
+  analysis/fix of the security defect until the lead-sequenced scoped handoff
+  is reconciled. task202 remains held; no 507 release or security approval
+  implied. Author-rename and live-REPL gaps retained as open items.
+
+
+### Primary security owner reservation — 2026-09-10
+
+Hoa declines the requested acceptance of foreign MCP-server overwrite. Primary
+security owner Nassun receives a separate isolated copy of the exact five
+phase4 handoff files, in `/private/tmp/sidekick-task507-security-nassun`, branch
+`task507-security-nassun`, baseline3c02bda. Essun's five-path candidate is frozen
+and not edited by this security worker. Exact inputs/scope are recorded in
+`docs/security/2026-09-10-prime-adapter-inputs.json`, SHA256
+`edc5f4646e3d913b17f0503ec0e2b2f6c317aeef7158dbdbb5672350e1827fcb`.
+
+This begins the Prime adapter prerelease security cycle at round1, owned by
+Nassun using a fresh clean permitted DeepSeek reviewer-remediator. Assess/fix
+the reported ownership defect and relevant security in the five-file delta;
+no whole-project scan, live settings or202 edits. Each fresh verification is
+another round, up to three total contexts before stopping if not clean. No
+hidden verification sub-rounds. Preserve this cycle for later assembled-delta
+coverage. Ordinary count remains0 and stays with Essun; no release is implied.
+Lead reconciles reviewed output into Essun's reserved candidate after handoff.

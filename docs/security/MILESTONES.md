@@ -633,3 +633,21 @@ integration/CI, this clears the governance entry gate for109/110; concrete
 separate-process configuration, actual fresh presence, delivery/observer setup
 and a new real cycle still have to pass. Bus fallback and149's background
 volume-access hold remain. No acceptance or successful rollout is inferred.
+
+
+### Prime adapter prerelease reservation — 2026-09-10
+
+Nassun owns security round1 over task507's exact five-file phase4 build overlay
+on3c02bda, including the owner-reported foreign MCP-server overwrite. Scope
+and pins: [input manifest](2026-09-10-prime-adapter-inputs.json), SHA256
+edc5f4646e3d913b17f0503ec0e2b2f6c317aeef7158dbdbb5672350e1827fcb.
+Separate worktree `task507-security-nassun`; Essun's candidate stays frozen.
+No residual-risk acceptance has been granted. Fresh DeepSeek reviewer fixes
+its own scoped findings, checks and retires; fresh verification increments
+the cumulative cycle, rounds1-3 maximum before a stop if not clean. Later
+assembly with202 needs relevant delta verification without resetting this
+cycle. No operational Prime install/release is authorized by the reservation.
+
+Governance integration3c02bda passed CI34490590683 and packaging34490590858.
+Its entry gate is cleared;109/110 remain in concrete configuration/readiness
+work, with no actual new acceptance launch recorded.

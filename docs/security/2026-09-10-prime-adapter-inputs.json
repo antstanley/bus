@@ -1,0 +1,42 @@
+{
+  "milestone": "Prime adapter prerelease security",
+  "parent_task": 507,
+  "reviewer_owner": "nassun",
+  "allowed_model": "deepseek-flash or any DeepSeek model",
+  "cumulative_security_round": 1,
+  "baseline_revision": "3c02bda76e9abb27a5675f3acd3b3bee90fceef6",
+  "candidate_kind": "five-file owner handoff overlay on baseline; exact hashes are authoritative",
+  "isolated_worktree": "/private/tmp/sidekick-task507-security-nassun",
+  "writable_paths": [
+    "packages/cli/src/prime-agent.ts",
+    "packages/cli/test/prime-agent.test.ts",
+    "docs/guides/prime-agent.md",
+    "packages/cli/src/install.ts",
+    "packages/cli/test/install.test.ts"
+  ],
+  "hashes": {
+    "packages/cli/src/prime-agent.ts": "1a650b859280f7a49041e7e5b2d57a7a5881b196afc4c9c3671e2658bf30d776",
+    "packages/cli/test/prime-agent.test.ts": "7459b14317a3ed844ff243baa71f9e07c98b789c5253d7a8c986f34e0032aa65",
+    "docs/guides/prime-agent.md": "c94444407341060365c6095b9eb746d67896e1b5a56cfc042b5fe2f3d158c763",
+    "packages/cli/src/install.ts": "c69f2c5de2519586a4a59181257e448492bf58cf15e3f9f9723e4f183ccebad7",
+    "packages/cli/test/install.test.ts": "c668ab39eb4b194fad3d0e7c2b66c6b52e3e104449d6c86e5fc397dbbc2c05fe"
+  },
+  "reported_finding": "Owner reports that update using --force can replace a foreign MCP server that already occupies board-<author>; no residual-risk acceptance given.",
+  "read_only_context": [
+    "DESIGN.md",
+    "docs/research/04-trust.md",
+    "docs/security/MILESTONES.md",
+    "backlog/507-prime-agent-adapter-daemon-send-wake.md"
+  ],
+  "report_path": "docs/security/2026-09-10-prime-adapter-round1.md",
+  "constraints": [
+    "Fresh clean DeepSeek reviewer-remediator; no inherited conversation.",
+    "Assess/fix reported ownership defect and relevant security in this frozen five-file adapter delta; no whole-project rescan.",
+    "Use disposable fixtures only; no live settings/credentials/board/permission/install/restart changes.",
+    "No edits to task202 core/CLI entrypoint/MCP paths or to Essun shared candidate.",
+    "Record exact input/output hashes, actual routing evidence, findings/fixes/checks, worker identity and retirement.",
+    "Each fresh verification is a NEW security round: at most rounds1,2,3 in this adapter cycle, then stop if not clean; never hide verification inside an earlier round.",
+    "Changed bytes require a fresh permitted-model reviewer. No ordinary correctness approval or operational release is inferred.",
+    "Complete assembly after task202 will require applicable delta verification, preserving this cycle and counts."
+  ]
+}
