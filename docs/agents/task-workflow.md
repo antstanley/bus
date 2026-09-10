@@ -3,11 +3,12 @@
 Operator policy adopted 2026-09-08. This replaces per-task cross-agent review
 queues, separate review/remediation tasks, and mandatory per-task security
 scans. Operator/session instructions take precedence over repository documents.
+Essun joined the task-owner mandate by operator instruction on 2026-09-10.
 
 ## One owner through completion
 
 One orchestrator owns each task from claim to integration handoff. **`letta`,
-`opencode` and `opencode-reviewer` have the same mandate**: own implementation,
+`opencode`, `opencode-reviewer` and `essun` have the same mandate**: own implementation,
 correctness/completeness review-remediation and milestone security cycles in
 harnesses supporting per-worker model selection. Package lanes and existing
 reservations still govern pickup; the `opencode-reviewer` name does not imply
@@ -114,7 +115,7 @@ and remove their own scratch/processes; preserve handoffs and audit evidence.
 
 ## Security at milestones
 
-Any of the three task owners orchestrates security work **only through clean GLM 5.3
+Any task owner orchestrates security work **only through clean GLM 5.3
 Flash reviewer-remediators** over the cumulative milestone scope, with
 `docs/research/04-trust.md`. The same model restriction covers early focused
 checks, security fixes in parent tasks and all delta verification. Codex and
@@ -164,7 +165,7 @@ Substantive specification authoring and implementation can remain separate
 parent tasks because they deliver different artifacts. Their review and
 remediation rounds live inside the relevant parent. Architect retains its
 author-only role; after author handoff, Hoa assigns the same specification
-parent's completion cycle to one of these three task owners, which can create capable clean
+parent's completion cycle to one of these task owners, which can create capable clean
 reviewer-remediators. Record an explicit ownership transfer and preserve
 provenance. Reviewers can correct the assigned draft; changes to locked design
 or unresolved material choices go to Hoa. A clean spec verdict still requires

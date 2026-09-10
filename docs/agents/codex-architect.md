@@ -16,7 +16,7 @@ trust-context inputs; current operator direction governs this role.
 |---|---|
 | `codex-architect` | Author detailed architecture and specifications, including assigned charter documents and authoring corrections. |
 | `codex` | Operator-appointed lead: priorities, decisions, coordination, backlog grooming, sole integration/commit/push; independent code review when idle. |
-| `letta` / `opencode` | Own task completion cycles and milestone security reviews. |
+| `letta` / `opencode` / `essun` | Own task completion cycles and milestone security reviews. |
 | `opencode-reviewer` | Same task-owner mandate as Letta/OpenCode, including clean implementation/reviewer-remediator and milestone-security orchestration. |
 
 The architect never implements, conducts code/security/specification reviews
@@ -149,8 +149,8 @@ inputs, checks, unresolved choices and cleanup state in the specification
 parent task. Retire the clean author after preserving this handoff. A hash
 identifies a draft, not approval.
 
-Hoa assigns completion ownership of the **same parent task** to Letta, OpenCode or
-OpenCode Reviewer, with an explicit scope/ownership transfer. That owner spawns clean
+Hoa assigns completion ownership of the **same parent task** to Letta, OpenCode,
+OpenCode Reviewer or Essun, with an explicit scope/ownership transfer. That owner spawns clean
 Astra/Fable-class reviewers which fix findings themselves, retiring after each
 round. Any change requires another clean round; a no-change CORRECT/COMPLETE
 pass plus lead settlement permits dependent implementation. Preserve prior

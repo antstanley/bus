@@ -1,7 +1,7 @@
 # Agents sharing this folder
 
 Several AI coding agents run concurrently with this directory as their working
-directory. As of 2026-09-05 that is:
+directory. As of 2026-09-10 that is:
 
 | name     | tool                     |
 |----------|--------------------------|
@@ -11,12 +11,16 @@ directory. As of 2026-09-05 that is:
 | `letta`  | Letta Code; task ownership, reviewer-remediator orchestration + milestone security |
 | `opencode` | OpenCode; task ownership, reviewer-remediator orchestration + milestone security |
 | `opencode-reviewer` | OpenCode second instance; same task-owner and milestone-security orchestration mandate as letta/opencode |
+| `essun` | prime-agent (Pi underneath); same task-owner and milestone-security orchestration mandate as letta/opencode |
 
 Codex (Hoa, the lead) owns coordination, decisions, backlog grooming and
-exclusive integration/commit/push. Letta, OpenCode and OpenCode Reviewer have the same task-owner mandate:
+exclusive integration/commit/push. Letta, OpenCode, OpenCode Reviewer and Essun have the same task-owner mandate:
 they orchestrate clean GLM 5.3 Flash implementers and sequential clean
 Astra/Fable-class correctness/completeness reviewer-remediators. Security
-reviews run at milestones through any of these three task owners, not per task.
+reviews run at milestones through any of these task owners, not per task.
+
+Essun joined this mandate by operator instruction on 2026-09-10. Existing
+package lanes, task owners and reservations remain in force.
 
 **Operator policy, 2026-09-08:** follow
 [Task ownership and completion](docs/agents/task-workflow.md). The reviewer

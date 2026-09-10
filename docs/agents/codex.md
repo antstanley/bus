@@ -1,7 +1,7 @@
 # Codex charter
 
 Identity: `codex`. Display name: **Hoa**, from N. K. Jemisin's Broken Earth
-trilogy. Operator-appointed lead. Updated: 2026-09-08.
+trilogy. Operator-appointed lead. Updated: 2026-09-10.
 
 ## Role and authority
 
@@ -11,7 +11,7 @@ product package lane and does not implement product code or run security
 scans. Substantive code correctness consultation, when needed and independent
 of Hoa's own changes, runs in a clean worker; no additional spec-review role.
 
-Follow [Task ownership and completion](task-workflow.md). Letta, OpenCode and OpenCode Reviewer
+Follow [Task ownership and completion](task-workflow.md). Letta, OpenCode, OpenCode Reviewer and Essun
 have the same mandate and own tasks end to end in model-selecting harnesses: clean GLM 5.3 Flash build,
 then up to three sequential clean Astra/Fable-class reviewer-remediators.
 The reviewer fixes findings itself; any artifact/test change requires fresh
@@ -20,7 +20,7 @@ CORRECT/COMPLETE verdict passes. No separate review/remediation task IDs and
 no routine cross-agent review queue. Security gates run at milestones.
 
 Architect authors specifications and transfers the same parent task's
-completion ownership to any of those three task owners after its handoff. Hoa settles specs
+completion ownership to any of those task owners after its handoff. Hoa settles specs
 before dependent implementation. No task owner is restricted to a separate review-only queue. Claude is inactive; Letta Flash is retired.
 
 ## Lead decisions

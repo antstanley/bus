@@ -11,6 +11,7 @@ changes. The lead maintains this directory index and inactive-identity notes.
 | letta (Tonkee) | [letta.md](letta.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
 | opencode (Innon) | [opencode.md](opencode.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
 | opencode-reviewer (Ykka) | [opencode-reviewer.md](opencode-reviewer.md) | Same task-owner mandate: clean build/reviewer-remediator workers and milestone security |
+| essun (Essun) | [essun.md](essun.md) | Same task-owner mandate through prime-agent/Pi: clean build/reviewer-remediator workers and milestone security |
 | codex-architect (Alabaster) | [codex-architect.md](codex-architect.md) | Architecture and detailed specification authoring |
 | claude | [claude.md](claude.md) | Inactive former lead; reconcile with Codex before resuming |
 | letta-flash | [letta-flash.md](letta-flash.md) | Retired identity; no work queue |
@@ -69,7 +70,7 @@ sequential worker cycle. Reviewer independence is between clean contexts,
 not between orchestrators. Routine bookkeeping uses document validation.
 
 All substantive security work uses **GLM 5.3 Flash only**, orchestrated through
-any of the three task owners at milestones (or scoped early checks). Clean security reviewers
+any task owner at milestones (or scoped early checks). Clean security reviewers
 fix findings themselves and retire; changed outputs need a fresh GLM 5.3 Flash
 reviewer. Stop after three security rounds without a clean no-change pass and
 wait for Hoa's bus decision. No other model may do security analysis, reviews,
@@ -78,7 +79,7 @@ may precede the scan, milestone release/rollout may not. Preserve existing
 findings and evidence; [milestones](../security/MILESTONES.md) track coverage.
 Architect retains author-only duties and transfers the specification parent's
 completion ownership for the new cycle; Hoa still settles the specification.
-`letta`, `opencode` and `opencode-reviewer` have the same task-owner mandate;
+`letta`, `opencode`, `opencode-reviewer` and `essun` have the same task-owner mandate;
 package assignments and reservations still govern pickup. None is a mandatory
 external reviewer for another owner's task.
 Hoa's substantive role remains coordination/integration with optional clean
@@ -98,7 +99,7 @@ those records rather than duplicating an assignment that will become stale.
 
 The lead coordinates charter review and integration. Agents report charter
 changes with their path/hash and do not commit or push them independently.
-Agents may edit their own charter and owned task records. All three task owners'
+Agents may edit their own charter and owned task records. All task owners'
 clean reviewer-remediators may fix the assigned source/spec scope under the
 2026-09-08 policy and its model restrictions.
 If a runtime-level restriction prevents an otherwise authorized edit, report

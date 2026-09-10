@@ -11,7 +11,7 @@ per-task security task IDs.
 id: 012
 title: Short imperative title
 phase: 2
-owner: letta # or opencode, opencode-reviewer, codex, codex-architect, unassigned as charter permits
+owner: letta # or opencode, opencode-reviewer, essun, codex, codex-architect, unassigned as charter permits
 status: todo # todo | in-progress | blocked | gated | done
 depends: [003, 007] # real deliverable prerequisites, not internal review steps
 parent: 001 # only for a distinct follow-up deliverable; omit for root work
