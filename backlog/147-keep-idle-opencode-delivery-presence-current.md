@@ -367,7 +367,7 @@ cleanup completed, no persistent worker-created processes. About2 minutes
 elapsed; aggregate usage/cost unavailable. Disposable reviewer session and
 owner runner/logs retired after evidence capture; lead-owned candidate retained.
 
-Task gated for Hoa integration, not done/live-adopted. Main source, installed
+At ordinary round2 handoff, task was gated for Hoa integration, not done/live-adopted. Main source, installed
 configuration and rollout holds remain untouched. Cumulative security round3
 for applicable147/148 deltas still awaits explicit lead scope/assignment; no
 security worker or acceptance is inferred from ordinary success. Historical
@@ -383,6 +383,36 @@ delivery or recipient-processing proof. Latest bounded board-read cursor:
 
 Hoa adopted the two exact ordinary-round2 hashes onto main. Neither target
 file had changed between owner baseline97629f4 and main faba3c3. Owner root
-validation remains applicable; commit/push/CI and candidate cleanup pending.
+validation remains applicable. Integration was committed and pushed as
+`9219b76fae64ed5032f1250be73038dcf0d38f6e`. Owner independently hashed both
+files from that exact commit and matched the frozen round2 pins above.
+Read-only GitHub checks confirmed both runs completed successfully at that
+same head SHA:
+- CI: `34462055855`, conclusion success.
+- CLI packaging: `34462055898`, conclusion success.
+
 Source integration does not authorize installed configuration changes or
 clear the existing milestone rollout hold.
+
+### Post-integration owner cleanup
+
+Owner rechecked the isolated checkout: only the two expected tracked candidate
+modifications remain, each byte-identical to the integrated commit; no
+untracked scratch. The approved coordinator temp directory is empty. All
+eight tracked task author/recovery/reviewer runner and worker PIDs are absent;
+their disposable sessions were deleted after recorded handoffs. Identified
+author repro fixtures and all owner runner/log/export files were removed;
+reviewer test teardown completed. No additional worker or tests were started.
+
+No owner-created branch/worktree needs removal. The lead-created isolated
+checkout `task147-idle-presence` remains deliberately retained for Hoa's
+removal after this confirmation; the owner did not remove it or touch other
+agents' worktrees. Live participant configuration, board replicas and watcher
+state remain intact. Historical author deviations and ordinary count2/3 are
+preserved. Status stays **gated** pending applicable milestone/live acceptance;
+no rollout, installer reapplication or successful automatic-delivery claim.
+
+Lead cleanup complete: after owner confirmation and exact equality checks
+against9219b76, Hoa removed the isolated task147 worktree and local branch.
+Source integration, CI and cleanup are complete; status remains gated solely
+for the recorded operational acceptance/milestone boundary.

@@ -393,3 +393,14 @@ board replica. A queued notification is not evidence of a processed wake;
 record real lead-session receipt. Existing remote-board final-cycle counts,
 coverage and rollout holds are unchanged. This entry is assignment metadata,
 not a security assessment or activation approval.
+
+### Task147 source integration; rollout coverage pending — 2026-09-10
+
+Hoa integrated the exact ordinary-round2 installer/test hashes from task147
+in9219b76fae64ed5032f1250be73038dcf0d38f6e. Root validation and independent
+no-change correctness evidence are in the parent; CI34462055855 and packaging
+34462055898 passed. This adds packages/cli/src/install.ts and its installer
+test to the uncovered remote-board operational delta already containing148.
+No installed configuration was changed. Applicable cumulative security
+round3 still needs an explicit frozen scope and GLM5.3Flash assignment before
+operational rollout; previous coverage, findings and holds remain.
