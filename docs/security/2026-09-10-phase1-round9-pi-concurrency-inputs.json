@@ -1,0 +1,18 @@
+{
+  "milestone": "phase1",
+  "parent_task": 150,
+  "owner": "nassun",
+  "completion_owner": "opencode",
+  "baseline": "f91723627ccf0a96af897a2512ab555dabfb1d02",
+  "worktree": "/private/tmp/sidekick-task150-security-nassun",
+  "security_round": 9,
+  "prior_security_rounds": 8,
+  "reserved_verification_round": 10,
+  "allowed_model": "deepseek-flash or any DeepSeek model",
+  "scope": {
+    "packages/cli/src/install.ts": "e54b2504c7feeb8050511d6a23e8d20c6f0d1f5c40b6716d628198486f22724d",
+    "packages/cli/test/install.test.ts": "24a812add64723ebb1544fec628ef002c266b5e1e41fcf92e699961adf863e75"
+  },
+  "report_path": "docs/security/2026-09-10-phase1-round9-pi-concurrency-report.md",
+  "stop_rule": "One clean R9 reviewer-remediator then retire; R10 reserved after ordinary handoff, no R11/nested verifier. Scope Pi only, preserve OpenCode fix. No live changes or other reserved worktrees."
+}

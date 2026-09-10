@@ -1,0 +1,46 @@
+{
+  "worktree": "/private/tmp/sidekick-task147-security-nassun",
+  "files": [
+    {
+      "worktree_path": "backlog/147-keep-idle-opencode-delivery-presence-current.md",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round7-parent-input.txt",
+      "sha256": "4377ea51095ad0301acc003d2804722d27b515c65f9dc5231bafd834d9b4cbd1"
+    },
+    {
+      "worktree_path": "docs/security/2026-09-10-phase1-round7-hook-concurrency-inputs.json",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round7-hook-concurrency-inputs.json",
+      "sha256": "ec9ef028b256637a0645ac24c47b376149bc5a0783212625f93f390a237e533e"
+    },
+    {
+      "worktree_path": "docs/security/2026-09-10-phase1-round7-hook-concurrency-report.md",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round7-hook-concurrency-report.md",
+      "sha256": "31949f40f61b6437184733e40f32fc9341a4291ba4294acce4aae548d3c0b824"
+    },
+    {
+      "worktree_path": "docs/security/2026-09-10-phase1-round7-reported-concurrency.json",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round7-reported-concurrency.json",
+      "sha256": "c4c1c64743060b43ae8fc0229d8d37e8f9de1891ff6af8855c70b82f0864c515"
+    },
+    {
+      "worktree_path": "docs/security/2026-09-10-phase1-round8-hook-concurrency-inputs.json",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round8-hook-concurrency-inputs.json",
+      "sha256": "59eeb74de186d9d7ba5a4beb2aaa07aea724c07d08efcdbacbeb39c5ddb27428"
+    },
+    {
+      "worktree_path": "docs/security/2026-09-10-phase1-round8-hook-concurrency-report.md",
+      "retained_repo_path": "docs/security/2026-09-10-phase1-round8-hook-concurrency-report.md",
+      "sha256": "488e0a6db36b945eed7f86850f3b379ae8fffee28b680df4a89a79552730e73a"
+    },
+    {
+      "worktree_path": "packages/cli/src/install.ts",
+      "retained_repo_path": "packages/cli/src/install.ts",
+      "sha256": "e54b2504c7feeb8050511d6a23e8d20c6f0d1f5c40b6716d628198486f22724d"
+    },
+    {
+      "worktree_path": "packages/cli/test/install.test.ts",
+      "retained_repo_path": "packages/cli/test/install.test.ts",
+      "sha256": "24a812add64723ebb1544fec628ef002c266b5e1e41fcf92e699961adf863e75"
+    }
+  ],
+  "ignored_paths_note": "Only node_modules dependency directories are ignored; no other ignored scratch paths were reported by git status --short --ignored. Dependency installs are reproducible from the frozen lockfile."
+}

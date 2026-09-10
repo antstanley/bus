@@ -56,6 +56,8 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 
 | 149 | [Periodically check board and legacy inbox and wake the lead](149-codex-coordination-monitor.md) | essun | blocked | S |
 
+| 150 | [Pi adapter shared-replica hook child serialization](150-pi-hook-child-serialization.md) | opencode | in-progress | S |
+
 ## Phase 2
 
 | id | task | owner | status | est |

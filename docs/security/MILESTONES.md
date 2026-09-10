@@ -778,3 +778,13 @@ observation, which remains separate and excluded from new activation here.
 Status gated pending integration CI and operational acceptance; no liveapply,
 restart or new monitor. Retain candidate until output/report retention checks
 and cleanup confirmation. Updated pinned runtime is provisioned after CI.
+
+### Pi follow-up frozen — task150, 2026-09-10
+
+Open/unmeasured Pi callback concurrency observation is now an independently
+deliverable task150, baselinef917236 after clean task147 ordinary3/security8
+and passed CI. Nassun primary handles phase1R9 in isolated task150 worktree;
+OpenCode retains ordinary completion ownership, then reserved securityR10
+after final ordinary handoff. Manifest:2026-09-10-phase1-round9-pi-concurrency-inputs.json.
+No reset of phase1 counts, no R11/nested verifier. Pi activation held; this
+work cannot alter the pinned OpenCode-only109/110 runtime. See parent150 scope.

@@ -910,3 +910,62 @@ All hook children must be proven serialized before activation. No live config
 or restart was performed. Runtime preparation remains pinned to detached
 /private/tmp/sidekick-phase1-runtime-3c02bda at
 3c02bda76e9abb27a5675f3acd3b3bee90fceef6, including resolved package imports.
+
+### R7 sequencing and managed-entry migration proposal
+
+Owner read board decisions `01M266Z21N7YNX2EP35NSACY1T` and
+`01M266Z8CJZTFVJ7PANCCZXB6A`: Nassun owns isolated147 phase1 R7, then owner
+ordinary R3, then reserved Nassun R8. No duplicate source fix. Production home
+`/Users/stan` is directly supplied for future generation, not externally read.
+Final config regeneration remains held for reviewed source and lead disposition.
+The previous completed config session is absent/retired; generated artifacts
+and failure evidence are retained, not applied.
+
+Fresh plan-only GLM worker `ses_f737ccf54ffeCFOP1yG2jK52DT`, exported runtime
+`zai-coding-plan/glm-5.3-flash`, runner77865/worker77873, returned a text-only
+mapping/quiescence proposal. About6 minutes elapsed. It performed read-only
+pinned-source/artifact and public Codex help inspection, no writes, final
+generation, live actions, denied reads/cleanup or source fixes. Start receipt
+`01M268A5GQJYKKSEARG8Z3XF1B` records the distinct plan-only context.
+
+The exact GLM JSON Patch was mechanically persisted as
+`.task109-config-prep/managed-mcp-migration.json` in the pinned runtime checkout.
+Its SHA256 `804fce2b5ef56a81fecc74743cd4d3543fca8b406772e7af4f65911fa68806aa`
+equals the hash extracted from the worker's JSON block. It is a PROPOSAL,
+not an applied/live patch or an approval to execute:
+- First test exact historical `/mcp/board` object (old main mcpPath, shared
+  board-data store, opencode/team, old index and enabled/environment fields).
+- Replace only that object with PlanA's board definition: pinned-runtime
+  mcpPath, supplied distinct MCP store and index. Do not apply the whole plan
+  or remove similarly named servers; preserve all non-board siblings.
+- At actual entry, revalidate the known preimage/hash and current state. On
+  mismatch, stop/reconcile rather than force or pattern-delete `board-bus`.
+  The historical3835b0ff file pin is not a fresh live observation.
+
+Plugin replacement remains a guarded manifest, not fabricated future bytes:
+target `.opencode/plugins/board.ts`, historical preimage656b229e plus managed
+marker and old main hookPath; replacement ONLY final reviewed regenerated B,
+with production registryDir `/Users/stan/.board/sessions/opencode`, supplied
+hook store/index and reviewed pinned hook source. Final B hash is TBD; fixture
+e26214e6 must never be applied. Reconcile stock old-path refusal explicitly;
+no force/guard bypass. Any worker-proposed uninstall through moving old main
+is NOT an approved execution route under the source freeze. Hoa must settle
+the precise permitted managed-entry transition; no whole B-then-A application.
+
+Public Codex help documents per-invocation `-c` dotted-key overrides, profile
+selection and resume mechanisms. Specific MCP/hook override keys/profile
+layout were not validated against a live/private configuration, and no custom
+per-process launcher was verified. These remain proposal capabilities, not
+executable-ready client commands. Root must assign distinct Codex client/MCP/
+hook slots (no reuse of OpenCode slots), schedule operator-controlled normal
+quiescence at safe handoffs, and validate per-client overrides/bindings before
+resumption. A single global definition cannot isolate multiple retained clients
+by itself. No user process was killed or global setting changed.
+
+Ordinary147 R3 subsequently passed unchanged; handoff
+`01M268VHXW5Y51JQASKKKWNKXN` supplies exact e54b2504/24a812ad output pins for
+the reserved Nassun R8. This does not relabel R7 clean or release source/config
+activation. The selected605 Unreleased-only slice remains unstarted. Old
+denied operations and original unsuccessful trial remain recorded.
+
+Lead runtime release: task147 serialization fix f91723627ccf0a96af897a2512ab555dabfb1d02 passed CI34514745038/packaging34514744946. New detached operational prep pin /private/tmp/sidekick-phase1-runtime-f917236 provisioned; final outputs must use this source rather than prior3c02 pin. Same assigned separateMCP/hook stores/indexes and production registryHome /Users/stan. Preserve priorplans; no liveapply/restart yet. Pi followup task150 is isolated and cannot alter this runtime.

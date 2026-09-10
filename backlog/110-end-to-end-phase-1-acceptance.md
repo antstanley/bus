@@ -331,3 +331,5 @@ Future605 Unreleased-only changelog slice is selected by Hoa; no authoring or
 new request/stage has begun. Prior failed cycle, counts, human/API accounting
 and rollout conditions remain intact. Config-only handoff publication
 `01M266RJEWXR0Y98PAM8MAJJJH` is coordination evidence, not live acceptance.
+
+Lead runtime release: task147 serialization fix f91723627ccf0a96af897a2512ab555dabfb1d02 passed CI34514745038/packaging34514744946. New detached operational prep pin /private/tmp/sidekick-phase1-runtime-f917236 provisioned; final outputs must use this source rather than prior3c02 pin. Same assigned separateMCP/hook stores/indexes and production registryHome /Users/stan. Preserve priorplans; no liveapply/restart yet. Pi followup task150 is isolated and cannot alter this runtime.

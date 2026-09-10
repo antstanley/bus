@@ -320,3 +320,5 @@ handoff. Accepted R5 A/B non-defect dispositions remain limited to the recorded
 same-user/trusted-projectRoot assumptions, not a generalized risk waiver.
 
 Lead audit integration/cleanup: reports and acceptance pushed at569aa94; CI34509030718 and packaging34509030914 passed. Exact retained-copy checks completed for all five final files and all six reports/manifest. Completed task507-security-nassun worktree and branch removed by Hoa; Essun candidate remains. Separate phase1 audit worktree/bundles retained pending their own reconciliation. No full task completion or rollout inferred.
+
+Assembly constraint: main installer advanced at f917236 with reviewed OpenCode-hook serialization. The frozen507 candidate predates that delta; eventual202-enabled assembly must reconcile it and preserve the new behavior, not overwrite main with the old installer. Applicable merged delta review remains required.
