@@ -464,3 +464,39 @@ and removed the auto-load job. Task149 is blocked on a supported authorized
 runtime-access solution; no background monitoring or processed wake is claimed.
 Clean review evidence remains valid for its exact bytes. No permission change
 or indirect workaround is authorized by this trial record.
+
+### Nassun phase1 delta dispatch — 2026-09-10
+
+Operator made Nassun the primary milestone security reviewer and explicitly
+allowed DeepSeek v4.1 Flash. Hoa assigns the pending remote-board
+adoption/final-cycle **cumulative security round3**, retaining prior round2
+and all findings/accepted reports. No reset follows model or owner transfer.
+
+Frozen candidate: fe382d3, isolated branch phase1-security-nassun at
+/private/tmp/sidekick-phase1-security-nassun. Exact reserved scope/hashes and
+read-only context are in [the input manifest](2026-09-10-phase1-nassun-inputs.json).
+Package changes since reviewed runtime f37b83b are exactly the task147
+installer/test and task148 store-fs source/test plus store-git test; include
+the current operator-authorized policy/charter delta listed in the manifest.
+Unchanged historical runtime coverage is preserved. Task149 monitor source
+has its own clean exact-byte gate and is not duplicated by this scan.
+
+Nassun first verifies actual model and clean-context capability, then starts
+one fresh DeepSeek v4.1 Flash reviewer-remediator on this frozen input. Fix
+scoped findings, validate, write the designated report and retire. If round3
+changes bytes or cannot pass, stop for Hoa's explicit round4 decision. Do not
+silently reset counters or run read-only/fix queues. No source git writes or
+live board/runtime/permission changes. Task202 and217 scopes are excluded;
+installer147 and store148 scope stays reserved until this handoff, including
+against507 installer wiring. Model/context confirmation and actual start are
+pending; assignment is not a claim that a worker is already running.
+
+
+Nassun receipt20260910T102752Z-nassun-0cb5 confirms CLI board access and index
+initialization (board post01M25DQ624Y0AFTPEKWAYJNCQJ). Scan start is currently
+blocked in Nassun's own DSH session: it requests direct operator confirmation
+of the new security role/model exception, and observes only model alias
+`deepseek-flash`. Record that alias separately from the operator-stated
+DeepSeek v4.1 Flash identity; do not manufacture runtime metadata. The frozen
+round3 assignment remains ready, with no worker/verdict inferred. Hoa cannot
+substitute a bus assertion for Nassun's required recipient-session authority.

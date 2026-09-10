@@ -87,7 +87,43 @@ open-ended discovery-only run.
 
 ## Completion evidence
 
-- Implementation: dispatched; worker start receipt pending.
-- Ordinary review rounds: 0; no verdict.
+- Implementation: clean GLM implementer dispatched — worker sub-1d54087e (task507-impl-glm, zai/glm-5.3-flash, requested thinking high), started 2026-09-10T08:15:16Z on worktree task507-prime-agent baseline 8f475c2e000e408335ecd28939421d1c5af145fa (clean). Scope: new packages/cli/src/prime-agent.ts, packages/cli/test/prime-agent.test.ts, docs/guides/prime-agent.md only; held seams 147/202 untouched. Handoff received and validated — see implementation bullet below. Runtime facts handed to worker, with lead correction 08:17Z: only basic `prime-agent send <agent-id> <message>` is execution-confirmed — installed help is stale, `--follow-up` FAILED on real execution (Unknown option), `--steer`/`--json`/`--follow-up` count as unverified unless probed by the worker; mcp-add stdio grammar verified. Absent ~/.prime/agent/extensions and ~/.pi mean directories absent only; extension compatibility/path behavior is UNVERIFIED, not false (earlier 'false here' wording withdrawn). Thinking levels remain requested settings only.
+- Implementation handoff received 2026-09-10, independently validated by essun (orchestrator check, not a review verdict): hashes reproduce — src b71f96d0a1681f215269d04cabebb985f47f0cabdcb5897667997d907d3f38f5, test d3dfd362d26a663e52c39dace38ca841a5cfea82f5a8e171d0689930b13475bb, guide c1e4b5a94a2f4a561d89ccd24bb296ee9ef85be477dc1d1e7a399e3c48da951e; scoped tests 25 pass/0 fail (56 expects), cli regression 83 pass/0 fail (4 files), bunx tsc --noEmit rc 0; git diff vs baseline on held 147/202 paths empty. Worker runtime contract re-probed post-correction: send <agent> <message> exec+live; --from/--json parse-accepted; --steer and --follow-up PARSE-REJECTED (installed help stale); '-'-leading messages need '--'; mcp add/get/list grammar verified against live settings.json; extension paths recorded unverified-absent; daemon status/list --json parsed live read-only. Helper API (packages/cli/src/prime-agent.ts): primeSendArgs/sendPrimeMessage, primeMcpAddArgs/primeMcpGetArgs/addPrimeMcpServer (idempotent check-then-add), primeDaemonStatus, defaultPrimeDaemonSocket, primeDeliveryKey/primeDeliveryMethod/isPrimeAgentTarget, primeRunnerFromRunCommand; unverified flags opt-in only, default argv carries exec-verified tokens only. Open design choices for lead: (a) prime-agent in core SESSION_ID_RUNTIMES vs name-based target (worker used name-based, letta/cmux shape); (b) uninstall route: mcp remove (help-listed only) vs direct settings.json edit; (c) mcp add stdio --force/update semantics. Remaining integration pending seam release: installRuntime case (147), board install/delivery wiring + presence daemon-id target + watch --deliver route (202), REPL skill wrapper, live acceptance on disposable daemon fixture. Worker sub-1d54087e retired after evidence preserved.
+- Ordinary review rounds: 0; no verdict. Astra review deferred to complete assembled candidate per dispatch.
 - Security review rounds: 0 for this task's new adapter scope; no coverage claimed.
 - Integration, live acceptance and cleanup: pending.
+
+
+## Lead next build slice — 2026-09-10
+
+Hoa updated the isolated task507-prime-agent checkout to fe382d3, preserving
+all three frozen helper hashes above. Task147 is source-integrated. Its
+installer files now belong to the pending Nassun phase1 security delta, so
+that installer seam remains reserved until its handoff. Task202 core/CLI/MCP
+seams likewise remain held. Do not race those scopes even in isolated trees.
+
+Essun resumes productive task507 work now through a NEW clean GLM5.3Flash
+implementer: complete the usable Prime/Python REPL board-skill wrapper as a
+renderable helper, disposable fixture tests and verified setup documentation
+within the EXISTING three reserved507 paths. Verify the actual Prime/RLM MCP
+calling contract from public installed harness code/help and fixtures; do
+not read credentials/live settings or change live runtime configuration.
+Do not claim full installer/delivery integration before held seams land.
+The later daemon target is the native opaque agent ID accepted by the proven
+prime-agent send command; do not broaden core session-ID schemas implicitly.
+Uninstall/update semantics stay unverified until actually demonstrated in
+fixtures. Preserve the initial handoff and retire this new build worker;
+ordinary review remains0 until the complete assembled candidate is frozen.
+No extra security review is assigned to Essun while507 is queued; Nassun is
+now primary under the updated operator model/scheduling policy.
+
+- Phase-2 implementation: dispatched; worker start receipt — clean GLM5.3Flash
+  implementer sub-a0f9c4ae (task507-impl2-glm, requested thinking high),
+  started 2026-09-10T10:31:35Z on worktree @ fe382d3 (frozen phase-1 helper
+  hashes b71f96d0…/d3dfd362…/c1e4b5a9… verified pre-dispatch). Scope: renderable
+  Prime/Python REPL board-skill wrapper + fixture tests + guide section within
+  the existing three reserved paths; contract verified from public installed
+  dist/SDK sources only (no live settings/credentials); installer seam (147,
+  now Nassun phase1 security delta) and 202 core/CLI/MCP seams remain held.
+  149 cleanup confirmed for lead: all five 149 workers retired, no essun-owned
+  scratch outside the provisioned 149 worktree — ready for worktree removal.

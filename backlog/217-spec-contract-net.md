@@ -3,7 +3,7 @@ id: 217
 title: "spec: author contract-net work allocation"
 phase: 2
 owner: opencode
-status: blocked
+status: in-progress
 kind: spec-authoring
 depends: [203, 209]
 estimate: M
@@ -159,3 +159,36 @@ may still be local and uncommitted; a recorded local path or historical verdict
 does not mean that artifact is included or approved by this commit. The new
 policy milestone report and reviewed task144 helper/guide are explicitly
 included; other deliverables retain their recorded integration holds.
+
+
+## Lead idle-capacity release — 2026-09-10
+
+Operator requested work for idle agents. Hoa releases the migration-priority
+hold for OpenCode's ordinary round2 on the frozen corrected specification,
+while operational109/110 remains gated. Isolated checkout:
+`/private/tmp/sidekick-task217-opencode`, branch `task217-contract-net-review`,
+baseline fe382d3; only docs/protocols/contract-net.md is writable. Input SHA256
+ce898918ee38c8062ab5e595ec82a040174b17f14665364254ce0ba5ad0bc662,115356 bytes.
+
+Use a fresh clean Astra reviewer-remediator, ordinary round2 (not round1).
+Review/fix ordinary correctness/completeness and the prior retained-ID/order
+findings; route substantive security work to Nassun, not Astra. Preserve
+historical round1 and author correction. Any changed artifact needs fresh
+ordinary round3; after3 without a clean pass, stop for Hoa. No product code,
+live negotiation, locked-design changes or security scan is authorized here.
+Required document validation and spec acceptance must pass. Owner records
+actual worker/model/start, full hashes/checks/verdict and retires each worker.
+Parent and INDEX row217 remain owner-maintained; Hoa alone integrates.
+
+### Actual ordinary round2 start
+
+Owner verified isolated baseline `fe382d305db19078446750020ede9f6b9a0d5348`
+and exact input SHA256 `ce898918ee38c8062ab5e595ec82a040174b17f14665364254ce0ba5ad0bc662`
+(115356 bytes). The untracked protocols directory contains the lead-supplied
+candidate, not worker scratch. Fresh pure reviewer
+`ses_f751eff6bffeva47sk5pxQ90ws` started, requested `openai/gpt-6-astra`, low
+variant, runner8377/worker8431. Board/codegraph MCP disabled process-locally
+as well as external plugins. Only the isolated contract-net document writable;
+no implementation/live/config/git or security work. Prior ordinary1 and
+correction220 preserved; this is ordinary2/3, with3 required after edits.
+Security referrals go to primary Nassun; no security round launched here.

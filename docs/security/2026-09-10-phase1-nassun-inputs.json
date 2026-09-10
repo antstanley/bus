@@ -1,0 +1,60 @@
+{
+  "milestone": "remote-board adoption/final cycle",
+  "reviewer_owner": "nassun",
+  "allowed_model": "DeepSeek v4.1 Flash",
+  "cumulative_security_round": 3,
+  "reviewed_runtime_baseline": "f37b83b",
+  "candidate_revision": "fe382d305db19078446750020ede9f6b9a0d5348",
+  "writable_paths": [
+    "packages/cli/src/install.ts",
+    "packages/cli/test/install.test.ts",
+    "packages/store-fs/src/index.ts",
+    "packages/store-fs/test/store-fs.test.ts",
+    "packages/store-git/test/store-git.test.ts",
+    "AGENTS.md",
+    "SECURITY.md",
+    "docs/agents/README.md",
+    "docs/agents/task-workflow.md",
+    "docs/agents/nassun.md",
+    "docs/agents/codex.md",
+    "docs/agents/codex-architect.md",
+    "docs/agents/letta.md",
+    "docs/agents/opencode.md",
+    "docs/agents/opencode-reviewer.md",
+    "docs/agents/essun.md"
+  ],
+  "hashes": {
+    "packages/cli/src/install.ts": "4eece9efd642dcb9449b46a4276c32e7169031224bf16b69280beaf34026e6d3",
+    "packages/cli/test/install.test.ts": "7e1200cb7c61141e234931dc4f9d881626dc02671a5def999b66a53ef5f47473",
+    "packages/store-fs/src/index.ts": "93670165dc93062d1c749a90cefc370e5f94148171ae78cbd8e50aee19ad5439",
+    "packages/store-fs/test/store-fs.test.ts": "e16ba600f14494fa496b881fcaf8775d82a8cef26d861ef335137553bc9bf3d0",
+    "packages/store-git/test/store-git.test.ts": "cb23cfac4a82d31be325524adbdb9715a11ac0bcba5f959e8bb3d8cf0cf96d49",
+    "AGENTS.md": "03a0b5a6e139258ba1bc29a40a008579b592a295705bb0e5cb9e82ce4f9a2868",
+    "SECURITY.md": "f77dadd23fb3f2bf13171ea57ebd3415c17e68da00e5e2d7badc42b813a63849",
+    "docs/agents/README.md": "7870718c8eec8ea54cf9eb1607b65178863f04e6503b8221dd7485e31ac2faed",
+    "docs/agents/task-workflow.md": "1ee7d7c9875c77b3cc71a7f327dc9cec75221897987c517004f1fa4b9ad34c74",
+    "docs/agents/nassun.md": "d0daccc2f22a9bff5200943684560464afe24fa8fd8e5316cd04685c30a0a55f",
+    "docs/agents/codex.md": "e7832ab2de962ec679cadc84e7f32ce0f92b3eadc7a973c5146554f5fc710e2d",
+    "docs/agents/codex-architect.md": "a1021ac2de9cb79e942de9f1b488b8de09ea37f5add722a6b914bce697a08855",
+    "docs/agents/letta.md": "6df280e93729dbbe3c444af9c97bd231c16276afbbb4c4220b2f0e5ea56413cd",
+    "docs/agents/opencode.md": "372e6cea1a2d80258f1d99c2bf11440497633e321b895a41bae80d2f7cec4ae1",
+    "docs/agents/opencode-reviewer.md": "f1a1c93c67971b5a98781c75cc869f9b886aa1459751bc68039dc49ac85f9d2f",
+    "docs/agents/essun.md": "3e8866bf3cccd4b7963ac93ec5f0518ba01ca4f7e4f8b1fa17d6738850e6585c"
+  },
+  "read_only_context": [
+    "docs/security/MILESTONES.md",
+    "docs/security/2026-09-09-remote-board-combined-round2.md",
+    "backlog/147-keep-idle-opencode-delivery-presence-current.md",
+    "backlog/done/148-handle-filename-less-watch-events.md",
+    "backlog/109-dogfood-move-team-coordination-from-bus-to-the-b.md",
+    "docs/research/04-trust.md"
+  ],
+  "report_path": "docs/security/2026-09-10-phase1-nassun-round3.md",
+  "constraints": [
+    "No live configuration, credential, private-board, runtime-permission or rollout changes.",
+    "No changes to other package paths, especially task202 core/CLI/MCP entrypoints. Read dependencies as needed.",
+    "Preserve operator role/model policies, historical reports/findings and cumulative counts.",
+    "Fix own scoped findings; changed bytes require new clean verification, stop before unapproved round4.",
+    "This is cumulative changed-delta review, not a claim of live migration acceptance."
+  ]
+}

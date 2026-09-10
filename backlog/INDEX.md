@@ -72,7 +72,7 @@ Archival is neither approval nor completion. Done/historical rows are unchanged.
 | 211 | [spec: author agent charters](done/211-spec-agent-charters.md) | codex-architect | done | M |
 | 214 | [spec review: request/response, round 2](done/214-review-request-response-round-2.md) | opencode-reviewer | done | M |
 | 216 | [spec review: agent charters, round 2](done/216-review-agent-charters-round-2.md) | opencode-reviewer | done | M |
-| 217 | [spec: author contract-net work allocation](217-spec-contract-net.md) | opencode | blocked | M |
+| 217 | [spec: author contract-net work allocation](217-spec-contract-net.md) | opencode | in-progress | M |
 | 219 | [security gate: settled request-response and charter specs](done/219-security-gate-settled-request-response-and-charters.md) | letta | done | M |
 
 ## Phase 3
