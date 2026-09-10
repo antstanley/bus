@@ -296,3 +296,25 @@ another round, up to three total contexts before stopping if not clean. No
 hidden verification sub-rounds. Preserve this cycle for later assembled-delta
 coverage. Ordinary count remains0 and stays with Essun; no release is implied.
 Lead reconciles reviewed output into Essun's reserved candidate after handoff.
+
+### Lead acceptance and candidate reconciliation — 2026-09-10
+
+Accepted cumulative security round6 clean no-change delta pass. R5 verified
+four unchanged final files; R6 independently verified the only changed test.
+Report SHA256 dbffdc54553d5914a2c61268359912e5b3405648dfd13a1d0c882c374fd035a6.
+All final security hashes and original Essun frozen inputs verified before
+lead exact-copy reconciliation into /private/tmp/sidekick-task507-essun.
+No product files integrated into main. Six reports retained under docs/security.
+Final candidate pins:
+- packages/cli/src/install.ts: bcf6c2b6e272c8389f637dfe24c8e396f129b9ed3c6d9b9c6b0397686e50a413
+- packages/cli/test/install.test.ts: 86819dc139541d870214bcc23164398756024c319ecc1fac11e8e918c25512a8
+- packages/cli/src/prime-agent.ts: 2014dc0e250b118455240039d544b35cfec8cf6bcea3890b9ab31ee1e4fafeea
+- packages/cli/test/prime-agent.test.ts: d0354f1282197acd11c0904d8604ebe338e3269cc0eebe0faed3a72cb60db3e8
+- docs/guides/prime-agent.md: cb7b4e9b3a8725de0ad2fb79d4d4fa191d9ed66210fb90c19d3da640db439dbc
+
+No further security context on identical scope. Ordinary correctness count
+remains zero; task202 dependency/assembly and eventual applicable security
+delta remain. Keep candidate frozen until lead releases the202 seam; Essun
+continues504. Nassun retains securityworktree until audit integration/cleanup
+handoff. Accepted R5 A/B non-defect dispositions remain limited to the recorded
+same-user/trusted-projectRoot assumptions, not a generalized risk waiver.

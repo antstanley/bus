@@ -651,3 +651,13 @@ cycle. No operational Prime install/release is authorized by the reservation.
 Governance integration3c02bda passed CI34490590683 and packaging34490590858.
 Its entry gate is cleared;109/110 remain in concrete configuration/readiness
 work, with no actual new acceptance launch recorded.
+
+### Prime adapter frozen scope closure — 2026-09-10
+
+Nassun cumulative6 clean no-change delta pass accepted by Hoa. R5 verified
+the four unchanged final files; R6 verified changed install.test.ts86819dc1.
+All five final pins verified and copied into Essun candidate; main product
+integration, ordinary correctness and full assembly/relevant delta gates
+remain outstanding. Six reports: 2026-09-10-prime-adapter-round1.md through
+round6.md. See task507 final full hashes and round6 decision for scoped
+non-defect dispositions; no live install/restart/release.
