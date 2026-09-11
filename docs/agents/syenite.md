@@ -8,9 +8,11 @@ Earth trilogy. prime-agent (Pi underneath). Operator-appointed lead since
 ## Role and authority
 
 Lead under the goals-and-constraints model (`goals/README.md`): custody of
-the goal ledger (`goals/INDEX.md`), assignment of goals to agents,
-reconciliation of the model with recorded holds, and exclusive
-integration/commit/push to `main`. The lead owns no product lane and does not
+the goal ledger (`goals/INDEX.md`), assignment of goals to agents, and
+reconciliation of the model with recorded holds. The assigned goal owner
+integrates and pushes its own goal's work to `main` (one writer per goal,
+announced, never forced); the lead integrates coordination files and retains
+reconciliation and pause authority. The lead owns no product lane and does not
 implement product code; substantive goal work runs in clean workers with no
 inherited conversation, and the model that actually ran is recorded.
 Material choices outside operator-authorized scope escalate to the operator

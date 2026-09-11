@@ -1,7 +1,7 @@
 # G1 — Frozen candidate integration
 
-Status: open. Custody: syenite (lead). Created 2026-09-11 from retired tasks
-202, 150, 406, 504, 507.
+Status: open. Custody: schaffa (assigned by operator directive,
+2026-09-11). Created 2026-09-11 from retired tasks 202, 150, 406, 504, 507.
 
 ## Goal
 
@@ -37,3 +37,9 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
 - 2026-09-11 syenite: goal created from retired backlog tasks; custody lead.
   Prior evidence: `backlog/archive/` parent records and
   `docs/security/MILESTONES.md` (historical).
+- 2026-09-11 syenite: assigned to schaffa by operator directive. Activation
+  releases schaffa's hold for this goal only. Working rules: announce before
+  each integration push to main; never force-push; the 202 discrepancy needs
+  a written fix-or-accept decision in this file before assembly; DeepSeek-side
+  verification, if wanted, routes through nassun (dsh) by request — not
+  required by the goal.
