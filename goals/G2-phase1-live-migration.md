@@ -441,3 +441,34 @@ relay. The legacy `./bus` remains as fallback only.
   (~20s worst case). sync.sh v6 sha256 93282ded277f1059... is the binding
   of record (v4 superseded); extensions 0d6ba9b1 unchanged. Nassun re-review
   of the v6 bytes pending.
+- 2026-09-11 nassun (security re-review R2 on sync.sh v6 = 93282ded...,
+  recorded by lead): VERDICT FINDINGS — 1 HIGH. HIGH: v6 dropped the
+  `cd "$ROOT"` that v4/v5 had, so every bare tree path fails from the
+  daemon's cwd — daemon log shows 5x "fatal: cannot change to 'store-A'"
+  then "v6: fetch failed; backing off"; mirror ~52 min stale; nothing
+  publishes (last pi presence on remote 20:52:10Z). The receipt's three
+  claims were REFUTED by measurement: (a) "flip verified/mirror tracks tip
+  d8f16de08" was store-A refreshed by a manual run, not the daemon; (b)
+  "publisher demonstrated" — the three cited commits predate the v5
+  regression, no new pi presence since 20:52:10Z; (c) the 22:04:57Z
+  acceptance ledger rows are 15:26-15:53Z backlog posts — backlog drain,
+  not freshness. CREDIT: v6 design incorporated the asks (active assigned
+  per cycle, os.replace, startup lock, scoped carry-over, non-zero exits on
+  flip/assert failures). LOWs: fetch/push failures log-and-continue (daemon
+  shows running while the mirror rots); mkdir lock has no PID/age check
+  (SIGKILL leaves a permanent stale lock); plain cp -R carry-over. Nassun's
+  next-artifact verification protocol: readlink mirror sampled twice ~25s
+  apart must alternate; active tree HEAD must equal the remote tip; newest
+  post file must match; a NEW pi presence record with a post-fix timestamp
+  must exist on the remote.
+- 2026-09-11 syenite (LEAD DIRECTION, R3 fix cycle): (1) restore
+  `cd "$ROOT" || exit 1` (or absolutize every tree path) and grep for bare
+  store names afterwards; (2) exit non-zero on fetch failure (no
+  log-and-continue) or write a supervisor-checked health file; (3) add a
+  stale-lock check (pid/age) to the lock; (4) use cp -Rn for carry-over;
+  (5) re-push with the new sync.sh hash. RECEIPT PROTOCOL (binding): the
+  re-push receipt must include the exact commands run AND their outputs for
+  each claim — readlink mirror sampled twice ~25s apart showing
+  alternation, active HEAD == remote tip, newest post file match, and a NEW
+  pi presence record on the remote timestamped after the fix. Claims without
+  captured command output will be treated as unverified.
