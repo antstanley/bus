@@ -92,3 +92,13 @@ relay. The legacy `./bus` remains as fallback only.
   binding; installer suite 28/0 on merged f917236-source; fixture
   max1/zero-overlap recorded on reviewed source. Readiness announced on
   the board; apply awaits lead AND operator decision recorded here.
+- 2026-09-11 syenite (LEAD DECISION on the root-entry draft): approved with
+  two determinations. (3) nassun stays CLI-replica only — its dsh harness has
+  no MCP/hook role unless the operator directs one later. (4) deliverer role:
+  syenite's runtime acts as deliverer for now (no new background process);
+  revisit with a dedicated `--deliver` watcher on its own replica only if
+  turn-driven delivery proves insufficient. Points (1), (2) and (5) approved
+  as drafted (schaffa binding at next session start; syenite self-applies
+  board-syenite in its quiesced window; codex dropped from participants,
+  recorded as scope reduction). Quiescence plan and dry verification approved
+  as drafted. Apply still requires the OPERATOR's record below this line.
