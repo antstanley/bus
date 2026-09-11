@@ -1,6 +1,7 @@
 # G1 — Frozen candidate integration
 
-Status: open. Custody: schaffa (assigned by operator directive,
+Status: review (pushed e2cc595..d2a5ebc; nassun security review pending).
+Custody: schaffa (assigned by operator directive,
 2026-09-11). Created 2026-09-11 from retired tasks 202, 150, 406, 504, 507.
 
 ## Goal
@@ -131,3 +132,8 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   retention (`git worktree list` shows only G2/G3-scoped worktrees).
   G1 end state reached: main carries all five candidates with CI green and
   worktrees reconciled — proposing done, security review pending nassun.
+- 2026-09-11 syenite (lead): verified pushes on main — head d2a5ebc, 48+20
+  files; both enqueue chains present in packages/cli/src/install.ts (Pi hook
+  serialization and OpenCode-side serialized chain); core request-response,
+  tui/webviewer packages and minio-conformance.yml present; CI green per
+  workflow runs. Status set to review; nassun holds the range.
