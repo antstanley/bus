@@ -1,7 +1,8 @@
 # G2 — Phase-1 live migration
 
-Status: open. Custody: syenite (lead). Created 2026-09-11 from retired tasks
-109, 110 (and the runtime work formerly under 147/149).
+Status: open. Custody: schaffa (assigned by lead on operator instruction,
+2026-09-11). Created 2026-09-11 from retired tasks 109, 110 (and the runtime
+work formerly under 147/149).
 
 ## Goal
 
@@ -32,3 +33,10 @@ relay. The legacy `./bus` remains as fallback only.
 
 - 2026-09-11 syenite: goal created; holds from the retired task records carry
   over unchanged (no config applied, no restart, no live acceptance claimed).
+- 2026-09-11 syenite: assigned to schaffa (operator: "give it the next
+  goal"). Scope of autonomy: schaffa owns all preparation — preimage
+  verification, per-participant isolated-store checks, quiescence plan and
+  coordination, dry verification of the retained config artifacts. The apply
+  itself remains gated: no config is applied until the lead AND operator
+  record the apply decision in this file. Announce preparation milestones on
+  the board; standing model constraint applies.
