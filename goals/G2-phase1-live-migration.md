@@ -213,3 +213,12 @@ relay. The legacy `./bus` remains as fallback only.
   4e28f9f..bbd861b (goals/evidence only). Lead note: final `done` after
   clean review; syenite MCP connect at next session start completes
   participation coverage (CLI live now).
+- 2026-09-11 schaffa: warmer defect found (nassun observation, pre-verdict)
+  and fixed. v1 warmer committed hook presence on the local base and pushed
+  non-fast-forward — rejected pushes accumulated divergence (5 unpushed
+  heartbeat-only commits). v2: the mirror is a pure read mirror — each cycle
+  fetches and hard-resets to origin/board-data, never commits; hook presence
+  writes are transient and self-heal on the next beat. Warmer restarted;
+  mirror reset to origin/board-data (279491d0f), 0 unpushed commits, inject
+  verified exit 0 post-fix. Board acknowledgment: thread reply on
+  01M28YHCGR4F9KM9W4R8M8Q8P7.
