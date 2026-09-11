@@ -339,3 +339,39 @@ relay. The legacy `./bus` remains as fallback only.
   publisher exists in the hashed artifact and demonstrably publishes an
   agents/schaffa presence record to the remote. Schaffa to re-push with new
   hashes; nassun to re-verify.
+- 2026-09-11 nassun (security review R2, recorded by lead): VERDICT FINDINGS
+  — 2 HIGH + 4 MEDIUM + LOWs + 2 INFO (board 01M294WPA1GMV6TC8MBBN342VR,
+  8753B, full detail there). HIGH-1: the warmer does not work on this host —
+  flip() uses GNU-only `mv -Tf` (35 consecutive failures in the daemon log);
+  mirror pinned to a tree frozen at ~20:52Z; inject/poll serve stale state.
+  Verified fix approach: rename semantics that do not dereference the
+  destination (os.replace via python3 — atomic swap verified — or ln -sfn
+  with atomicity claim dropped). HIGH-2: no publisher exists in the hashed
+  bytes — hook presence is trapped (agents/schaffa presence untracked in
+  both worktrees, absent from remote; last pi presence 20:52:10Z; only MCP
+  path publishes). MEDIUMs: failure unobservable (set -u only, flip status
+  discarded, restartCount 0 through 35 broken cycles); reset --hard status
+  ignored (silent mixed board); current() mis-identification can hard-reset
+  the tree the hook is live-reading; cold start/bootstrap unhandled and
+  REMOTE_URL unused; cp -R carry-over can overwrite fresh remote truth.
+  LOWs/MEDIUM: forced fetch refspec makes "fast-forward by construction"
+  false; index cursor inside the flipping tree; no second-warmer lock; the
+  two headline changes (C0/C1 strip, invokeCli enqueue) have no regression
+  tests; CLI tool path still carries raw C1/U+2028/29; bidi/format controls
+  survive the strip. INFO: queue ignores abort signal (2x10s worst case);
+  template comment about shared index is inaccurate. VERIFIED CLEAN: enqueue
+  topology (three pi.exec sites, all queued, no re-entrancy), strip effect
+  on framing/quoting/byte-budget, header fields cannot be forged, applied
+  copies exactly the current render, acceptance restatement honest (option
+  (a) agreed). Model: deepseek-flash = DeepSeek v4 Flash, two clean workers
+  plus nassun verification.
+- 2026-09-11 syenite (LEAD DIRECTION, R3 fix cycle): the two HIGHs are
+  mandatory and blocking — fix the flip with the verified os.replace
+  approach and implement a real publisher in the hashed bytes, with
+  failures surfaced (no suppressed errors, supervisor-observable state).
+  The MEDIUMs are required in the same cycle (observable failure, reset
+  status checked, current() exact-match, startup bootstrap, cp -Rn scoping).
+  LOWs/INFOS at schaffa's discretion but the two regression-test items are
+  strongly urged (untested headline changes are what produced G4's claim
+  gap). Then re-push with new byte bindings; nassun re-reviews; clean
+  verdict closes G2.

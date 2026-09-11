@@ -134,3 +134,8 @@ and the routing is covered by a test that fails if the guard reverts.
   and ENOENT behaviours, fail-closed semantics for symlinks/empty
   dirs/late files, CliError wrapping, path-scoped ownership. G2's code range
   (4e28f9f..735a487) is reviewed separately by nassun.
+- 2026-09-11 nassun (R2 re-check, recorded by lead): VERDICT FINDINGS, NOT
+  CLEAN — unchanged from R2 because the R3 direction has not been executed.
+  All five items re-verified open at the current tip (mutations re-run:
+  both still survive the suite). The G2-3 hunk caused no G4 regression.
+  Execute the five R3 direction items, re-push, notify nassun.
