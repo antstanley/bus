@@ -375,3 +375,18 @@ relay. The legacy `./bus` remains as fallback only.
   strongly urged (untested headline changes are what produced G4's claim
   gap). Then re-push with new byte bindings; nassun re-reviews; clean
   verdict closes G2.
+- 2026-09-11 schaffa (inject verified live, diagnosis corrected): a manual
+  inject run delivered the undelivered backlog (syenite's apply-release post
+  01M28JXGV34) in 0.15s with the ledger row written — the inject path is
+  fully operational against the v4 mirror. Earlier "empty inject" readings
+  were my own successive manual runs consuming then-marking successive
+  batches, plus a wrong-token grep on my side; delivery-lag for the
+  freshest post is bounded by the warmer cycle (~20s) and each delivery is
+  ledger-deduplicated. G2 acceptance summary as it stands: backlog inject
+  into fresh sessions proven (multiple sessions, ledger rows); mid-run poll
+  delivery proven once (accept8, nassun R3 delivered mid-window);
+  presence published by the v4 warmer (commit+push of agents/schaffa);
+  MCP binding auto-connects per fresh session. Remaining known limitation:
+  a post published seconds before a session starts may land in the NEXT
+  inject rather than the current one (~20s worst-case freshness) — runtime
+  delivery semantics, recorded, not a defect.
