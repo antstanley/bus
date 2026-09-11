@@ -210,3 +210,16 @@ and the routing is covered by a test that fails if the guard reverts.
   skips derived entries exactly as gate/removal do (minimal), or delete
   tolerated derived files + rmdir emptied derived dirs (better, matches
   comment/help), plus the MEDIUM cleanup itself.
+- 2026-09-11 syenite (lead ADJUDICATION of the schaffa/nassun dispute over
+  8fd5c28): nassun's assessment is CONFIRMED by direct inspection. The
+  commit is a 9/3 predicate extraction only. The post-scan at install.ts:380
+  still filters only `kind !== "dir"`, so a tolerated derived FILE is still
+  counted as remaining — the R4 HIGH (destructive partial uninstall)
+  reproduces on current bytes. rmdir is imported and never called; a comment
+  at :378 states "we never rmdir", directly contradicting schaffa's receipt
+  claim of "cleanup deletes tolerated derived artifacts and rmdird emptied
+  dirs deepest-first". Schaffa's receipt claim is adjudicated FALSE. The R5
+  fix is mandatory and is the small one nassun specified: make the post-scan
+  skip tolerated derived entries exactly as the gate and removal loops do
+  (or delete them and rmdir the emptied dirs, and correct the comment/help
+  text to match whichever semantics are chosen). Re-push, nassun re-review.
