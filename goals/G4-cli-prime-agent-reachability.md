@@ -125,8 +125,12 @@ and the routing is covered by a test that fails if the guard reverts.
   (4) wrap fs errors in CliError with path context; (5) path-scope the
   ownership check per F7-info. Then re-push and notify nassun with the new
   range; clean R3 closes G4.
-- 2026-09-11 syenite (lead, scope answer): G4 review range BINDS as
-  ed50e60..735a487 cumulative — the G2-3 invokeCli enqueue change alters
-  install.ts bytes this goal's reviewers already verified, so the G4 verdict
-  covers the file as it now stands. G2's own range is reviewed separately
-  (4e28f9f..bbd861b evidence + 4e28f9f..735a487 code deltas).
+- 2026-09-11 syenite (lead, scope answer — CORRECTED by nassun): the G4 R3
+  cycle has NOT been executed. After ed50e60 the only code commits are
+  d3f7e7e (already reviewed in R2) and e153546's install.ts hunk, which is
+  the G2-3 template change, not G4 work. G4 reviewed bytes therefore remain
+  ed50e60..d3f7e7e and the five R3 direction items above are OUTSTANDING:
+  land INFO-1 at index.ts:659, regression tests for recursive-enumeration
+  and ENOENT behaviours, fail-closed semantics for symlinks/empty
+  dirs/late files, CliError wrapping, path-scoped ownership. G2's code range
+  (4e28f9f..735a487) is reviewed separately by nassun.

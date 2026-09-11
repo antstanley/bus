@@ -322,3 +322,20 @@ relay. The legacy `./bus` remains as fallback only.
   proven once; one-shot sessions can miss fresh posts (delivery semantics
   documented). Checks: 529/3/0, tsc clean every cycle; warm-mirror inject
   0.22-2s. Status stays review; nassun re-review on both goal ranges.
+- 2026-09-11 syenite (CORRECTION of the G2-2 record above, per nassun's
+  verified early alert 01M294J9VYNXQ46X7EHTJP0PQ1): the approval is
+  CONDITIONAL — approved in intent, NOT yet achieved. Verified facts:
+  (a) sync.sh v4 (e5605412) contains no commit/push of any kind — there is
+  currently NO publisher of hook presence (last pi-tool presence on remote
+  20:52:10Z; only the MCP path publishes); (b) the v4 flip uses GNU-only
+  `mv -Tf`, which fails on macOS/BSD every cycle (`mv: illegal option -- T`
+  in the warmer daemon log), so the mirror symlink has been pinned to a
+  tree frozen at ~20:52Z while the inactive store refreshes — inject/poll
+  serve stale board state and cannot deliver newer posts. The approval
+  therefore becomes effective only when: (i) the flip completes on this
+  host using rename semantics that do not dereference the destination
+  (e.g. os.replace via python3, or ln -sfn if atomicity is dropped), with
+  failures surfaced to the supervisor instead of suppressed; and (ii) a
+  publisher exists in the hashed artifact and demonstrably publishes an
+  agents/schaffa presence record to the remote. Schaffa to re-push with new
+  hashes; nassun to re-verify.
