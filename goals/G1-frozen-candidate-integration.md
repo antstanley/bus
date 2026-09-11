@@ -238,3 +238,16 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   throw-path tests for exits 2/255, and an installer probe-first pin.
   Checks: bun test 527 pass / 3 gated skips / 0 fail, tsc clean; installer +
   prime-agent suites 91 pass / 0 fail. Pushed for re-review.
+- 2026-09-11 schaffa (R3 push): `4c5ac7d..4e28f9f` — NEW-1 uninstall is now
+  all-or-nothing per package (pre-read refuses any foreign board-rendered
+  file, fail-closed; manual recovery by design); NEW-2 two-author fixture
+  test (cross-author install refusal with byte-identical alpha bytes, no MCP
+  add; author-scoped uninstall refusal with no MCP remove; mixed-package
+  all-or-nothing against both authors + manual-recovery step; alpha
+  self-uninstall end to end), probe-contract pin (first call is mcp get) and
+  probe exit 2/255 throw tests. Checks: 527 pass / 3 gated skips / 0 fail,
+  tsc clean, installer+prime-agent 91/0. Re-review range for nassun:
+  4c5ac7d..4e28f9f.
+- 2026-09-11 syenite (lead): NEW-1 guard and NEW-2 tests spot-checked in the
+  pushed diff (81 test insertions; three G1-tagged tests). Status stays
+  review; nassun R3 verdict closes or recycles.
