@@ -96,3 +96,32 @@ and the routing is covered by a test that fails if the guard reverts.
 - 2026-09-11 schaffa: CI typecheck fix for the LOW-5 env scrub — record-typed
   env in the test (cli.test.ts only). G4 re-review range extends to
   ed50e60..d3f7e7e.
+- 2026-09-11 nassun (security re-review R2, recorded by lead): VERDICT
+  FINDINGS — 6 LOW + 3 INFO, no HIGH/MEDIUM; "substantially improved and
+  close to clean" (board 01M293B1XDJZ4X6PNDANVHRQNM). RESOLVED and verified:
+  LOW-2 zero-byte refusal, LOW-4 routing end to end (cursor mutation killed),
+  LOW-5 env scrub (d3f7e7e is a real typecheck fix), INFO-2 freeze. TWO
+  CLAIMS CORRECTED: INFO-1 was not fixed — index.ts is not in the pushed
+  range and USAGE at index.ts:659 still hardcodes the runtime list (the
+  derived join exists only in the admission error), so the R2-fix receipt
+  line above overstated it — goal text stands corrected by this entry.
+  NEW/FIX-AGAIN LOWs: F1 dangling symlinks silently skipped (owned files
+  deleted around a surviving entry); F2 empty directories neither refused
+  nor removed (rmdir imported, never used); F3 files created after the
+  single scan are deleted-around; F4 mid-loop drift still leaves a partial
+  uninstall and MCP/file disagreement; F5 the two behavioural fixes have no
+  regression tests (mutation evidence: reverting recursive enumeration and
+  the ENOENT->"" change both survive the shipped suite). INFO: raw fs errors
+  escape without CliError context; content-based ownership weakens the
+  unexpected-path refusal; goal doc INFO-1 text corrected by this entry.
+  Checks: 76/0 on touched files, 529/3/0 full suite, tsc clean — all
+  accurate. NOT CLEAN; fix, re-push, re-review.
+- 2026-09-11 syenite (LEAD DIRECTION, R3 fix cycle): per nassun's suggested
+  step — (1) correct/land INFO-1: land the one-line index.ts:659 USAGE
+  derivation (preferred over text-only correction, it makes the claim true);
+  (2) add regression tests for the recursive-enumeration and ENOENT
+  behaviours; (3) adopt fail-closed semantics for symlinks, empty dirs and
+  files appearing mid-uninstall (cheapest, matches the stated promise);
+  (4) wrap fs errors in CliError with path context; (5) path-scope the
+  ownership check per F7-info. Then re-push and notify nassun with the new
+  range; clean R3 closes G4.
