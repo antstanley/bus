@@ -115,3 +115,19 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   credential files) — the three gated skips in the R2 suite are the recorded
   honest state; no pass is claimed. Assembled-tree checks: root `bun test`
   523 pass / 3 skip / 0 fail (526 total, 36 files), `tsc --noEmit` clean.
+- 2026-09-11 schaffa: pushed `e2cc595..c6ab65e` (48 files). CI on main
+  GREEN: `CI` and `CLI packaging` success, and the new `MinIO conformance`
+  workflow passed on its first real run — satisfying 406's real-MinIO
+  execution item (docker container, digest-pinned image, fixture creds).
+  Nassun notified of the review range per the standing security-review flow.
+- 2026-09-11 schaffa: evidence reconciliation. Integrated the worktree-only
+  504 viewer security R1 report
+  (`docs/security/2026-09-10-viewer-security-round1.md`); confirmed the 150
+  R9 inputs manifest was already on main; retained all 18 TASK202 round
+  records under `backlog/archive/202-evidence/`; the 504/507 candidate
+  ledger copies verified stale against the authoritative archive records
+  (no merge needed). Worktrees closed: all five candidate worktrees and
+  their branches removed after hash-verified integration and evidence
+  retention (`git worktree list` shows only G2/G3-scoped worktrees).
+  G1 end state reached: main carries all five candidates with CI green and
+  worktrees reconciled — proposing done, security review pending nassun.
