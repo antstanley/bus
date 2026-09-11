@@ -1,6 +1,6 @@
 # G4 — CLI reachability: `board install prime-agent`
 
-Status: review (executed; nassun security review pending on bbd861b..9f2e508).
+Status: review (executed; nassun security review pending on bbd861b..ed50e60).
 Custody: schaffa (lead assignment, 2026-09-11). Created 2026-09-11 from the deferred G1
 authorization (nassun observation, R2).
 
@@ -58,10 +58,11 @@ and the routing is covered by a test that fails if the guard reverts.
   end-to-end (isolated HOME, dry-run admitted, unknown runtime exits 2
   listing prime-agent), two-author fixture suite, non-marker module refusal;
   528 pass / 3 gated skips / 0 fail, tsc clean. Review range
-  bbd861b..9f2e508 (index.ts, install.ts, cli.test.ts, install.test.ts, G4
-  log). Lead note: an uncommitted hermeticity tweak to cli.test.ts in the
-  shared tree belongs to schaffa — stashed/restored byte-exact during a pull,
-  left uncommitted for its owner to claim.
+  corrected to bbd861b..ed50e60: schaffa's first CI run failed (the
+  end-to-end test needed the real prime-agent binary), fixed by the
+  hermeticity commit (isolated HOME + PATH-shimmed prime-agent stand-in) —
+  CI + packaging green on ed50e60. That commit is the claimed ownership of
+  the previously uncommitted cli.test.ts tweak.
 - 2026-09-11 schaffa: CI on the first G4 push exposed a test-portability
   defect in the new end-to-end test — it depended on the real `prime-agent`
   binary (absent on CI runners) and on the host's live agent settings.
