@@ -37,19 +37,29 @@ describe("runWebviewerCli", () => {
   });
 
   it("rejects bad usage without writing output", async () => {
+    // G1 review LOW: --out must be exercised on real-store usage errors so
+    // the "never wrote" assertion can actually fail; the writer stub counts.
+    const f = await snapshotFixture([{ board: "general", posts: [hostilePost({ title: "usage" })] }]);
+    fixtures.push(f);
     const outDir = await mkdtemp(join(tmpdir(), "board-webviewer-out-"));
     scratch.push(outDir);
     const outPath = join(outDir, "viewer.html");
 
+    let writes = 0;
+    const countingWriteOut = async (): Promise<void> => {
+      writes += 1;
+    };
+
     for (const argv of [
-      [],                                  // missing --store
-      ["--store"],                         // dangling flag value
-      ["--store", "/nonexistent", "extra"],// positionals are not accepted
-      ["--store", "/nonexistent", "--bogus"],
-      ["--store", "/nonexistent", "--board", "NOT-A-VALID-NAME"],
+      ["--out", outPath],                                        // missing --store
+      ["--store"],                                               // dangling flag value
+      ["--store", f.dir, "extra"],                               // positionals are not accepted
+      ["--store", f.dir, "--bogus"],                             // unknown flag
+      ["--store", f.dir, "--out", outPath, "--board", "NOT-A-VALID-NAME"],
     ]) {
-      await expect(runWebviewerCli(argv, { writeOut: async () => undefined })).rejects.toThrow(WebviewerUsageError);
+      await expect(runWebviewerCli(argv, { writeOut: countingWriteOut })).rejects.toThrow(WebviewerUsageError);
     }
+    expect(writes).toBe(0); // the writer was never called
     await expect(stat(outPath)).rejects.toThrow(); // nothing was written
   });
 

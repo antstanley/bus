@@ -177,7 +177,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
     if (options.uninstall) {
       for (const file of skillPaths) {
         const before = await readText(file.absolute);
-        if (before && isOwnedPrimeSkillFile(file.path, before)) {
+        if (before && isOwnedPrimeSkillFile(file.path, before, author)) {
           changes.push({ path: file.absolute, before, after: "" });
           removals.add(file.absolute);
         }
@@ -209,7 +209,13 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
         skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
       );
       for (const { file, before } of existing) {
-        if (before && before !== file.content && !isOwnedPrimeSkillFile(file.path, before)) {
+        if (before && before !== file.content && !isOwnedPrimeSkillFile(file.path, before, author)) {
+          // Author scoping (G1 review M1): the package name is fixed, so one
+          // wrapper per agentDir; files rendered for a different author are
+          // not ours to replace and fail closed here.
+          if (before.includes("Rendered by the sidekick board CLI for author")) {
+            throw new CliError(`refusing to replace prime-agent skill rendered for a different author: ${file.absolute}`);
+          }
           throw new CliError(`refusing to replace non-board prime-agent skill: ${file.absolute}`);
         }
       }
@@ -367,13 +373,17 @@ function isOwnedPiExtension(value: string, hookPath: string): boolean {
  * file carries the renderer's fixed provenance line, and each file type adds
  * its binding shape, so a foreign file that merely quotes the marker is still
  * refused (the renderer is a pure verified-contract function with no edit
- * marker).
+ * marker). Author scoping (G1 review M1): the package name is fixed, so a
+ * rendered file is only owned by the author named in its provenance marker
+ * (and in the module's SERVER binding); another author's files are refused
+ * on install and left untouched on uninstall.
  */
-function isOwnedPrimeSkillFile(relativePath: string, value: string): boolean {
+function isOwnedPrimeSkillFile(relativePath: string, value: string, author: string): boolean {
   if (!value.includes("Rendered by the sidekick board CLI for author")) return false;
-  if (relativePath === "SKILL.md") return /^name: board$/m.test(value);
-  if (relativePath === "pyproject.toml") return /^name = "board"$/m.test(value);
-  return value.includes('\nSERVER = "');
+  const authorMarker = `for author ${author})`;
+  if (relativePath === "SKILL.md") return /^name: board$/m.test(value) && value.includes(authorMarker);
+  if (relativePath === "pyproject.toml") return /^name = "board"$/m.test(value) && value.includes(authorMarker);
+  return value.includes(`\nSERVER = "board-${author}"`);
 }
 
 /**

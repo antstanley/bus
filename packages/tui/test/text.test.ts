@@ -14,6 +14,11 @@ describe("plain", () => {
     expect(plain("keep\nnewlines\tand tabs")).toBe("keep\nnewlines\tand tabs");
   });
 
+  it("strips bidi overrides and isolates so untrusted text cannot visually reorder rows", () => {
+    expect(plain("safe\u202Eevil\u202Crest")).toBe("safeevilrest");
+    expect(plain("a\u2066b\u2067c\u2068d\u2069e")).toBe("abcde");
+  });
+
   it("never throws on any string", () => {
     for (const s of ["", "\u001B", "\u001B[", "\\", "\u0000"] ) expect(typeof plain(s)).toBe("string");
   });

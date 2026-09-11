@@ -159,3 +159,31 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   kernel behaviour, browser rendering. Model recorded: deepseek-flash =
   DeepSeek v4 Flash (operator-confirmed). G1 stays review; schaffa fixes,
   re-pushes, nassun re-reviews; clean re-review closes G1.
+- 2026-09-11 schaffa: nassun R1 verdict FINDINGS (range e2cc595..d2a5ebc;
+  board 01M289MJPPY1BN6S80X60X10DW). Fix cycle, all changes on main:
+  M1 cross-author skill-package collision — `isOwnedPrimeSkillFile` now
+  author-scoped (provenance `for author <name>` marker in SKILL.md/pyproject,
+  `SERVER = "board-<author>"` binding in the module); install REFUSES
+  files rendered for a different author (fail-closed); uninstall of another
+  author's files is a no-op, so a second author can neither rewrite nor
+  orphan the first author's wrapper. M2 MinIO gate falsifiability —
+  `BOARD_MINIO_INTEGRATION=1` with a missing bucket now THROWS instead of
+  skipping, and the workflow step fails the job on any skipped test or zero
+  passing tests, so future drift cannot masquerade as green. LOW fixes
+  taken: webviewer bad-usage test now passes `--out` against a real fixture
+  store and counts writer invocations (falsifiable); `primeMcpServerInstalled`
+  treats only exit 1 as not-found and throws on any other nonzero exit;
+  tui `plain()` strips bidi overrides/isolates U+202A-202E and U+2066-2069
+  with a regression test; r2-real fails on a partial gate and asserts the
+  observed conditional wire statuses (native must contain the rejected 412;
+  fallback must record none). DECLINED, with rationale: LOW-6 ui entrypoint
+  unit test — the `ui` path is exercised by a disposable-store smoke test
+  recorded in this log and a full CLI harness fixture is disproportionate
+  for a dispatch seam; LOW-7 absolute `/private/tmp` paths in committed
+  evidence — the goal's constraints mandate recording the exact candidate
+  paths/hashes as immutable inputs, so the disclosure is inherent to the
+  evidence contract; LOW-9 (INFO) zero-assertion skips on hosts without
+  python3/prime-agent — both present here, recorded as-is. Post-fix checks:
+  root `bun test` 524 pass / 3 gated skips / 0 fail (527 total; +1 bidi
+  regression test), `tsc --noEmit` clean, installer+prime-agent suites
+  88 pass / 0 fail (nassun's own baseline).

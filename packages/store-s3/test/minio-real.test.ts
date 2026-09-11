@@ -183,7 +183,9 @@ async function resolveTarget(): Promise<Target> {
   if (gate === "1") {
     const bucket = Bun.env.BOARD_MINIO_TEST_BUCKET;
     if (!bucket) {
-      return { kind: "skip", reason: "BOARD_MINIO_INTEGRATION=1 requires BOARD_MINIO_TEST_BUCKET (optionally BOARD_MINIO_TEST_ENDPOINT, BOARD_MINIO_TEST_PREFIX, BOARD_MINIO_TEST_REGION, BOARD_MINIO_TEST_ACCESS_KEY_ID, BOARD_MINIO_TEST_SECRET_ACCESS_KEY)" };
+      // G1 review M2: an explicitly requested integration run must fail, not
+      // skip, so gate drift can never masquerade as a green run.
+      throw new Error("BOARD_MINIO_INTEGRATION=1 requires BOARD_MINIO_TEST_BUCKET (optionally BOARD_MINIO_TEST_ENDPOINT, BOARD_MINIO_TEST_PREFIX, BOARD_MINIO_TEST_REGION, BOARD_MINIO_TEST_ACCESS_KEY_ID, BOARD_MINIO_TEST_SECRET_ACCESS_KEY)");
     }
     const accessKeyId = Bun.env.BOARD_MINIO_TEST_ACCESS_KEY_ID;
     const secretAccessKey = Bun.env.BOARD_MINIO_TEST_SECRET_ACCESS_KEY;

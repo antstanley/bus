@@ -294,11 +294,17 @@ export function primeStatusArgs(): string[] {
 
 /**
  * Probe whether an MCP server name is configured: true when `mcp get` exits 0,
- * false on any nonzero exit (0.9.4 exits 1 with "was not found" when absent).
+ * false only on the documented exit 1 ("was not found"). Any other nonzero
+ * exit is a spawn failure or crash — G1 review LOW: it must fail loudly
+ * instead of reading as absence, which would let uninstall orphan the server.
  */
 export async function primeMcpServerInstalled(name: string, options: PrimeCommandOptions = {}): Promise<boolean> {
   const result = await runPrimeAgent(primeMcpGetArgs(name), options);
-  return result.exitCode === 0;
+  if (result.exitCode === 0) return true;
+  if (result.exitCode === 1) return false;
+  throw new Error(
+    `prime-agent mcp get ${JSON.stringify(name)} exited ${result.exitCode}: cannot distinguish presence from failure`,
+  );
 }
 
 /**

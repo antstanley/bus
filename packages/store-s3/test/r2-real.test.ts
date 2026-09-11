@@ -42,7 +42,11 @@ function resolveTarget(): { target: R2Target } | { reason: string } {
   if (!hasExplicitCredentials && !hasAmbientCredentials) {
     missing.push("BOARD_R2_TEST_ACCESS_KEY_ID and BOARD_R2_TEST_SECRET_ACCESS_KEY (or ambient S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY)");
   }
-  if (missing.length > 0) return { reason: `BOARD_R2_INTEGRATION=1 is set but missing: ${missing.join(", ")}` };
+  if (missing.length > 0) {
+    // G1 review LOW: a partially set gate must fail, not skip, so drift can
+    // never masquerade as a green run.
+    throw new Error(`BOARD_R2_INTEGRATION=1 is set but missing: ${missing.join(", ")}`);
+  }
   const target: R2Target = {
     bucket: Bun.env.BOARD_R2_TEST_BUCKET!,
     endpoint: Bun.env.BOARD_R2_TEST_ENDPOINT!,
@@ -152,12 +156,18 @@ if ("reason" in resolved) {
       await store.put("probe/auto", "first", { ifNoneMatch: true });
       await expect(store.put("probe/auto", "second", { ifNoneMatch: true })).rejects.toBeInstanceOf(KeyExistsError);
       expect(decoder.decode((await store.get("probe/auto"))!)).toBe("first");
-      // native: 2 auto-probe requests + 1 write + 1 rejected duplicate = 4;
-      // fallback: the probe can issue 0–2 requests before exists+write.
-      const strategy = log.requests.length >= 3 ? "native" : "fallback";
-      const statuses = log.requests.join(",");
-      expect(["native", "fallback"]).toContain(strategy);
-      console.info(`[r2-real] auto selected ${strategy} conditional PUT (conditional statuses: ${statuses || "none"})`);
+      // G1 review LOW: assert the OBSERVED conditional wire statuses instead
+      // of a derived-label tautology. native puts If-None-Match on the wire
+      // (probe 404 + rejected duplicate 412); fallback never sends a
+      // conditional request, so nothing is recorded.
+      const conditionalStatuses = log.requests;
+      const strategy = conditionalStatuses.length > 0 ? "native" : "fallback";
+      if (strategy === "native") {
+        expect(conditionalStatuses).toContain(412); // the rejected duplicate put
+      } else {
+        expect(conditionalStatuses).toEqual([]);
+      }
+      console.info(`[r2-real] auto selected ${strategy} conditional PUT (conditional statuses: ${conditionalStatuses.join(",") || "none"})`);
     });
 
     it("auto probe objects never leak into list results", async () => {

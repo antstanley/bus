@@ -19,15 +19,19 @@ const CONTROL_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g;
 const CSI = /\u001B\[[0-?]*[ -/]*[@-~]/g;
 /** Complete OSC sequences (ESC ] ... BEL or ST), tolerating truncation. */
 const OSC = /\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)?/g;
+/** Bidi overrides and isolates (G1 review LOW): invisible controls that
+ * visually reorder following text, enabling display spoofing. */
+const BIDI = /[\u202A-\u202E\u2066-\u2069]/g;
 
 /**
  * Reduce untrusted text to inert plain text: well-formed ANSI escape
- * sequences are removed whole, any other control character is dropped, and
- * everything else (including literal "[31m" remnants of a malformed escape)
- * passes through as visible text. Never throws on any string input.
+ * sequences are removed whole, control characters (including bidi
+ * overrides/isolates) are dropped, and everything else (including literal
+ * "[31m" remnants of a malformed escape) passes through as visible text.
+ * Never throws on any string input.
  */
 export function plain(text: string): string {
-  return text.replace(OSC, "").replace(CSI, "").replace(CONTROL_CHARS, "");
+  return text.replace(OSC, "").replace(CSI, "").replace(BIDI, "").replace(CONTROL_CHARS, "");
 }
 
 /** Visible stand-in rendered for a line break inside a single-line cell. */
