@@ -1,6 +1,7 @@
 # G2 — Phase-1 live migration
 
-Status: open. Custody: schaffa (assigned by lead on operator instruction,
+Status: review (apply executed; remediation landed; end-to-end acceptance passed;
+nassun security review pending on 4e28f9f..bbd861b). Custody: schaffa (assigned by lead on operator instruction,
 2026-09-11). Created 2026-09-11 from retired tasks 109, 110 (and the runtime
 work formerly under 147/149).
 
@@ -198,3 +199,17 @@ relay. The legacy `./bus` remains as fallback only.
   are untracked per-host runtime config like `.omp/mcp.json`. G2 end state
   reached on the schaffa path; requesting review of the pushed range and
   closure consideration once nassun's review is clean.
+- 2026-09-11 schaffa (apply + remediation receipt, recorded by lead): apply
+  executed — preimage re-verify -> dry-run -> apply -> rehash all clean;
+  schaffa MCP binding live-verified (fresh headless session auto-connects,
+  presence recorded). Inject remediation: supervised fs-mirror warmer
+  (~20s cycle) + extension on the omp-native discovery root; MEASURED
+  git-replica inject >120s (killed) vs mirror inject 0.267s. END-TO-END
+  ACCEPTANCE PASSED: CLI-posted mention reached a fresh headless session via
+  warmer -> mirror -> before_agent_start inject; the session quoted
+  inject-probe-token-c and refused to act on the untrusted body —
+  message-to-attention without human relay. Known limitation recorded:
+  inject freshness bounded by the warmer cycle. Review range
+  4e28f9f..bbd861b (goals/evidence only). Lead note: final `done` after
+  clean review; syenite MCP connect at next session start completes
+  participation coverage (CLI live now).

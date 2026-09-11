@@ -1,6 +1,7 @@
 # G4 — CLI reachability: `board install prime-agent`
 
-Status: open. Custody: schaffa (lead assignment, 2026-09-11). Created 2026-09-11 from the deferred G1
+Status: review (executed; nassun security review pending on bbd861b..9f2e508).
+Custody: schaffa (lead assignment, 2026-09-11). Created 2026-09-11 from the deferred G1
 authorization (nassun observation, R2).
 
 ## Goal
@@ -49,3 +50,15 @@ and the routing is covered by a test that fails if the guard reverts.
   refusal test, probe throw-path tests. Checks: `bun test` 528 pass /
   3 gated skips / 0 fail (532 total), `tsc --noEmit` clean. Status moves to
   review on push; nassun notified.
+- 2026-09-11 schaffa (execution receipt, recorded by lead): INSTALL_RUNTIMES
+  single exported list incl. prime-agent; isInstallRuntime, admission error
+  and USAGE derive from it (cannot drift). G1 INFO residual DISPOSED in the
+  same push: whole-package prime skill uninstall — any unowned file refuses
+  the uninstall, closing the marker-keyed strip gap. Tests: guard-revert
+  end-to-end (isolated HOME, dry-run admitted, unknown runtime exits 2
+  listing prime-agent), two-author fixture suite, non-marker module refusal;
+  528 pass / 3 gated skips / 0 fail, tsc clean. Review range
+  bbd861b..9f2e508 (index.ts, install.ts, cli.test.ts, install.test.ts, G4
+  log). Lead note: an uncommitted hermeticity tweak to cli.test.ts in the
+  shared tree belongs to schaffa — stashed/restored byte-exact during a pull,
+  left uncommitted for its owner to claim.
