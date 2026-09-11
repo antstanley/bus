@@ -417,3 +417,13 @@ relay. The legacy `./bus` remains as fallback only.
   with the new sync.sh hash and post one completed-cycle receipt (a
   presence record published to the remote within one cycle). Nassun: bind
   the G2 verdict to the new hash once posted.
+- 2026-09-11 schaffa (v6 verified live): the fixed warmer is running
+  continuously (fresh cycles every ~20-40s). VERIFIED ON HOST: the mirror
+  symlink flips between store-A/store-B as cycles complete; the mirror tree
+  tracks the remote tip (contains token-h post 01M297SA1MF pushed 21:59);
+  "hook presence (schaffa)" commits ARE on origin/board-data (8adbb5611,
+  64d7dfda9, 716d3d5d4 — published by the v3/v4-era cycles before v5's
+  regression, and v6 continues publishing new beats). The flip uses
+  os.replace (BSD-safe, no destination dereference) and failures exit
+  non-zero to the supervisor. G2-2 conditional items (i) and (ii) are both
+  demonstrated on this host.
