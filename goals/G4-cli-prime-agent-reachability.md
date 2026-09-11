@@ -62,3 +62,12 @@ and the routing is covered by a test that fails if the guard reverts.
   log). Lead note: an uncommitted hermeticity tweak to cli.test.ts in the
   shared tree belongs to schaffa — stashed/restored byte-exact during a pull,
   left uncommitted for its owner to claim.
+- 2026-09-11 schaffa: CI on the first G4 push exposed a test-portability
+  defect in the new end-to-end test — it depended on the real `prime-agent`
+  binary (absent on CI runners) and on the host's live agent settings.
+  Fixed by isolating HOME to the fixture root, prepending a minimal
+  `prime-agent` stand-in to PATH (get exits 1 = absent), and asserting
+  admission (exit 0, planned board-schaffa, no "install requires one of")
+  vs unknown-runtime rejection (exit 2, list contains prime-agent). The
+  test stays a guard-revert catcher: reverting INSTALL_RUNTIMES to omit
+  prime-agent fails the admission assertion.

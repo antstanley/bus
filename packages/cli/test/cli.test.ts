@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { Board, MemoryStore, ulid, type Store } from "@board/core";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { BoardIndex } from "@board/index";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -847,10 +847,16 @@ describe("board CLI", () => {
     const cwd = join(import.meta.dir, "../../..");
     const root = await mkdtemp(join(tmpdir(), "board-cli-g4-"));
     roots.push(root);
-    // Deterministic HOME: the probe reads prime-agent settings under this
-    // root, so the test never touches the real agent configuration. Dry-run
-    // is probe-only and prints the plan without mutating anything.
-    const env = { ...process.env, HOME: root };
+    // Deterministic and hermetic: HOME points at the fixture root and a
+    // minimal prime-agent stand-in is prepended to PATH, so the probe never
+    // touches the real agent configuration and the test behaves identically
+    // on hosts without the real binary. Dry-run is probe-only and prints the
+    // plan without mutating anything.
+    const binDir = join(root, "bin");
+    await mkdir(join(binDir), { recursive: true });
+    await writeFile(join(binDir, "prime-agent"), "#!/usr/bin/env bash\nexit 1\n");
+    await chmod(join(binDir, "prime-agent"), 0o755);
+    const env = { ...process.env, HOME: root, PATH: `${binDir}:${process.env.PATH}` };
     const spawnCli = (args: string[]) => {
       const proc = Bun.spawn(["bun", "packages/cli/src/index.ts", ...args], {
         cwd, env, stdout: "pipe", stderr: "pipe",
