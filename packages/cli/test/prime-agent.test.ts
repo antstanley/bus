@@ -307,6 +307,15 @@ describe("primeMcpServerInstalled", () => {
       runner: scriptedRunner([{ exitCode: 1, stdout: "", stderr: "was not found" }]),
     })).toBe(false);
   });
+
+  test("fails loudly on any probe exit other than 0 or 1 (G1 R2 NEW-2)", async () => {
+    await expect(primeMcpServerInstalled("board", {
+      runner: scriptedRunner([{ exitCode: 2, stdout: "", stderr: "boom" }]),
+    })).rejects.toThrow("cannot distinguish presence from failure");
+    await expect(primeMcpServerInstalled("board", {
+      runner: scriptedRunner([{ exitCode: 255, stdout: "", stderr: "crash" }]),
+    })).rejects.toThrow("cannot distinguish presence from failure");
+  });
 });
 
 describe("primeDaemonStatus", () => {

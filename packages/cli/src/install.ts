@@ -175,8 +175,25 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       }
     };
     if (options.uninstall) {
-      for (const file of skillPaths) {
-        const before = await readText(file.absolute);
+      const existing = await Promise.all(
+        skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
+      );
+      // G1 R2 NEW-1: deletion is all-or-nothing. Ownership is checked per
+      // file, so a mixed-author package (e.g. a module whose SERVER binding
+      // reverted to another author) must stop the uninstall instead of being
+      // partially deleted — the remaining author could not reinstall, since
+      // install refuses files it does not own, leaving no self-repair.
+      for (const { file, before } of existing) {
+        if (
+          before && before.includes("Rendered by the sidekick board CLI for author")
+          && !isOwnedPrimeSkillFile(file.path, before, author)
+        ) {
+          throw new CliError(
+            `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${file.absolute}`,
+          );
+        }
+      }
+      for (const { file, before } of existing) {
         if (before && isOwnedPrimeSkillFile(file.path, before, author)) {
           changes.push({ path: file.absolute, before, after: "" });
           removals.add(file.absolute);

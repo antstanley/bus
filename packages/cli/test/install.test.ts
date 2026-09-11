@@ -1421,6 +1421,78 @@ export const Type = {
     expect(await Bun.file(skillPath).exists()).toBe(true);
   });
 
+  test("author-scopes the prime-agent skill package across install and uninstall (G1 R2 NEW-1/NEW-2)", async () => {
+    // Alpha installs first.
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const alphaInstall = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), author: "alpha", primeRunner: alphaInstall.runner });
+    const alphaBytes: Record<string, string> = {};
+    for (const entry of renderPrimeSkillPackage({ server: "board-alpha", board: "general", author: "alpha" }).files) {
+      alphaBytes[entry.path] = await text(join(skillDir, ...entry.path.split("/")));
+    }
+
+    // Beta's install must refuse on alpha's render and change nothing: no
+    // partial write, no MCP add, alpha's files byte-identical.
+    const betaInstall = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({ ...options(home, "prime-agent"), author: "beta", primeRunner: betaInstall.runner }))
+      .rejects.toThrow("refusing to replace prime-agent skill rendered for a different author");
+    for (const entry of renderPrimeSkillPackage({ server: "board-alpha", board: "general", author: "alpha" }).files) {
+      expect(await text(join(skillDir, ...entry.path.split("/")))).toBe(alphaBytes[entry.path]!);
+    }
+    expect(betaInstall.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+
+    // Beta's uninstall refuses the whole package too (all-or-nothing), so it
+    // can neither orphan nor strip alpha's wrapper; board-alpha survives.
+    const betaUninstall = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), author: "beta", uninstall: true, primeRunner: betaUninstall.runner,
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains files rendered for a different author");
+    for (const entry of renderPrimeSkillPackage({ server: "board-alpha", board: "general", author: "alpha" }).files) {
+      expect(await text(join(skillDir, ...entry.path.split("/")))).toBe(alphaBytes[entry.path]!);
+    }
+    expect(betaUninstall.calls.some((args) => args[0] === "mcp" && args[1] === "remove")).toBe(false);
+
+    // A mixed-author package (module reverted to another author's SERVER
+    // binding) stops BOTH authors' uninstalls: partial deletion would leave
+    // no self-repair, so the fail-closed gate requires manual recovery.
+    const betaModule = renderPrimeSkillPackage({ server: "board-beta", board: "general", author: "beta" })
+      .files.find((file) => file.path === "src/board/__init__.py")!;
+    await put(join(skillDir, ...betaModule.path.split("/")), betaModule.content);
+    const mixedUninstall = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), author: "alpha", uninstall: true, primeRunner: mixedUninstall.runner,
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains files rendered for a different author");
+    expect(await text(join(skillDir, "SKILL.md"))).toBe(alphaBytes["SKILL.md"]!);
+
+    // Alpha's own uninstall still works end to end.
+    // Recovery from a mixed package is manual by design: restore the alpha
+    // module, after which the owner's uninstall proceeds normally.
+    const alphaModule = renderPrimeSkillPackage({ server: "board-alpha", board: "general", author: "alpha" })
+      .files.find((file) => file.path === "src/board/__init__.py")!;
+    await put(join(skillDir, ...alphaModule.path.split("/")), alphaModule.content);
+    expect(await text(join(skillDir, "SKILL.md"))).toBe(alphaBytes["SKILL.md"]!);
+    const alphaUninstall = fakePrimeAgent(settingsPath);
+    await installRuntime({
+      ...options(home, "prime-agent"), author: "alpha", uninstall: true, primeRunner: alphaUninstall.runner,
+    });
+    expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(false);
+    const settings = JSON.parse(await text(settingsPath)) as { mcpServers?: Record<string, unknown> };
+    expect(settings.mcpServers?.["board-alpha"]).toBeUndefined();
+  });
+
+  test("primeMcpServerInstalled contract lives behind the installer probe (G1 R2 NEW-2)", async () => {
+    // The exit contract is pinned in prime-agent.test.ts; here we pin that
+    // the installer actually probes before adding, so the throw path of
+    // primeMcpServerInstalled is on the live install path.
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    expect(prime.calls[0]).toEqual(["mcp", "get", "board-prime-agent"]);
+  });
+
   test("dry-run plans prime-agent changes without adding the server or writing the skill package", async () => {
     const home = await fixture();
     const settingsPath = join(home, ".prime", "agent", "settings.json");

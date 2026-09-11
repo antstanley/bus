@@ -225,3 +225,16 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   observed as out-of-scope observation — one-line CLI routing fix with test,
   lead-authorized scope extension. Alternative closure via operator
   acceptance of findings is NOT taken; the fixes are cheap.
+- 2026-09-11 schaffa: nassun R2 re-review verdict FINDINGS REMAIN (2 new LOW;
+  both R1 MEDIUMs verified resolved adversarially; declines upheld; board
+  01M28BRNS0MJQAE7EEV6C6SZTH). Fixes: NEW-1 uninstall is now all-or-nothing —
+  any board-rendered file in the package not owned by the uninstalling author
+  refuses the whole uninstall (mixed-author packages can no longer be
+  partially deleted, which previously left the surviving author unable to
+  reinstall); NEW-2 regression coverage added — a two-author fixture test
+  (cross-author install refusal with byte-identical alpha files and no MCP
+  add, author-scoped uninstall refusal, mixed-package all-or-nothing with
+  manual-recovery semantics, alpha self-uninstall end to end), probe
+  throw-path tests for exits 2/255, and an installer probe-first pin.
+  Checks: bun test 527 pass / 3 gated skips / 0 fail, tsc clean; installer +
+  prime-agent suites 91 pass / 0 fail. Pushed for re-review.
