@@ -856,7 +856,10 @@ describe("board CLI", () => {
     await mkdir(join(binDir), { recursive: true });
     await writeFile(join(binDir, "prime-agent"), "#!/usr/bin/env bash\nexit 1\n");
     await chmod(join(binDir, "prime-agent"), 0o755);
+    // G4 LOW-5: scrub the agent-dir override so the spawned CLI resolves the
+    // fixture root, never a live agent directory.
     const env = { ...process.env, HOME: root, PATH: `${binDir}:${process.env.PATH}` };
+    delete env.PRIME_AGENT_CODING_AGENT_DIR;
     const spawnCli = (args: string[]) => {
       const proc = Bun.spawn(["bun", "packages/cli/src/index.ts", ...args], {
         cwd, env, stdout: "pipe", stderr: "pipe",

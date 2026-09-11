@@ -1,5 +1,5 @@
-import { chmod, lstat, mkdir, readFile, realpath, rename, stat, unlink, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, rmdir, stat, unlink, writeFile } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { assertName } from "@board/core";
 import { createHash } from "node:crypto";
 import { homedir, hostname as systemHostname } from "node:os";
@@ -13,7 +13,9 @@ import {
   type PrimeRunner,
 } from "./prime-agent.ts";
 
-export const INSTALL_RUNTIMES = ["claude", "codex", "letta", "gemini", "cursor", "opencode", "pi", "prime-agent"] as const;
+export const INSTALL_RUNTIMES = Object.freeze([
+  "claude", "codex", "letta", "gemini", "cursor", "opencode", "pi", "prime-agent",
+] as const);
 export type InstallRuntime = (typeof INSTALL_RUNTIMES)[number];
 
 export interface InstallOptions {
@@ -58,7 +60,20 @@ export class CliError extends Error {
 /** Merge or remove the board integration without disturbing unrelated config. */
 export async function installRuntime(options: InstallOptions): Promise<InstallResult> {
   const runtime = options.runtime;
+  // G4 LOW-4: validate the runtime at the entry too — the CLI guard can be
+  // bypassed by any non-CLI caller, and an unhandled name must fail closed
+  // instead of falling into another runtime's configuration branch.
+  if (!(INSTALL_RUNTIMES as readonly string[]).includes(runtime)) {
+    throw new CliError(`unimplemented install runtime: ${String(runtime)}`);
+  }
   const notices: string[] = [];
+  // G4 LOW-3: set when the prime-agent skill package is being removed, so
+  // the unlink loop can re-verify file ownership against the live bytes.
+  let primeSkillContext: { dir: string; author: string } | undefined;
+  // G4 LOW-3: prime-agent skill removals get a live-bytes ownership
+  // re-verification immediately before their unlink (other runtimes'
+  // removals keep the plain unlink).
+  const primeRemovalVerification = new Map<string, { rel: string }>();
   if (!options.uninstall && !options.store) throw new CliError("install requires --store");
 
   const derivedPiAuthor = runtime === "pi" && !options.uninstall && options.author === undefined;
@@ -89,7 +104,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       : "Installed legacy Letta hooks only; prefer packages/letta-mod/README.md for the mod path. Letta MCP registration remains server-side.");
   } else if (runtime === "codex") {
     const path = join(options.home, ".codex", "config.toml");
-    const before = await readText(path);
+    const before = await readText(path) ?? "";
     const after = mergeCodex(before, {
       uninstall: options.uninstall ?? false, executable, hookPath, mcpPath, mcp, store, author, board, indexPath,
     });
@@ -98,7 +113,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
     const extensionPath = options.projectLocal
       ? join(cwd, ".pi", "extensions", "board.ts")
       : join(options.home, ".pi", "agent", "extensions", "board.ts");
-    const before = await readText(extensionPath);
+    const before = await readText(extensionPath) ?? "";
     if (!options.uninstall && before && !isOwnedPiExtension(before, hookPath)) {
       throw new CliError(`refusing to replace non-board Pi extension: ${extensionPath}`);
     }
@@ -116,7 +131,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       mergeOpenCodeMcp(root, openCodeMcp, options.uninstall ?? false, mcpPath);
     });
     const pluginPath = join(cwd, ".opencode", "plugins", "board.ts");
-    const before = await readText(pluginPath);
+    const before = await readText(pluginPath) ?? "";
     if (!options.uninstall && before && !isOwnedOpenCodePlugin(before, hookPath)) {
       throw new CliError(`refusing to replace non-board OpenCode plugin: ${pluginPath}`);
     }
@@ -156,6 +171,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
     const skill = renderPrimeSkillPackage({ server, board, author });
     const skillDir = join(agentDir, "skills", skill.name);
     const skillPaths = skill.files.map((file) => ({ ...file, absolute: join(skillDir, ...file.path.split("/")) }));
+    primeSkillContext = { dir: skillDir, author };
     // Ownership gate for the destructive MCP mutations. `mcp get` only reports
     // the transport type, so ownership is proven by a read-only parse of the
     // agent settings file (never written here; every mutation still goes
@@ -176,31 +192,46 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       }
     };
     if (options.uninstall) {
-      const existing = await Promise.all(
-        skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
-      );
-      // G1 R2 NEW-1 + G4 (INFO residual): uninstall is whole-package and
-      // all-or-nothing. ANY file in the package that is not owned by the
-      // requesting author — another author's render or a foreign non-marker
-      // module — refuses the entire uninstall, so owned files can never be
-      // stripped while foreign bytes survive (no self-repair would remain).
-      for (const { file, before } of existing) {
-        if (before && !isOwnedPrimeSkillFile(file.path, before, author)) {
+      // G4 LOW-1: enumerate the REAL package contents (recursive readdir) —
+      // a foreign file at any path outside the three renderer outputs must
+      // refuse the uninstall too, not silently survive it.
+      const onDisk = (await recursiveReadDir(skillDir)).sort();
+      const rendererPaths = new Set(skillPaths.map((p) => relative(skillDir, p.absolute)));
+      // G4 LOW-2: readText returns null for ENOENT; an empty file is present
+      // and subject to ownership, never silently skipped.
+      const existing: Array<{ rel: string; absolute: string; before: string }> = [];
+      for (const rel of onDisk) {
+        const absolute = join(skillDir, ...rel.split("/"));
+        const before = await readText(absolute);
+        if (before === null) continue;
+        existing.push({ rel, absolute, before });
+      }
+      // G1 R2 NEW-1 + G4 LOW-1/LOW-2: whole-package, all-or-nothing. ANY file
+      // in the package that is not owned by the requesting author — another
+      // author's render, a foreign non-marker module, or an unexpected path —
+      // refuses the entire uninstall, so owned files can never be stripped
+      // while foreign bytes survive (no self-repair would remain).
+      for (const { rel, absolute, before } of existing) {
+        if (!isOwnedPrimeSkillFile(rel, before, author)) {
           if (before.includes("Rendered by the sidekick board CLI for author")) {
             throw new CliError(
-              `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${file.absolute}`,
+              `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${absolute}`,
+            );
+          }
+          if (rendererPaths.has(rel)) {
+            throw new CliError(
+              `refusing to uninstall: prime-agent skill package contains non-board files: ${absolute}`,
             );
           }
           throw new CliError(
-            `refusing to uninstall: prime-agent skill package contains non-board files: ${file.absolute}`,
+            `refusing to uninstall: unexpected file in prime-agent skill package: ${absolute}`,
           );
         }
       }
-      for (const { file, before } of existing) {
-        if (before && isOwnedPrimeSkillFile(file.path, before, author)) {
-          changes.push({ path: file.absolute, before, after: "" });
-          removals.add(file.absolute);
-        }
+      for (const { rel, absolute, before } of existing) {
+        changes.push({ path: absolute, before, after: "" });
+        removals.add(absolute);
+        primeRemovalVerification.set(absolute, { rel });
       }
       // Verified removal: probe with `mcp get`, then `mcp remove` when
       // present (exit 0 removes only this entry; absent is a natural no-op).
@@ -226,7 +257,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       // Read once, then refuse foreign files before any mutating MCP
       // invocation so a refusal leaves the agent configuration untouched.
       const existing = await Promise.all(
-        skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
+        skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) ?? "" })),
       );
       for (const { file, before } of existing) {
         if (before && before !== file.content && !isOwnedPrimeSkillFile(file.path, before, author)) {
@@ -293,17 +324,32 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
         mergeMcp(root, mcp, options.uninstall ?? false, mcpPath);
       });
       notices.push("Gemini hooks are deferred to task 503; its hooks require runtime-specific JSON output.");
-    } else {
+    } else if (runtime === "cursor") {
       await planJson(changes, join(options.home, ".cursor", "mcp.json"), (root) => {
         mergeMcp(root, mcp, options.uninstall ?? false, mcpPath);
       });
       notices.push("Cursor hooks are deferred to task 503; its hooks require runtime-specific JSON output.");
+    } else {
+      // G4 LOW-4: exhaustive default — an admitted but unimplemented runtime
+      // must fail closed instead of silently installing Cursor configuration.
+      throw new CliError(`no installer implementation for runtime: ${runtime}`);
     }
   }
 
   if (!options.dryRun) for (const change of changes) {
-    if (removals.has(change.path)) await unlink(change.path);
-    else await atomicWrite(change.path, change.after);
+    const primeVerification = primeRemovalVerification.get(change.path);
+    if (removals.has(change.path)) {
+      if (primeVerification) {
+        // G4 LOW-3: the ownership snapshot ages across the mutating MCP
+        // remove. Re-read and re-verify immediately before each unlink; any
+        // drift fails the uninstall closed with nothing further deleted.
+        const current = await readText(change.path);
+        if (current === null || !isOwnedPrimeSkillFile(primeVerification.rel, current, primeSkillContext?.author ?? "")) {
+          throw new CliError(`refusing to continue uninstall: ${change.path} changed mid-uninstall`);
+        }
+      }
+      await unlink(change.path);
+    } else await atomicWrite(change.path, change.after);
   }
   return { changes, notices };
 }
@@ -450,7 +496,7 @@ function expandTildePath(value: string): string {
  * fails closed instead of treating an unknown entry as board-owned.
  */
 async function readPrimeMcpServers(agentDir: string): Promise<JsonObject | null> {
-  const before = await readText(join(agentDir, "settings.json"));
+  const before = (await readText(join(agentDir, "settings.json"))) ?? "";
   if (!before.trim()) return {};
   let parsed: unknown;
   try { parsed = JSON.parse(before); } catch { return null; }
@@ -1119,7 +1165,7 @@ function availableServerName(servers: JsonObject): string {
 async function planJson(changes: InstallChange[], path: string, mutate: (root: JsonObject) => void): Promise<void> {
   const before = await readText(path);
   let root: JsonObject;
-  if (!before.trim()) root = {};
+  if (before === null || !before.trim()) root = {};
   else {
     let parsed: unknown;
     try { parsed = JSON.parse(before); } catch { throw new CliError(`cannot parse JSON config ${path}`); }
@@ -1128,14 +1174,15 @@ async function planJson(changes: InstallChange[], path: string, mutate: (root: J
     root = structuredClone(object);
   }
   mutate(root);
-  const newline = before.includes("\r\n") ? "\r\n" : "\n";
-  const indent = before === "" ? "  " : before.includes("\n") ? before.match(/\r?\n([ \t]+)"/)?.[1] ?? "  " : undefined;
-  const trailingNewline = before === "" || before.endsWith("\n");
+  const source = before ?? "";
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  const indent = source === "" ? "  " : source.includes("\n") ? source.match(/\r?\n([ \t]+)"/)?.[1] ?? "  " : undefined;
+  const trailingNewline = source === "" || source.endsWith("\n");
   const serialized = JSON.stringify(root, null, indent).replaceAll("\n", newline);
   const after = Object.keys(root).length
     ? serialized + (trailingNewline ? newline : "")
     : "";
-  if (after !== before) changes.push({ path, before, after });
+  if (after !== source) changes.push({ path, before: source, after });
 }
 
 interface CodexMergeOptions {
@@ -1428,12 +1475,31 @@ function objectValue(value: unknown): JsonObject | null {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : null;
 }
 
-async function readText(path: string): Promise<string> {
+async function readText(path: string): Promise<string | null> {
   try { return await readFile(path, "utf8"); }
   catch (error) {
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return "";
+    // G4 LOW-2: ENOENT yields null (absent); an empty file reads as "" and
+    // is a present file subject to ownership, never silently skippable.
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return null;
     throw error;
   }
+}
+
+/** Relative paths of every file under `dir` (recursive); [] when absent. */
+async function recursiveReadDir(dir: string): Promise<string[]> {
+  const out: string[] = [];
+  const walk = async (current: string, prefix: string): Promise<void> => {
+    for (const entry of await readdir(current, { withFileTypes: true })) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) await walk(join(current, entry.name), rel);
+      else out.push(rel);
+    }
+  };
+  try { await walk(dir, ""); } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return out;
+    throw error;
+  }
+  return out;
 }
 
 async function atomicWrite(path: string, content: string): Promise<void> {
