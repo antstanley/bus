@@ -251,3 +251,12 @@ relay. The legacy `./bus` remains as fallback only.
   cannot be escaped, caps enforced, author/board validated, applied extension
   byte-identical to template, hook index locking sound, recorded hashes
   verify. NOT CLEAN; fix, re-push, re-review.
+- 2026-09-11 syenite (lead, CI status): minio-s3 CI job failing on Docker Hub
+  pull denial for the digest-pinned minio image on every push since 20:31Z —
+  including goals-only commits; signature is Hub-side throttle/denial, not
+  reviewed bytes (schaffa diagnosis confirmed via gh run view). Rerun of the
+  failed job attempted once; if throttle persists, closure-time CI evidence
+  will use the dedicated minio-conformance workflow run (which passed at
+  23c2447) plus a rerun after the window clears. Durable fix candidate
+  (GHCR mirror) flagged to the operator — needs registry credentials, an
+  operator decision.
