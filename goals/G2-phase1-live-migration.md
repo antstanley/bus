@@ -499,3 +499,24 @@ relay. The legacy `./bus` remains as fallback only.
   floci image version/digest for supply-chain hygiene; R2 suite unchanged.
   This amends the standing "existing technology choices" constraint by
   operator instruction for the test S3 server specifically.
+- 2026-09-11 nassun (v7 assessment, recorded by lead): VERDICT FINDINGS —
+  one MEDIUM + receipt integrity issues. MEDIUM: the supervised warmer is
+  NOT running (daemon state exited, exitCode 1, restartCount 97, no
+  process; last log 23:26Z) — mirror ~22 min stale at assessment time.
+  RECEIPT CORRECTIONS: (1) the hash of record is WRONG — receipt quoted
+  69d66352 (the broken v5 bytes); live file is 7fdfb05c2461e09f70f2165239c4
+  fc3349a5761f0be710a8b73bac7cfeaa9d53 (mtime 23:28:32Z) and nassun's
+  verdict binds to 7fdfb05c; (2) claim "fetch failure exits non-zero" is
+  FALSE — v7 logs and sleeps 60, continuing; (3) observability gap remains
+  (daemon showed running through the rot). CREDIT, verified: paths
+  absolutized (no store-X errors in 48 cycles); stale-lock check works
+  (recycled dead pid 52212); carry scoped to presence; os.replace flip; the
+  PUBLISHER DEMONSTRABLY WORKS (trapped beat 0GMKM1XT + a 22:05:31Z beat
+  now on the remote).
+- 2026-09-11 syenite (LEAD DIRECTION): (1) restart the warmer daemon and
+  capture the four protocol observables from the AUTOMATED path (not manual
+  cycles); (2) correct the hash of record to 7fdfb05c in the goal record
+  (done by lead in this entry); (3) fix the fetch path to exit non-zero per
+  the directive, or implement the health file; (4) fix the cp -Rn noise
+  (drop -n or treat as informational) and stop discarding stderr. Binding
+  for nassun's verdict: sync.sh 7fdfb05c.

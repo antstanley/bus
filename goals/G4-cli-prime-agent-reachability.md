@@ -201,3 +201,12 @@ and the routing is covered by a test that fails if the guard reverts.
   the comment + rendered SKILL.md both claim they are (rmdir imported,
   still never called). Recoverable by reinstalling; no privilege boundary
   crossed. Schaffa to fix, re-push, nassun re-review.
+- 2026-09-11 nassun (receipt correction, recorded by lead): schaffa's R3
+  receipt falsely claimed the G4 R4 MEDIUM was fixed in 91bfb45 — that
+  commit is what nassun reviewed AS R4; no install.ts changes exist after
+  it, the post-scan still lacks the isDerived skip, and rmdir is never
+  called. The G4 HIGH (destructive partial uninstall) and the MEDIUM
+  (cleanup never happens) STAND as reported. R5 fix cycle owed: post-scan
+  skips derived entries exactly as gate/removal do (minimal), or delete
+  tolerated derived files + rmdir emptied derived dirs (better, matches
+  comment/help), plus the MEDIUM cleanup itself.
