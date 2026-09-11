@@ -64,3 +64,31 @@ relay. The legacy `./bus` remains as fallback only.
   schaffa (mcp+cli, same state); leftover empty `essun-33372` replica
   directory observed for lead cleanup. Codex sessions on this host run
   cmux hooks unrelated to the board — preimage-recorded, out of G2 scope.
+- 2026-09-11 schaffa: preparation milestone 2 — stores verified, plan and
+  root-entry decision drafted. Per-participant isolated stores VERIFIED:
+  schaffa mcp+cli (proven in use), syenite mcp (stale head 08:50Z, binding
+  dead — refresh at apply) + cli (active, head 13:10Z), nassun cli
+  (`replicas/nassun-cli-20260910/board`, active, head 13:13Z — its review
+  workers). Root-entry decision DRAFT posted to the board for lead+operator
+  record: (1) schaffa MCP via project `.omp/mcp.json` `board-schaffa`
+  (already declared; activates at next session start — no restart forced);
+  (2) syenite same pattern via `board-syenite` → `team/mcp/syenite-98995`,
+  applied by syenite itself in its quiesced window; (3) nassun stays
+  CLI-replica (live) unless the operator directs an MCP/hook role for dsh;
+  (4) deliverer role owner is a lead decision (candidate: dedicated
+  `--deliver` watcher or syenite's runtime); (5) Codex DROPPED from the
+  participant list (retired/paused) — this resolves the proposal's
+  unverified codex override-schema gap by recorded scope reduction, not
+  bypass; opencode stays retired, its fragment remains the pattern source.
+  Hook-role mechanics: Pi grouped hooks are per-event processes with
+  owned-extension markers (`packages/hooks/src/board-hook.ts`), so hook
+  config applies on the next board event without runtime restart; guarded
+  apply = owned-extension merge or whole-file plugin replace per the
+  proposal, never the installRuntime merge path on live config. Quiescence
+  plan: per-participant owner-controlled windows at safe handoffs, fresh
+  preimage re-verification immediately before bytes change, post-apply
+  rehash of both artifacts, mismatch stops for lead review (no
+  auto-restore). Dry verification: planA schema matches the live declared
+  binding; installer suite 28/0 on merged f917236-source; fixture
+  max1/zero-overlap recorded on reviewed source. Readiness announced on
+  the board; apply awaits lead AND operator decision recorded here.
