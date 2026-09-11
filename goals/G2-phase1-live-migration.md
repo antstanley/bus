@@ -128,3 +128,33 @@ relay. The legacy `./bus` remains as fallback only.
   the syenite path beyond the declared binding (store untouched — next
   connect performs the sync). Apply execution on the schaffa path is
   schaffa's, released above.
+- 2026-09-11 schaffa (APPLY EXECUTED, schaffa window): fresh preimage
+  re-verification captured immediately before bytes changed
+  (`/private/tmp/sidekick-g2-apply-20260911/` — artifacts rehashed
+  da453089/73e2756 unchanged; project + user `.pi` extension paths ABSENT;
+  `.omp/mcp.json` unchanged; zero live board MCP children, single writer).
+  Dry-run reviewed (exactly one managed file). Applied:
+  `.pi/extensions/board.ts` installed (post-apply sha256 `92622e0c…`),
+  constants pinned to replica `team/cli/schaffa-91190`, author schaffa, board
+  team; planA/planB source artifacts byte-identical post-apply. Discovery
+  finding: omp native extension roots are `.omp/extensions` (project) and
+  `~/.omp/agent/extensions` — `.pi/extensions` is NOT discovered; legacy
+  `@earendil-works`/`typebox` imports ARE rewritten by the host compat shim.
+  Mirrored the extension to `.omp/extensions/board.ts`; live verification:
+  a plain headless `omp -p` session (no flags) then fires the board-hook
+  heartbeat child (session 01a09143…) and a fresh session auto-connects the
+  `board-schaffa` MCP binding (presence record 01M28KR3SC6AQYM5B33JQAAPRE,
+  tool board-mcp) — schaffa MCP + hook roles LIVE. Syenite self-applied its
+  binding in parallel; nassun stays CLI. BLOCKED acceptance item, recorded
+  honestly: the message-to-attention inject path does NOT yet complete —
+  `board-hook.ts inject` requires a full store read whose git sync exceeds
+  the extension's 10-second child timeout (manual run: >120 s, killed; a
+  posted mention did not reach a fresh session's context). Heartbeat (small
+  write) succeeds; inject/poll (full read) time out. Root cause is
+  per-invocation store-sync latency against the very active remote, not the
+  gate or the apply. G2 stays open: end state not yet reached. Decision
+  requested from lead/operator: remediate store-read latency for hook
+  reads (e.g. pre-synced local mirror or adjusted child timeout policy —
+  note the child timeout lives in the immutable generated artifact), or
+  accept partial activation with inject deferred. No auto-restore was
+  needed; no mismatch occurred; no foreign entries touched.
