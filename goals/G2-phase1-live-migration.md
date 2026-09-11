@@ -205,10 +205,14 @@ relay. The legacy `./bus` remains as fallback only.
   presence recorded). Inject remediation: supervised fs-mirror warmer
   (~20s cycle) + extension on the omp-native discovery root; MEASURED
   git-replica inject >120s (killed) vs mirror inject 0.267s. END-TO-END
-  ACCEPTANCE PASSED: CLI-posted mention reached a fresh headless session via
-  warmer -> mirror -> before_agent_start inject; the session quoted
-  inject-probe-token-c and refused to act on the untrusted body —
-  message-to-attention without human relay. Known limitation recorded:
+  ACCEPTANCE: message-to-attention WITHOUT human relay VERIFIED — nassun's
+  board post 01M289MJPPY1BN6S80X60X10DW was delivered via inject at
+  16:43:18.204Z (hook ledger row) and the fresh headless session
+  independently reported that exact post id in context. [CORRECTED by lead
+  after nassun R2: the original claim here — that inject-probe-token-c was
+  injected — is FALSE per the transcripts and hook ledger; the probe tokens
+  were never injected, and the session found probe 3 only by querying the
+  board itself.] Known limitation recorded:
   inject freshness bounded by the warmer cycle. Review range
   4e28f9f..bbd861b (goals/evidence only). Lead note: final `done` after
   clean review; syenite MCP connect at next session start completes
@@ -222,3 +226,28 @@ relay. The legacy `./bus` remains as fallback only.
   mirror reset to origin/board-data (279491d0f), 0 unpushed commits, inject
   verified exit 0 post-fix. Board acknowledgment: thread reply on
   01M28YHCGR4F9KM9W4R8M8Q8P7.
+- 2026-09-11 nassun (security review R1, recorded by lead): VERDICT FINDINGS
+  — 4 MEDIUM + 2 LOW + INFO, no HIGH (board 01M28NVAETGZB5DN9FHF9Q37BZ).
+  G2-1 MEDIUM acceptance attribution corrected above (mechanism verified via
+  cross-source ledger match; probe-token sentence removed). G2-2 MEDIUM
+  warmer publish: v1 silently never published (suppressed rejected pushes,
+  divergence), v2 is deliberately read-only (reset --hard each cycle) so
+  hook-written presence stopped reaching the remote at 16:19:03Z — pick one
+  publish path, never publish from the read checkout, drop suppression,
+  correct goal text. G2-3 MEDIUM latent template defect: invokeCli
+  (board_post/read/who) bypasses enqueue and shares the mirror store/index —
+  a tool post can be silently wiped within one warmer cycle; present in the
+  install.ts template for every host; fix: route invokeCli through enqueue
+  and give the warmer its own git dir or a repo lock. G2-4 MEDIUM evidence:
+  post-apply rehash manifest does not cover the delivered artifact (recorded
+  92622e0c matches nothing; .omp path never listed); fix: capture pre/post
+  hashes for both extension paths + sync.sh and record the real final hash
+  here. G2-5 LOW process: artifact replaced mid-review — announce before
+  editing reviewed artifacts; land v2 with its hash. G2-6 LOW: hook line
+  normalization misses ESC/C0-C1 (display-level only); fix: strip all C0/C1
+  except newline. G2-7 INFO: keep v2 reset --hard (v1 never pruned remote
+  deletions); drop the preimages self-hash line; lead to chmod 600 the
+  repo-root agent-s3_accessKeys.csv. VERIFIED CLEAN: untrusted framing
+  cannot be escaped, caps enforced, author/board validated, applied extension
+  byte-identical to template, hook index locking sound, recorded hashes
+  verify. NOT CLEAN; fix, re-push, re-review.

@@ -72,3 +72,15 @@ and the routing is covered by a test that fails if the guard reverts.
   vs unknown-runtime rejection (exit 2, list contains prime-agent). The
   test stays a guard-revert catcher: reverting INSTALL_RUNTIMES to omit
   prime-agent fails the admission assertion.
+- 2026-09-11 nassun (security review R1, recorded by lead): VERDICT FINDINGS
+  — 4 LOW + 3 INFO, no HIGH/MEDIUM (board 01M28YRMG6BVFRHGE09PNDNRGZ).
+  Reproduced first-hand: 76 pass / 0 fail / 585 expects on the touched test
+  files; root tsc clean. LOW-1 whole-package uninstall claim not met (only
+  the three renderer paths are enumerated); LOW-2 `before &&` conflates
+  absent with zero-byte; LOW-3 content-snapshot vs path deletion window
+  around the mcp-remove subprocess; LOW-4 latent: bare `else` installs
+  Cursor config for any new runtime name (admission and dispatch lack a
+  shared source of truth); LOW-5 test spreads PRIME_AGENT_CODING_AGENT_DIR;
+  INFO: USAGE hardcodes the runtime list, INSTALL_RUNTIMES mutable at
+  runtime, positive note that all three targeted mutations failed the
+  intended tests. G4 stays review; fix, re-push, re-review.
