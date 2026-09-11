@@ -877,6 +877,11 @@ describe("board CLI", () => {
     expect(admitted.code, admitted.stderr).toBe(0);
     expect(admitted.stdout).not.toContain("install requires one of");
     expect(admitted.stdout).toContain("board-schaffa");
+    // The help text derives its runtime list from INSTALL_RUNTIMES: if the
+    // list ever loses prime-agent, the help line loses it too (mutation pin
+    // for the USAGE derivation).
+    const help = await command(["bun", "packages/cli/src/index.ts", "install", "--help"], cwd);
+    expect(help.stdout).toContain("prime-agent");
     // The guard must reject an unknown runtime with the full accepted list,
     // so reverting the list to omit prime-agent fails this assertion.
     const unknown = await spawnCli([

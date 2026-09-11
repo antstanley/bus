@@ -200,34 +200,45 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       // files can never be stripped while foreign bytes survive.
       const onDisk = (await scanPrimePackage(skillDir)).sort((a, b) => a.rel < b.rel ? -1 : 1);
       const rendererPaths = new Set(skillPaths.map((p) => relative(skillDir, p.absolute)));
-      const owned = (rel: string): boolean =>
-        rendererPaths.has(rel) && isOwnedPrimeSkillFile(rel, onDisk.find((e) => e.rel === rel)!.content, author);
+      const isDerived = (rel: string): boolean => rel.includes("__pycache__") || rel.includes(".egg-info");
+      const isRendererAncestor = (rel: string): boolean =>
+        [...rendererPaths].some((p) => p.startsWith(`${rel}/`));
       for (const entry of onDisk) {
-        if (owned(entry.rel)) continue;
+        // Derived build artifacts (__pycache__, *.egg-info) are tolerated:
+        // they never block the uninstall and are cleaned up afterwards.
+        if (isDerived(entry.rel)) continue;
         if (entry.kind === "dangling") {
           throw new CliError(`refusing to uninstall: dangling symlink in prime-agent skill package: ${join(skillDir, entry.rel)}`);
         }
         if (entry.kind === "dir") {
-          // Ancestor directories of renderer outputs are part of the
-          // expected layout; only a directory nothing rendered lives under
-          // is unexpected.
-          const isRendererAncestor = [...rendererPaths].some((p) => p.startsWith(`${entry.rel}/`));
-          if (isRendererAncestor) continue;
+          // Ancestor directories of renderer outputs are expected layout.
+          if (isRendererAncestor(entry.rel)) continue;
           throw new CliError(`refusing to uninstall: unexpected directory in prime-agent skill package: ${join(skillDir, entry.rel)}`);
         }
-        if (entry.content.includes("Rendered by the sidekick board CLI for author")) {
+        // Path scope first (G4 R3 INFO): an owned-looking file at a path no
+        // renderer output occupies is an unexpected path, not a different
+        // author's file.
+        if (!rendererPaths.has(entry.rel)) {
+          if (entry.content.includes("Rendered by the sidekick board CLI for author")) {
+            throw new CliError(
+              `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${join(skillDir, entry.rel)}`,
+            );
+          }
           throw new CliError(
-            `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${join(skillDir, entry.rel)}`,
+            `refusing to uninstall: prime-agent skill package contains non-board files: ${join(skillDir, entry.rel)}`,
           );
         }
-        throw new CliError(
-          `refusing to uninstall: prime-agent skill package contains non-board files: ${join(skillDir, entry.rel)}`,
-        );
+        if (!isOwnedPrimeSkillFile(entry.rel, entry.content, author)) {
+          const authored = entry.content.includes(`for author ${author})`);
+          throw new CliError(authored
+            ? `refusing to uninstall: prime-agent skill file rendered for a different author: ${join(skillDir, entry.rel)}`
+            : `refusing to uninstall: prime-agent skill package contains non-board files: ${join(skillDir, entry.rel)}`);
+        }
       }
       // Only files and dangling symlinks are removed; directories (e.g.
       // src/board/) are left in place and tolerated by the post-remove scan.
       for (const entry of onDisk) {
-        if (entry.kind === "dir") continue;
+        if (entry.kind === "dir" || isDerived(entry.rel)) continue;
         const absolute = join(skillDir, ...entry.rel.split("/"));
         changes.push({ path: absolute, before: entry.content, after: "" });
         removals.add(absolute);

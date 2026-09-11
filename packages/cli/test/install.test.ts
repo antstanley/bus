@@ -1448,7 +1448,7 @@ export const Type = {
     const betaUninstall = fakePrimeAgent(settingsPath);
     await expect(installRuntime({
       ...options(home, "prime-agent"), author: "beta", uninstall: true, primeRunner: betaUninstall.runner,
-    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains files rendered for a different author");
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains non-board files");
     for (const entry of renderPrimeSkillPackage({ server: "board-alpha", board: "general", author: "alpha" }).files) {
       expect(await text(join(skillDir, ...entry.path.split("/")))).toBe(alphaBytes[entry.path]!);
     }
@@ -1463,7 +1463,7 @@ export const Type = {
     const mixedUninstall = fakePrimeAgent(settingsPath);
     await expect(installRuntime({
       ...options(home, "prime-agent"), author: "alpha", uninstall: true, primeRunner: mixedUninstall.runner,
-    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains files rendered for a different author");
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains non-board files");
     expect(await text(join(skillDir, "SKILL.md"))).toBe(alphaBytes["SKILL.md"]!);
 
     // Alpha's own uninstall still works end to end.
@@ -1517,6 +1517,21 @@ export const Type = {
       ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
     })).rejects.toThrow("refusing to uninstall: unexpected directory in prime-agent skill package");
     // Nothing was deleted by the refused uninstall.
+    expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(true);
+  });
+
+  test("uninstall refuses a dangling symlink in the package (G4 R3 F1)", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    // A dangling symlink must fail the uninstall closed (it is enumerated
+    // as a present entry), not be skipped while owned files are deleted.
+    await symlink(join(skillDir, "does-not-exist"), join(skillDir, "dangling.py"));
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
+    })).rejects.toThrow("dangling symlink in prime-agent skill package");
     expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(true);
   });
 
