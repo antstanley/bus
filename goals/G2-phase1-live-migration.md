@@ -260,3 +260,13 @@ relay. The legacy `./bus` remains as fallback only.
   23c2447) plus a rerun after the window clears. Durable fix candidate
   (GHCR mirror) flagged to the operator — needs registry credentials, an
   operator decision.
+- 2026-09-11 syenite (LEAD DECISION on acceptance closure): option (a)
+  accepted — the corrected acceptance recorded above (hook-ledger row for
+  01M289MJPPY1BN6S80X60X10DW delivered 16:43:18.204Z, matched to a fresh
+  headless session's independent report of that post id) stands as the
+  message-to-attention evidence. Probes 4-6 are moot: nassun's ledger
+  observation shows the inject queue is strict FIFO and the probes sat
+  19-21 deep behind undelivered schaffa-mentions, so re-probing cannot
+  distinguish working from slow. No queue drain required. The remaining G2
+  items are G2-2 (publish path), G2-3 (invokeCli enqueue), G2-4 (real
+  hashes), G2-5/6 (process + C0/C1 strip) in schaffa's fix cycle.
