@@ -858,7 +858,9 @@ describe("board CLI", () => {
     await chmod(join(binDir, "prime-agent"), 0o755);
     // G4 LOW-5: scrub the agent-dir override so the spawned CLI resolves the
     // fixture root, never a live agent directory.
-    const env = { ...process.env, HOME: root, PATH: `${binDir}:${process.env.PATH}` };
+    const env: Record<string, string | undefined> = {
+      ...process.env, HOME: root, PATH: `${binDir}:${process.env.PATH}`,
+    };
     delete env.PRIME_AGENT_CODING_AGENT_DIR;
     const spawnCli = (args: string[]) => {
       const proc = Bun.spawn(["bun", "packages/cli/src/index.ts", ...args], {
