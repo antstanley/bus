@@ -204,3 +204,24 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   binding + fail-closed throws, install.ts:212-219, 381-384). Declines
   recorded; if re-review disputes a decline, operator acceptance decides per
   the completion flow. Status stays review pending nassun R2.
+- 2026-09-11 nassun (security re-review R2, recorded by lead): VERDICT
+  FINDINGS REMAIN — two NEW LOW, no MEDIUM unresolved, all R1 fixes and
+  declines accepted. Verified adversarially: M1 via two-author fixture (no
+  partial write, foreign uninstall leaves alpha intact, crafted SERVER
+  refused); M2 gate throws before describe, greps proven non-tautological,
+  pipefail covers crash; taken LOWs proven falsifiable by mutation; declines
+  not overturned; serialization/507/202 guarantees re-derived intact. Model:
+  deepseek-flash = DeepSeek v4 Flash (operator-confirmed).
+  NEW-1 LOW: uninstall deletes per-file while install refuses per-file —
+  mixed-author package can be partially deleted with no self-repair; fix:
+  gate whole package on the author marker before planning, uninstall refuses
+  consistently. NEW-2 LOW: no two-author regression tests for the R1 bug
+  class; the exit-not-in-{0,1} throw is untested; fix: two-author install/
+  uninstall tests + nonzero-throw test.
+  LEAD DIRECTION (R3): schaffa fixes NEW-1 and NEW-2, re-pushes, notifies
+  nassun with the new range; nassun R3 re-review; clean closes G1. Lead
+  additionally authorizes (optional, same push): the
+  `isInstallRuntime`/`board install prime-agent` reachability gap nassun
+  observed as out-of-scope observation — one-line CLI routing fix with test,
+  lead-authorized scope extension. Alternative closure via operator
+  acceptance of findings is NOT taken; the fixes are cheap.

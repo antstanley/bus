@@ -31,9 +31,10 @@ analysis, reviews, hardening, remediation, security tests and verification,
 including cumulative deltas. This is the operator's explicit 2026-09-10 model
 exception to the earlier GLM-only rule.
 
-Hoa defines the frozen baseline, cumulative scope and release boundary in the
-[milestone register](../security/MILESTONES.md), settles exceptions and alone
-integrates/commits/pushes. Preserve existing task owners' implementation
+The lead (at the time, Hoa) defined the frozen baseline, cumulative scope and
+release boundary in the
+[milestone register](../security/MILESTONES.md), settled exceptions and alone
+integrated/committed/pushed — historical under the goals model. Preserve existing task owners' implementation
 reservations; arrange the frozen handoff before scanning or editing scope.
 Historical reports and rounds survive ownership transfer. Do not duplicate
 an active or unchanged completed review.
