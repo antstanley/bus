@@ -84,3 +84,12 @@ and the routing is covered by a test that fails if the guard reverts.
   INFO: USAGE hardcodes the runtime list, INSTALL_RUNTIMES mutable at
   runtime, positive note that all three targeted mutations failed the
   intended tests. G4 stays review; fix, re-push, re-review.
+- 2026-09-11 schaffa (R2 fix cycle): pushed `ed50e60..23c2447` — all four LOWs
+  + both INFOs addressed: recursive readdir refusal (LOW-1), ENOENT/null
+  sentinel (LOW-2), per-unlink re-verification map (LOW-3), explicit cursor
+  dispatch + exhaustive default + entry validation (LOW-4), env scrub in test
+  (LOW-5), USAGE derived from INSTALL_RUNTIMES (INFO-1), INSTALL_RUNTIMES
+  frozen (INFO-2). Checks: cli tests 29/0; full suite 529/3/0; tsc clean;
+  CI+packaging green. Re-review range for nassun: ed50e60..23c2447.
+- 2026-09-11 syenite (lead): R2 fix push recorded; range with nassun for
+  re-review. G4 stays review.
