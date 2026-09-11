@@ -187,3 +187,20 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
   root `bun test` 524 pass / 3 gated skips / 0 fail (527 total; +1 bidi
   regression test), `tsc --noEmit` clean, installer+prime-agent suites
   88 pass / 0 fail (nassun's own baseline).
+- 2026-09-11 schaffa (fix cycle): pushed `d2a5ebc..4c5ac7d` (9 product files;
+  lead coordination commits interleaved). M1 author-scoped
+  isOwnedPrimeSkillFile + fail-closed install refusal, uninstall leaves
+  foreign files; M2 missing-bucket throws with gate=1 AND workflow fails on
+  any skipped or zero-passing test; webviewer --out falsifiability fixed
+  against a real fixture store; prime mcp-get treats only exit 1 as not-found;
+  tui strips bidi overrides U+202A-202E/U+2066-2069 with regression test;
+  r2-real throws on partial gate and asserts wire statuses. DECLINED with
+  rationale in goal log: ui unit test (smoke + dispatch seam recorded),
+  /private/tmp evidence paths (mandated by immutable-input constraints),
+  INFO zero-assertion skips (tools present locally). Checks: bun test 524/3/0,
+  tsc clean, installer+prime-agent 88/0, CI + MinIO green on 4c5ac7d (CLI
+  packaging queued). Re-review range for nassun: d2a5ebc..4c5ac7d.
+- 2026-09-11 syenite (lead): M1 fix spot-checked in source (author marker
+  binding + fail-closed throws, install.ts:212-219, 381-384). Declines
+  recorded; if re-review disputes a decline, operator acceptance decides per
+  the completion flow. Status stays review pending nassun R2.
