@@ -542,7 +542,13 @@ function quoteUntrusted(value: string): string {
 }
 
 function normalizeUntrustedLines(value: string): string {
-  return value.replace(/\r\n|[\r\u000b\u000c\u001c-\u001e\u0085\u2028\u2029]/g, "\n");
+  // G2-6: fold unicode/C0 line separators to "\n" (unchanged behavior), then
+  // strip every other C0/C1 control — including ESC, so ANSI/OSC sequences
+  // cannot travel through inject/poll into a displayed board message. Tabs
+  // survive as tabs. Never throws on any input.
+  return value
+    .replace(/\r\n?|[\u000b\u000c\u001c-\u001e\u0085\u2028\u2029]/g, "\n")
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, "");
 }
 
 function overflowSuffix(count: number): string {

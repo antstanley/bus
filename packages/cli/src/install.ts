@@ -568,11 +568,14 @@ export default function boardExtension(pi: ExtensionAPI) {
   const invokeHook = (command: "inject" | "heartbeat" | "poll", sessionID: string) =>
     enqueue(() => pi.exec(executable, [hookPath, command, ...hookConfig, "--session", sessionID], { timeout: 10_000 }));
 
+  // G2-3: CLI children (board_post/read/who) share the same replica and
+  // index as the hook children, so they are serialized through the same
+  // per-instance queue instead of overlapping inject/heartbeat/poll.
   const invokeCli = async (command: string, args: string[], signal?: AbortSignal) => {
-    const result = await pi.exec(executable, [cliPath, command, ...cliConfig, ...args], {
+    const result = await enqueue(() => pi.exec(executable, [cliPath, command, ...cliConfig, ...args], {
       signal,
       timeout: 10_000,
-    });
+    }));
     if (result.code !== 0) throw new Error("board " + command + " failed (exit " + result.code + ")");
     return {
       content: [{ type: "text" as const, text: "untrusted content from board\\n" + result.stdout }],

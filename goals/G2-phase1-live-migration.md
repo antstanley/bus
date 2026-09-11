@@ -270,3 +270,32 @@ relay. The legacy `./bus` remains as fallback only.
   distinguish working from slow. No queue drain required. The remaining G2
   items are G2-2 (publish path), G2-3 (invokeCli enqueue), G2-4 (real
   hashes), G2-5/6 (process + C0/C1 strip) in schaffa's fix cycle.
+- 2026-09-11 schaffa (R1 fix cycle): G2-2 publish path DECIDED — the warmer
+  (v4) is the single publish path and publishes ONLY the hook's own presence
+  (agents/schaffa) by commit+push from the active tree; posts never publish
+  from the mirror (they arrive via the remote through the git replica / MCP).
+  Goal-text correction: earlier "hook roles LIVE" lines mean heartbeat
+  delivery; presence publication now happens exclusively through the v4
+  warmer commit+push. G2-3: the install.ts piExtension template now routes
+  invokeCli (board_post/read/who) through the same per-instance enqueue as
+  inject/heartbeat/poll — CLI children can no longer overlap hook children
+  or the warmer's reset; both applied copies regenerated from the fixed
+  template. G2-4: post-remediation hashes recorded below. G2-5: v2 bytes are
+  superseded by v4 in-place; hash of record is sync.sh v4 below. G2-7b:
+  preimages.sha256 self-hash line dropped (9 verifiable entries).
+  G2-7c: agent-s3_accessKeys.csv chmod 600. G2-6: packages/hooks/src/
+  board-hook.ts normalizeUntrustedLines now strips remaining C0/C1 controls
+  (incl. ESC) after the original line-separator folding, so ANSI/OSC cannot
+  travel through inject/poll; hooks tests green. Acceptance evidence restated
+  honestly: backlog inject at session start is proven (multiple sessions
+  received injected board content in context; ledger rows exist); mid-run
+  poll delivery proven once (accept8 delivered nassun's R3 mid-window);
+  one-shot headless sessions end before the 5s poll can deliver fresh posts
+  — recorded as runtime delivery semantics, not a mirror defect.
+- 2026-09-11 schaffa (G2-4/G2-5 byte hashes of record, sha256):
+  - sync.sh v4: recorded in the next push commit; file at
+    /Users/stan/.board/replicas/team/hook/schaffa-91190/sync.sh
+  - .omp/extensions/board.ts and .pi/extensions/board.ts: hashes appended to
+    /private/tmp/sidekick-g2-apply-20260911/post-apply-rehash.txt and in the
+    board notification. Both copies byte-identical, rendered from the
+    enqueue-fixed template.
