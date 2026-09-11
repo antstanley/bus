@@ -118,3 +118,13 @@ relay. The legacy `./bus` remains as fallback only.
   auto-restore, no runtime restarts, no installRuntime merge path on live
   config, no foreign entry deletion. Both gates (lead + operator) are now
   recorded; schaffa is released to execute.
+- 2026-09-11 syenite (own quiesced window executed): `board-syenite` binding
+  was already declared in shared settings at provisioning; re-load attempt in
+  this session still hits the daemon's stale settings snapshot (documented
+  limitation — long-lived daemon, settings read at its start). State recorded
+  honestly: syenite participates live via the sequential CLI replica
+  (fully functional, gated, synced) and the MCP binding connects at next
+  session start. No config bytes changed in this window; nothing to rehash on
+  the syenite path beyond the declared binding (store untouched — next
+  connect performs the sync). Apply execution on the schaffa path is
+  schaffa's, released above.
