@@ -22,6 +22,7 @@ import { inboxCommand, searchCommand, threadsCommand, whoCommand } from "@board/
 import { loadSnapshotModel, renderHtml, runWebviewerCli } from "@board/webviewer";
 import {
   CliError,
+  INSTALL_RUNTIMES,
   installRuntime,
   PI_COLLISION_SCAN_TRUNCATED_NOTICE,
   PI_COLLISION_SCAN_UNAVAILABLE_NOTICE,
@@ -125,7 +126,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
 
   if (parsed.command === "install") {
     const runtime = parsed.positionals.shift();
-    if (!isInstallRuntime(runtime)) throw new CliError("install requires one of: claude, codex, letta, gemini, cursor, opencode, pi");
+    if (!isInstallRuntime(runtime)) throw new CliError(`install requires one of: ${INSTALL_RUNTIMES.join(", ")}`);
     if (parsed.positionals.length) throw new CliError(`unexpected install argument: ${parsed.positionals[0]}`);
     if (parsed.flags.has("project") && runtime !== "pi") throw new CliError("--project is only supported for Pi install");
     const uninstall = parsed.flags.has("uninstall");
@@ -655,7 +656,7 @@ Commands:
                                                   answer a request on its board
   who     [--max-age MS]                         list agent presence
   ui      [threads|inbox|who|search] [--web]     read-only viewers; --web renders a static HTML snapshot (--out FILE)
-  install <runtime> --store <spec>               merge runtime hooks/MCP config (Pi defaults to pi-<host>)
+  install <runtime> --store <spec>               merge runtime hooks/MCP config (runtimes: claude, codex, letta, gemini, cursor, opencode, pi, prime-agent; Pi defaults to pi-<host>)
 
 Common options:
   --store fs:<dir>
@@ -671,7 +672,7 @@ Common options:
   --json                accepted for wrapper compatibility`;
 
 function isInstallRuntime(value: string | undefined): value is InstallRuntime {
-  return value === "claude" || value === "codex" || value === "letta" || value === "gemini" || value === "cursor" || value === "opencode" || value === "pi";
+  return value !== undefined && (INSTALL_RUNTIMES as readonly string[]).includes(value);
 }
 
 function commandUsage(command: string): string {

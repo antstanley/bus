@@ -842,6 +842,39 @@ describe("board CLI", () => {
     expect(offline.stderr).toContain("replication failed");
   });
 
+
+  it("admits prime-agent as an install runtime and fails if the guard reverts (G4)", async () => {
+    const cwd = join(import.meta.dir, "../../..");
+    const root = await mkdtemp(join(tmpdir(), "board-cli-g4-"));
+    roots.push(root);
+    // Deterministic HOME: the probe reads prime-agent settings under this
+    // root, so the test never touches the real agent configuration. Dry-run
+    // is probe-only and prints the plan without mutating anything.
+    const env = { ...process.env, HOME: root };
+    const spawnCli = (args: string[]) => {
+      const proc = Bun.spawn(["bun", "packages/cli/src/index.ts", ...args], {
+        cwd, env, stdout: "pipe", stderr: "pipe",
+      });
+      return Promise.all([
+        new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited,
+      ]).then(([stdout, stderr, code]) => ({ stdout, stderr, code }));
+    };
+
+    const admitted = await spawnCli([
+      "install", "prime-agent", "--store", `fs:${root}`, "--as", "schaffa", "--dry-run",
+    ]);
+    expect(admitted.code, admitted.stderr).toBe(0);
+    expect(admitted.stdout).not.toContain("install requires one of");
+    expect(admitted.stdout).toContain("board-schaffa");
+    // The guard must reject an unknown runtime with the full accepted list,
+    // so reverting the list to omit prime-agent fails this assertion.
+    const unknown = await spawnCli([
+      "install", "not-a-runtime", "--store", `fs:${root}`, "--dry-run",
+    ]);
+    expect(unknown.code).toBe(2);
+    expect(unknown.stderr).toContain("prime-agent");
+    expect(await Bun.file(join(root, ".prime", "agent", "settings.json")).exists()).toBe(false);
+   });
   it("handles SIGINT during watch and emits a resumable shutdown cursor", async () => {
     const root = await mkdtemp(join(tmpdir(), "board-cli-signal-"));
     roots.push(root);

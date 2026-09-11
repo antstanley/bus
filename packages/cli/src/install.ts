@@ -13,7 +13,8 @@ import {
   type PrimeRunner,
 } from "./prime-agent.ts";
 
-export type InstallRuntime = "claude" | "codex" | "letta" | "gemini" | "cursor" | "opencode" | "pi" | "prime-agent";
+export const INSTALL_RUNTIMES = ["claude", "codex", "letta", "gemini", "cursor", "opencode", "pi", "prime-agent"] as const;
+export type InstallRuntime = (typeof INSTALL_RUNTIMES)[number];
 
 export interface InstallOptions {
   runtime: InstallRuntime;
@@ -178,18 +179,20 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       const existing = await Promise.all(
         skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
       );
-      // G1 R2 NEW-1: deletion is all-or-nothing. Ownership is checked per
-      // file, so a mixed-author package (e.g. a module whose SERVER binding
-      // reverted to another author) must stop the uninstall instead of being
-      // partially deleted — the remaining author could not reinstall, since
-      // install refuses files it does not own, leaving no self-repair.
+      // G1 R2 NEW-1 + G4 (INFO residual): uninstall is whole-package and
+      // all-or-nothing. ANY file in the package that is not owned by the
+      // requesting author — another author's render or a foreign non-marker
+      // module — refuses the entire uninstall, so owned files can never be
+      // stripped while foreign bytes survive (no self-repair would remain).
       for (const { file, before } of existing) {
-        if (
-          before && before.includes("Rendered by the sidekick board CLI for author")
-          && !isOwnedPrimeSkillFile(file.path, before, author)
-        ) {
+        if (before && !isOwnedPrimeSkillFile(file.path, before, author)) {
+          if (before.includes("Rendered by the sidekick board CLI for author")) {
+            throw new CliError(
+              `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${file.absolute}`,
+            );
+          }
           throw new CliError(
-            `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${file.absolute}`,
+            `refusing to uninstall: prime-agent skill package contains non-board files: ${file.absolute}`,
           );
         }
       }

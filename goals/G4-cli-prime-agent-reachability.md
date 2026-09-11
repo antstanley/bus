@@ -29,3 +29,23 @@ and the routing is covered by a test that fails if the guard reverts.
   operator apply decision, and this goal touches files it already knows.
   Small scope: one routing admission + test; the marker-keyed residual
   (INFO) may be taken in the same push if clean, or recorded.
+- 2026-09-11 schaffa: executed. `isInstallRuntime` now derives from a single
+  exported `INSTALL_RUNTIMES` list in `packages/cli/src/install.ts` (includes
+  `prime-agent`), the admission error message is built from the same list,
+  and the USAGE install line names the accepted runtimes — guard and
+  strings can no longer drift apart. Regression test
+  (`packages/cli/test/cli.test.ts`, G4): end-to-end headless CLI —
+  `install prime-agent --dry-run` is admitted (exit 0, plans
+  `board-schaffa`, no "install requires one of"), an unknown runtime exits 2
+  with the full list on stderr (fails if the list reverts). Took the G1
+  INFO residual in the same push per the goal's allowance: prime-agent
+  uninstall is now WHOLE-PACKAGE — any file in the package not owned by the
+  uninstalling author (another author's render OR a foreign non-marker
+  module) refuses the uninstall, closing the marker-keyed gap where owned
+  files could be stripped around a foreign module. Tests: two-author
+  fixture (install refusal with byte-identical alpha files and no MCP add,
+  author-scoped uninstall refusal, mixed-package all-or-nothing both
+  directions, manual-recovery + alpha self-uninstall), non-marker module
+  refusal test, probe throw-path tests. Checks: `bun test` 528 pass /
+  3 gated skips / 0 fail (532 total), `tsc --noEmit` clean. Status moves to
+  review on push; nassun notified.

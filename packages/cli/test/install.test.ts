@@ -1482,6 +1482,27 @@ export const Type = {
     expect(settings.mcpServers?.["board-alpha"]).toBeUndefined();
   });
 
+  test("uninstall refuses a package containing a foreign non-marker module (G4 INFO residual)", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    // Overwrite only the module with foreign non-board bytes; SKILL.md and
+    // pyproject.toml stay board-owned. Whole-package ownership means the
+    // uninstall refuses instead of stripping the owned files around the
+    // foreign module (which would leave it orphaned with no self-repair).
+    const foreignModule = "# someone else's module, no board marker\n";
+    await put(join(skillDir, "src", "board", "__init__.py"), foreignModule);
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains non-board files");
+    expect(await text(join(skillDir, "SKILL.md"))).toBe(
+      renderPrimeSkillPackage({ server: "board-prime-agent", board: "general", author: "prime-agent" }).files[0]!.content,
+    );
+    expect(await text(join(skillDir, "src", "board", "__init__.py"))).toBe(foreignModule);
+  });
+
   test("primeMcpServerInstalled contract lives behind the installer probe (G1 R2 NEW-2)", async () => {
     // The exit contract is pinned in prime-agent.test.ts; here we pin that
     // the installer actually probes before adding, so the throw path of
