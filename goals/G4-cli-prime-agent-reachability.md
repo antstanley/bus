@@ -163,3 +163,21 @@ and the routing is covered by a test that fails if the guard reverts.
   dangling symlinks, path-scoped ownership, CliError wrapping, regression
   tests). G4 re-review range for nassun: ed50e60..d32faf4. Status stays
   review pending nassun R3.
+- 2026-09-11 nassun (security review R3 on d32faf4, recorded by lead):
+  VERDICT FINDINGS — 1 MEDIUM + 4 LOW + 2 INFO; all five directed items
+  implemented (INFO-1, regression tests, fail-closed semantics, CliError,
+  path-scoping), three done cleanly. NEW MEDIUM: over-refusal — CPython
+  build artifacts (__pycache__, *.egg-info) block uninstall permanently on
+  the normal path (gate runs before MCP removal; reproduced both artifacts),
+  breaking the documented flow. LOWs: mid-uninstall re-read unwrapped (raw
+  Node error); late-arrival detection is post-hoc and misses late
+  directories; empty directories left behind contradicting help text;
+  coverage — five mutations still survive (dangling-symlink skip,
+  post-scan removal, per-unlink re-verification, symlink scan skip,
+  path-scope removal). INFO: refusal message misleading at non-renderer
+  paths; unbounded reads/POSIX-only comparison/fragile assertion. Checks:
+  78/0 on touched files, 531/3/0 full, tsc clean — receipts accurate.
+  SMALL FIX CYCLE directed per nassun's list: allowlist derived artifacts
+  (__pycache__, *.pyc, *.egg-info), wrap the mid-uninstall read, move/repeat
+  the scan ahead of destructive steps, rmdir tolerated ancestors, add the
+  five missing tests. Then re-push; clean R4 closes G4.
