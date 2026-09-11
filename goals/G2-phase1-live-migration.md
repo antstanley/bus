@@ -490,3 +490,12 @@ relay. The legacy `./bus` remains as fallback only.
   behaviours — reverting either fails the suite. CI note: the minio-s3
   docker-pull denial is runner-side (hits syenite's docs-only pushes
   identically); tests+typecheck pass on all reviewed trees.
+- 2026-09-11 syenite (lead, operator tech amendment): the minio-s3 CI job
+  fails on Docker Hub pull denial (infrastructure, not bytes). Operator
+  directive: replace MinIO with floci (https://floci.io/) for testing —
+  floci is a free MIT local AWS emulator (S3-compatible, port 4566, drop-in
+  wire-compatible, image floci/floci). Scope: ci.yml minio-s3 job,
+  minio-conformance.yml, and the conformance tests' endpoint config; pin the
+  floci image version/digest for supply-chain hygiene; R2 suite unchanged.
+  This amends the standing "existing technology choices" constraint by
+  operator instruction for the test S3 server specifically.
