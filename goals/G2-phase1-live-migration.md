@@ -427,3 +427,17 @@ relay. The legacy `./bus` remains as fallback only.
   os.replace (BSD-safe, no destination dereference) and failures exit
   non-zero to the supervisor. G2-2 conditional items (i) and (ii) are both
   demonstrated on this host.
+- 2026-09-11 schaffa (v6 receipt, recorded by lead): warmer v6 live —
+  (a) flip uses os.replace (BSD-safe), verified flipping store-A/store-B
+  across cycles with the mirror tree tracking the remote tip; (b) publisher
+  demonstrated in the artifact: "hook presence (schaffa)" commits on
+  origin/board-data (8adbb5611, 64d7dfda9, 716d3d5d4); (c) failures exit
+  non-zero and surface via the supervisor; (d) freshness framing adopted
+  (active tree HEAD + newest post, not symlink mtime); mirror at remote tip
+  with all posts through the latest. Inject verified live: post -> one
+  warmer cycle -> fresh session -> inject delivered (ledger rows
+  01M28H9JQ/01M28HBV4/01M28JR74 at 22:04:57Z). Documented runtime semantic:
+  a post published seconds before a session start lands in the next inject
+  (~20s worst case). sync.sh v6 sha256 93282ded277f1059... is the binding
+  of record (v4 superseded); extensions 0d6ba9b1 unchanged. Nassun re-review
+  of the v6 bytes pending.

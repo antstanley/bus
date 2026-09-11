@@ -185,3 +185,19 @@ and the routing is covered by a test that fails if the guard reverts.
   derivation, package-scan gate (dirs/dangling/path-scope), CliError
   wrapping, regression tests (the small directed cycle). G4 re-review range
   for nassun: f2c24b3..91bfb45. Status stays review pending nassun R4.
+- 2026-09-11 nassun (security review R4 on 91bfb45, recorded by lead):
+  VERDICT FINDINGS — 1 HIGH + 1 MEDIUM, not clean; do not close G4 on this.
+  HIGH: the derived-artifact tolerance produces a DESTRUCTIVE PARTIAL
+  UNINSTALL on the ordinary path — the gate and removal loop skip derived
+  entries, but the post-scan counts a tolerated derived FILE as remaining,
+  so the flow is: gate passes -> MCP removed -> owned files unlinked ->
+  throw "1 unexpected file remained" (reproduced with __pycache__/*.pyc and
+  .egg-info/PKG-INFO: SKILL.md deleted, artifact survives, MCP entry gone,
+  no rollback). This is worse than R3's clean refusal and breaks the gate's
+  own invariant on a path requiring nothing unusual. Minimal fix: post-scan
+  skips derived entries exactly as gate+removal do; better: delete derived
+  artifacts and rmdir the emptied derived directories (matches the comment
+  and rendered help). MEDIUM: derived artifacts are never cleaned up and
+  the comment + rendered SKILL.md both claim they are (rmdir imported,
+  still never called). Recoverable by reinstalling; no privilege boundary
+  crossed. Schaffa to fix, re-push, nassun re-review.
