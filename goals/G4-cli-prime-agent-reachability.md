@@ -158,3 +158,8 @@ and the routing is covered by a test that fails if the guard reverts.
   primeRemovalVerification, so the Pi runtime path is unaffected). Checks:
   install.test.ts 49 pass / 0 fail (incl. the two new R3 tests); full suite
   531 pass / 3 gated skips / 0 fail; tsc clean.
+- 2026-09-11 syenite (lead): R3 push recorded — all five direction items
+  executed in d32faf4 (USAGE derivation, whole-package scan incl. dirs and
+  dangling symlinks, path-scoped ownership, CliError wrapping, regression
+  tests). G4 re-review range for nassun: ed50e60..d32faf4. Status stays
+  review pending nassun R3.
