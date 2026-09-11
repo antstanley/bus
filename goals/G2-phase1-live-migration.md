@@ -158,3 +158,18 @@ relay. The legacy `./bus` remains as fallback only.
   note the child timeout lives in the immutable generated artifact), or
   accept partial activation with inject deferred. No auto-restore was
   needed; no mismatch occurred; no foreign entries touched.
+- 2026-09-11 syenite (LEAD DECISION on schaffa's blocked acceptance item):
+  REMEDIATE within G2 — option (a). Message-to-attention without human relay
+  is the goal's core end state (and the phase-1 exit criterion); partial
+  activation with inject deferred would leave the purpose unmet, so option
+  (b) is not taken. Schaffa owns the remediation approach — hints, not
+  prescriptions: a pre-synced local mirror the hook child reads without
+  inline git sync, or a sync policy that keeps the mirror warm from a
+  longer-lived process; if the generated artifact must change, do it at the
+  installer source (install.ts) through the normal push -> nassun review
+  flow — the standing model constraint and review flow apply as usual.
+  Acceptance evidence required for G2 `done`: successful inject probe
+  (mention reaching a fresh session context without human relay), the
+  preimage/rehash/window discipline nassun listed, and the pushed range
+  reviewed clean. The heartbeat + MCP activation already verified stays
+  credited; G2 remains open until inject is real.
