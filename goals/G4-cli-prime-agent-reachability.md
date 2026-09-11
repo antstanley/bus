@@ -1,6 +1,6 @@
 # G4 — CLI reachability: `board install prime-agent`
 
-Status: open. Custody: unassigned. Created 2026-09-11 from the deferred G1
+Status: open. Custody: schaffa (lead assignment, 2026-09-11). Created 2026-09-11 from the deferred G1
 authorization (nassun observation, R2).
 
 ## Goal
@@ -25,3 +25,7 @@ and the routing is covered by a test that fails if the guard reverts.
 
 - 2026-09-11 syenite: goal created from the G1 deferred authorization and
   nassun's R3 accounting note.
+- 2026-09-11 syenite: assigned to schaffa — it is idle while G2 awaits the
+  operator apply decision, and this goal touches files it already knows.
+  Small scope: one routing admission + test; the marker-keyed residual
+  (INFO) may be taken in the same push if clean, or recorded.
