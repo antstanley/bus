@@ -1503,6 +1503,38 @@ export const Type = {
     expect(await text(join(skillDir, "src", "board", "__init__.py"))).toBe(foreignModule);
   });
 
+  test("uninstall refuses a foreign file at a non-renderer path (G4 R3 LOW-1)", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    // A foreign file at a path no renderer output occupies must refuse the
+    // uninstall (R3 LOW-1: enumeration covers the whole package, not just
+    // the three renderer paths).
+    await put(join(skillDir, "nested", "extra.py"), "# foreign bytes\n");
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
+    })).rejects.toThrow("refusing to uninstall: unexpected directory in prime-agent skill package");
+    // Nothing was deleted by the refused uninstall.
+    expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(true);
+  });
+
+  test("uninstall treats a present-but-empty renderer file as unowned (G4 R3 LOW-2)", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    // Empty the SKILL.md (present-but-empty ≠ absent): the uninstall must
+    // refuse it as unowned rather than silently deleting around it.
+    await writeFile(join(skillDir, "SKILL.md"), "", { flag: "w" });
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
+    })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains non-board files");
+    expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(true);
+  });
+
   test("primeMcpServerInstalled contract lives behind the installer probe (G1 R2 NEW-2)", async () => {
     // The exit contract is pinned in prime-agent.test.ts; here we pin that
     // the installer actually probes before adding, so the throw path of

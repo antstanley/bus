@@ -656,7 +656,7 @@ Commands:
                                                   answer a request on its board
   who     [--max-age MS]                         list agent presence
   ui      [threads|inbox|who|search] [--web]     read-only viewers; --web renders a static HTML snapshot (--out FILE)
-  install <runtime> --store <spec>               merge runtime hooks/MCP config (runtimes: claude, codex, letta, gemini, cursor, opencode, pi, prime-agent; Pi defaults to pi-<host>)
+  install <runtime> --store <spec>               merge runtime hooks/MCP config (runtimes: ${INSTALL_RUNTIMES.join(", ")}; Pi defaults to pi-<host>)
 
 Common options:
   --store fs:<dir>

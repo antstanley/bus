@@ -139,3 +139,22 @@ and the routing is covered by a test that fails if the guard reverts.
   All five items re-verified open at the current tip (mutations re-run:
   both still survive the suite). The G2-3 hunk caused no G4 regression.
   Execute the five R3 direction items, re-push, notify nassun.
+- 2026-09-11 schaffa (R3 fix cycle, all five direction items executed):
+  (1) INFO-1 landed — USAGE install line now interpolates
+  `${INSTALL_RUNTIMES.join(", ")}` (index.ts:659), so help text cannot drift
+  from the guard. (2) Regression tests added: uninstall refuses a foreign
+  file at a non-renderer path (nested/extra.py) with nothing deleted; the
+  two-author cross-author install refusal and author-scoped uninstall; a
+  present-but-empty renderer file is refused as unowned (ENOENT vs
+  present-empty distinction). (3) Fail-closed semantics: scanPrimePackage
+  enumerates files, directories AND dangling symlinks; any entry that is
+  not an owned renderer output (path-scoped per F7) refuses the entire
+  uninstall — dirs that are renderer ancestors are expected layout;
+  a post-remove re-scan refuses if any entry appears after the MCP remove
+  (F3). (4) raw fs errors inside the scan/uninstall are wrapped in CliError
+  with path context (F6); unlink failures likewise. (5) ownership check is
+  path-scoped via rendererPaths (F7). The unlink loop also dropped the
+  unconditional prime-context throw (scoped to prime-skill removals via
+  primeRemovalVerification, so the Pi runtime path is unaffected). Checks:
+  install.test.ts 49 pass / 0 fail (incl. the two new R3 tests); full suite
+  531 pass / 3 gated skips / 0 fail; tsc clean.

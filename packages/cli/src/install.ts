@@ -1,3 +1,4 @@
+import type { Dirent } from "node:fs";
 import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { assertName } from "@board/core";
@@ -192,47 +193,49 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       }
     };
     if (options.uninstall) {
-      // G4 LOW-1: enumerate the REAL package contents (recursive readdir) —
-      // a foreign file at any path outside the three renderer outputs must
-      // refuse the uninstall too, not silently survive it.
-      const onDisk = (await recursiveReadDir(skillDir)).sort();
+      // G4 R3: whole-package scan — files, directories and dangling
+      // symlinks are all enumerated (scanPrimePackage wraps raw fs errors
+      // with path context). The gate is fail-closed: any entry that is not
+      // an owned renderer output refuses the ENTIRE uninstall, so owned
+      // files can never be stripped while foreign bytes survive.
+      const onDisk = (await scanPrimePackage(skillDir)).sort((a, b) => a.rel < b.rel ? -1 : 1);
       const rendererPaths = new Set(skillPaths.map((p) => relative(skillDir, p.absolute)));
-      // G4 LOW-2: readText returns null for ENOENT; an empty file is present
-      // and subject to ownership, never silently skipped.
-      const existing: Array<{ rel: string; absolute: string; before: string }> = [];
-      for (const rel of onDisk) {
-        const absolute = join(skillDir, ...rel.split("/"));
-        const before = await readText(absolute);
-        if (before === null) continue;
-        existing.push({ rel, absolute, before });
-      }
-      // G1 R2 NEW-1 + G4 LOW-1/LOW-2: whole-package, all-or-nothing. ANY file
-      // in the package that is not owned by the requesting author — another
-      // author's render, a foreign non-marker module, or an unexpected path —
-      // refuses the entire uninstall, so owned files can never be stripped
-      // while foreign bytes survive (no self-repair would remain).
-      for (const { rel, absolute, before } of existing) {
-        if (!isOwnedPrimeSkillFile(rel, before, author)) {
-          if (before.includes("Rendered by the sidekick board CLI for author")) {
-            throw new CliError(
-              `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${absolute}`,
-            );
-          }
-          if (rendererPaths.has(rel)) {
-            throw new CliError(
-              `refusing to uninstall: prime-agent skill package contains non-board files: ${absolute}`,
-            );
-          }
+      const owned = (rel: string): boolean =>
+        rendererPaths.has(rel) && isOwnedPrimeSkillFile(rel, onDisk.find((e) => e.rel === rel)!.content, author);
+      for (const entry of onDisk) {
+        if (owned(entry.rel)) continue;
+        if (entry.kind === "dangling") {
+          throw new CliError(`refusing to uninstall: dangling symlink in prime-agent skill package: ${join(skillDir, entry.rel)}`);
+        }
+        if (entry.kind === "dir") {
+          // Ancestor directories of renderer outputs are part of the
+          // expected layout; only a directory nothing rendered lives under
+          // is unexpected.
+          const isRendererAncestor = [...rendererPaths].some((p) => p.startsWith(`${entry.rel}/`));
+          if (isRendererAncestor) continue;
+          throw new CliError(`refusing to uninstall: unexpected directory in prime-agent skill package: ${join(skillDir, entry.rel)}`);
+        }
+        if (entry.content.includes("Rendered by the sidekick board CLI for author")) {
           throw new CliError(
-            `refusing to uninstall: unexpected file in prime-agent skill package: ${absolute}`,
+            `refusing to uninstall: prime-agent skill package contains files rendered for a different author: ${join(skillDir, entry.rel)}`,
           );
         }
+        throw new CliError(
+          `refusing to uninstall: prime-agent skill package contains non-board files: ${join(skillDir, entry.rel)}`,
+        );
       }
-      for (const { rel, absolute, before } of existing) {
-        changes.push({ path: absolute, before, after: "" });
+      // Only files and dangling symlinks are removed; directories (e.g.
+      // src/board/) are left in place and tolerated by the post-remove scan.
+      for (const entry of onDisk) {
+        if (entry.kind === "dir") continue;
+        const absolute = join(skillDir, ...entry.rel.split("/"));
+        changes.push({ path: absolute, before: entry.content, after: "" });
         removals.add(absolute);
-        primeRemovalVerification.set(absolute, { rel });
+        primeRemovalVerification.set(absolute, { rel: entry.rel });
       }
+      // G4 R3 F3: files that appear after the scan must fail the uninstall
+      // instead of being deleted-around — re-scanned after the MCP remove.
+      // (Implemented at the post-execution re-verification below.)
       // Verified removal: probe with `mcp get`, then `mcp remove` when
       // present (exit 0 removes only this entry; absent is a natural no-op).
       // A present entry is removed only after the ownership gate approves it,
@@ -340,16 +343,36 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
     const primeVerification = primeRemovalVerification.get(change.path);
     if (removals.has(change.path)) {
       if (primeVerification) {
+        if (!primeSkillContext) throw new CliError("internal: prime-agent removal without skill context");
         // G4 LOW-3: the ownership snapshot ages across the mutating MCP
         // remove. Re-read and re-verify immediately before each unlink; any
         // drift fails the uninstall closed with nothing further deleted.
+        const rel = relative(primeSkillContext.dir, change.path);
         const current = await readText(change.path);
-        if (current === null || !isOwnedPrimeSkillFile(primeVerification.rel, current, primeSkillContext?.author ?? "")) {
+        if (current === null || !isOwnedPrimeSkillFile(rel, current, primeSkillContext.author)) {
           throw new CliError(`refusing to continue uninstall: ${change.path} changed mid-uninstall`);
         }
       }
-      await unlink(change.path);
+      try {
+        await unlink(change.path);
+      } catch (error) {
+        throw new CliError(`failed to unlink ${change.path}: ${error instanceof Error ? error.message : String(error)}`);
+      }
     } else await atomicWrite(change.path, change.after);
+  }
+  // G4 R3 F3: a file created after the pre-remove scan must fail the
+  // uninstall instead of being deleted-around or silently left behind.
+  if (!options.dryRun && primeSkillContext && removals.size > 0) {
+    const remaining = await scanPrimePackage(primeSkillContext.dir);
+    // Empty directories left behind by the file removals are expected
+    // remnants (we never rmdir); only surviving FILES mean the uninstall
+    // was only partially applied.
+    const remainingFiles = remaining.filter((entry) => entry.kind !== "dir");
+    if (remainingFiles.length > 0) {
+      throw new CliError(
+        `refusing to complete uninstall: ${remainingFiles.length} unexpected file${remainingFiles.length === 1 ? "" : "s"} remained under ${primeSkillContext.dir}`,
+      );
+    }
   }
   return { changes, notices };
 }
@@ -1488,23 +1511,61 @@ async function readText(path: string): Promise<string | null> {
   }
 }
 
-/** Relative paths of every file under `dir` (recursive); [] when absent. */
-async function recursiveReadDir(dir: string): Promise<string[]> {
-  const out: string[] = [];
+/**
+ * G4 R3: full package enumeration for the uninstall gate. Returns every
+ * entry under `dir` with its kind — regular files carry their content,
+ * directories and dangling symlinks are surfaced as fail-closed refusals
+ * (F1/F2), and raw fs errors are wrapped in CliError with path context
+ * (F6). Absent root yields [] (nothing installed).
+ */
+async function scanPrimePackage(dir: string): Promise<Array<{ rel: string; kind: "file" | "dir" | "dangling"; content: string }>> {
+  const out: Array<{ rel: string; kind: "file" | "dir" | "dangling"; content: string }> = [];
+  const wrap = (error: unknown, absolute: string): CliError =>
+    new CliError(`prime-agent skill scan failed for ${absolute}: ${error instanceof Error ? error.message : String(error)}`);
   const walk = async (current: string, prefix: string): Promise<void> => {
-    for (const entry of await readdir(current, { withFileTypes: true })) {
+    let entries: Dirent[];
+    try { entries = await readdir(current, { withFileTypes: true }); }
+    catch (error) {
+      // An absent scan root means "nothing installed here": return without
+      // wrapping so the caller sees an empty scan. A nested ENOENT inside an
+      // existing root is a real error and keeps its path context.
+      if (prefix === "" && typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return;
+      throw wrap(error, current);
+    }
+    for (const entry of entries) {
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (entry.isDirectory()) await walk(join(current, entry.name), rel);
-      else out.push(rel);
+      const absolute = join(current, entry.name);
+      if (entry.isDirectory()) {
+        out.push({ rel, kind: "dir", content: "" });
+        await walk(absolute, rel);
+        continue;
+      }
+      if (entry.isSymbolicLink()) {
+        let content: string | null = null;
+        try { content = await readFile(absolute, "utf8"); }
+        catch (error) {
+          if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
+            out.push({ rel, kind: "dangling", content: "" });
+            continue;
+          }
+          throw wrap(error, absolute);
+        }
+        out.push({ rel, kind: "file", content });
+        continue;
+      }
+      let content: string;
+      try { content = await readFile(absolute, "utf8"); }
+      catch (error) { throw wrap(error, absolute); }
+      out.push({ rel, kind: "file", content });
     }
   };
   try { await walk(dir, ""); } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return out;
-    throw error;
+    if (error instanceof CliError) throw error;
+    throw wrap(error, dir);
   }
   return out;
 }
-
 async function atomicWrite(path: string, content: string): Promise<void> {
   const target = await writeTarget(path);
   await mkdir(dirname(target), { recursive: true });
