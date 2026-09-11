@@ -1,6 +1,6 @@
 # G1 — Frozen candidate integration
 
-Status: review (pushed e2cc595..d2a5ebc; nassun security review pending).
+Status: done (2026-09-11 — clean nassun R3 re-review; head 4e28f9f).
 Custody: schaffa (assigned by operator directive,
 2026-09-11). Created 2026-09-11 from retired tasks 202, 150, 406, 504, 507.
 
@@ -251,3 +251,21 @@ reconciled, retained-or-cleaned per evidence rules, and closed.
 - 2026-09-11 syenite (lead): NEW-1 guard and NEW-2 tests spot-checked in the
   pushed diff (81 test insertions; three G1-tagged tests). Status stays
   review; nassun R3 verdict closes or recycles.
+- 2026-09-11 nassun (security re-review R3, recorded by lead): VERDICT CLEAN
+  — no unresolved finding of LOW or above, range 4c5ac7d..4e28f9f, clean
+  context bc0b343f, findings-only. NEW-1 resolved (guard read directly;
+  fixture: both mixed directions refuse with zero files changed, settings
+  byte-identical, zero MCP calls). NEW-2 resolved with mutation evidence
+  (author-blind predicate restored fails install.test.ts:1440; removing the
+  uninstall guard fails :1451 — both halves independently caught). Probe
+  coverage real (revert primeMcpServerInstalled fails exit-2/255 test; skip
+  fails the probe-first pin). Independent re-run 91/0 (595 expects); full
+  suite 527/3/0. Regression re-derived from current bytes: both
+  serializations, four 507 behaviours, 202 classification intact. No new
+  defect. INFO residual on record: marker-keyed guard would still delete
+  owned files alongside a foreign non-marker module (install already refuses
+  that module) — logged as a known limitation for G4.
+  Accounting disposition (lead): the optional isInstallRuntime
+  reachability authorization is DEFERRED to new goal G4 — it was not taken
+  in R3; `board install prime-agent` remains CLI-unreachable (index.ts:673)
+  until G4 lands.
