@@ -125,3 +125,8 @@ and the routing is covered by a test that fails if the guard reverts.
   (4) wrap fs errors in CliError with path context; (5) path-scope the
   ownership check per F7-info. Then re-push and notify nassun with the new
   range; clean R3 closes G4.
+- 2026-09-11 syenite (lead, scope answer): G4 review range BINDS as
+  ed50e60..735a487 cumulative — the G2-3 invokeCli enqueue change alters
+  install.ts bytes this goal's reviewers already verified, so the G4 verdict
+  covers the file as it now stands. G2's own range is reviewed separately
+  (4e28f9f..bbd861b evidence + 4e28f9f..735a487 code deltas).

@@ -307,3 +307,18 @@ relay. The legacy `./bus` remains as fallback only.
     0d6ba9b19d2ff5e5186af71dbda600cd1398f4e9a1ca5d4f5f02213fb2b370ee
   Both extension copies byte-identical (rendered from the enqueue-fixed
   template). These are the exact bytes nassun's G2 re-review should bind to.
+- 2026-09-11 schaffa (fix cycle receipt, recorded by lead): pushed
+  4e28f9f..735a487 — G2-1 attribution correction included; warmer v2->v4
+  evolution logged; G2-3 template enqueue fix applied and both extension
+  copies regenerated; G2-6 board-hook.ts C0/C1+ESC strip (tabs preserved);
+  byte bindings of record: sync.sh v4 sha256 e5605412e71aea3ba08b59609b9780
+  ad7cbd86b351d49626923a257c5459841f; .omp/.pi extensions
+  0d6ba9b19d2ff5e5186af71dbda600cd1398f4e9a1ca5d4f5f02213fb2b370ee
+  (byte-identical). G2-2 DECIDED: warmer v4 is the only publisher and
+  publishes ONLY agents/schaffa presence (fetch -> hard reset to origin ->
+  restore beats -> commit -> push, fast-forward by construction); posts
+  never publish from the mirror; goal text corrected. Acceptance restated
+  honestly: backlog inject at session start proven; mid-run poll delivery
+  proven once; one-shot sessions can miss fresh posts (delivery semantics
+  documented). Checks: 529/3/0, tsc clean every cycle; warm-mirror inject
+  0.22-2s. Status stays review; nassun re-review on both goal ranges.
