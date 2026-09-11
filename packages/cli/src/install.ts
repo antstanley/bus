@@ -200,13 +200,12 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       // files can never be stripped while foreign bytes survive.
       const onDisk = (await scanPrimePackage(skillDir)).sort((a, b) => a.rel < b.rel ? -1 : 1);
       const rendererPaths = new Set(skillPaths.map((p) => relative(skillDir, p.absolute)));
-      const isDerived = (rel: string): boolean => rel.includes("__pycache__") || rel.includes(".egg-info");
       const isRendererAncestor = (rel: string): boolean =>
         [...rendererPaths].some((p) => p.startsWith(`${rel}/`));
       for (const entry of onDisk) {
         // Derived build artifacts (__pycache__, *.egg-info) are tolerated:
         // they never block the uninstall and are cleaned up afterwards.
-        if (isDerived(entry.rel)) continue;
+        if (isDerivedArtifact(entry.rel)) continue;
         if (entry.kind === "dangling") {
           throw new CliError(`refusing to uninstall: dangling symlink in prime-agent skill package: ${join(skillDir, entry.rel)}`);
         }
@@ -238,7 +237,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
       // Only files and dangling symlinks are removed; directories (e.g.
       // src/board/) are left in place and tolerated by the post-remove scan.
       for (const entry of onDisk) {
-        if (entry.kind === "dir" || isDerived(entry.rel)) continue;
+        if (entry.kind === "dir" || isDerivedArtifact(entry.rel)) continue;
         const absolute = join(skillDir, ...entry.rel.split("/"));
         changes.push({ path: absolute, before: entry.content, after: "" });
         removals.add(absolute);
@@ -1520,6 +1519,13 @@ async function readText(path: string): Promise<string | null> {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return null;
     throw error;
   }
+}
+
+/** Derived build artifacts (__pycache__, editable-install metadata) are
+ * tolerated remnants: they never block a prime-agent uninstall and are
+ * cleaned up with it (G4 R4). */
+function isDerivedArtifact(rel: string): boolean {
+  return rel.includes("__pycache__") || rel.includes(".egg-info");
 }
 
 /**
