@@ -8,6 +8,7 @@ import { keys, dayBucket, nextDay, prevDay, assertName, isDayBucket } from "./ke
 import { type Store, listAll, DEFAULT_LIST_LIMIT, encoder } from "./store.ts";
 import { type Post, type NewPost, encodePost, parsePost, validatePost, hasV2Fields, POST_VERSION, POST_VERSION_V2, InvalidPostError, invalidKey, checkEncodedSize } from "./post.ts";
 import { canonicalize } from "./post.ts";
+import { requestAndWait, respond, type RequestInput, type ResponseInput, type RequestWaitOptions, type RespondOptions, type RequestReply } from "./request-response.ts";
 
 export interface BoardOptions {
   board: string;
@@ -119,6 +120,21 @@ export class Board {
     });
   }
 
+  requestAndWait(to: string | string[], input: RequestInput, opts: RequestWaitOptions): Promise<RequestReply> {
+    return requestAndWait(this, to, input, opts);
+  }
+
+  respond(requestId: string, input: ResponseInput, opts: RespondOptions = {}): Promise<Post> {
+    return respond(this, requestId, input, opts);
+  }
+
+  /** @internal Shared ordering seam; only publication may occupy this queue. */
+  enqueueWrite<T>(run: () => Promise<T>): Promise<T> {
+    const p = this.writeChain.then(run, run);
+    this.writeChain = p.catch(() => {});
+    return p;
+  }
+
   private base(id: string, ts: string, input: NewPost): Omit<Post, "thread"> {
     const p: Omit<Post, "thread"> = {
       v: POST_VERSION, id, board: this.name, author: this.author, instance: this.instance, ts, body: input.body,
@@ -164,9 +180,7 @@ export class Board {
       await this.store.put(keys.post(this.name, id, ulidTime(id)), bytes, { ifNoneMatch: true });
       return post;
     };
-    const p = this.writeChain.then(run, run);
-    this.writeChain = p.catch(() => {});
-    return p;
+    return this.enqueueWrite(run);
   }
 
   // ------------------------------------------------------------- reads ---

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { chmod, lstat, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -11,16 +11,37 @@ import {
   renderInstallDiff,
   type InstallOptions,
 } from "../src/install.ts";
+import {
+  DEFAULT_PRIME_AGENT_COMMAND,
+  primeMcpAddArgs,
+  primeMcpGetArgs,
+  primeMcpRemoveArgs,
+  renderPrimeMcpSkill,
+  renderPrimeSkillPackage,
+  type PrimeRunner,
+  type PrimeRunResult,
+} from "../src/prime-agent.ts";
 import { openCodeSessionRegistryPath, runCli } from "../src/index.ts";
 import { Board, MemoryStore, ulid } from "@board/core";
 import { FsStore } from "@board/store-fs";
 import { heartbeat, MAX_WHO_LIMIT, who } from "@board/presence";
 
+const PRIME_AGENT_DIR_ENV = "PRIME_AGENT_CODING_AGENT_DIR";
 const roots: string[] = [];
 const pluginCleanups: Array<() => Promise<void>> = [];
 const projectRoot = join(import.meta.dir, "../../..");
+let savedPrimeAgentDir: string | undefined;
+
+beforeEach(() => {
+  // The host harness may export PRIME_AGENT_* variables. Clear the override
+  // before every test so installRuntime resolves each disposable fixture home
+  // and never a live agent directory; the F3 override tests set it explicitly.
+  savedPrimeAgentDir = process.env[PRIME_AGENT_DIR_ENV];
+  delete process.env[PRIME_AGENT_DIR_ENV];
+});
 
 afterEach(async () => {
+  restoreEnv(PRIME_AGENT_DIR_ENV, savedPrimeAgentDir);
   await Promise.all(pluginCleanups.splice(0).map((cleanup) => cleanup()));
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
@@ -816,6 +837,111 @@ export const Type = {
     expect(calls.some(({ args }) => args.includes("who") && args.includes("60000"))).toBe(true);
   });
 
+  test("the generated Pi extension serializes inject, heartbeat and poll children on one replica", async () => {
+    const home = await fixture();
+    const extensionPath = join(home, ".pi", "agent", "extensions", "board.ts");
+    await put(join(home, "node_modules", "typebox", "package.json"), JSON.stringify({
+      name: "typebox",
+      type: "module",
+      exports: "./index.js",
+    }));
+    await put(join(home, "node_modules", "typebox", "index.js"), `
+export const Type = {
+  Object: (properties, options = {}) => ({ type: "object", properties, ...options }),
+  String: (options = {}) => ({ type: "string", ...options }),
+  Integer: (options = {}) => ({ type: "integer", ...options }),
+  Optional: (schema) => schema,
+  Array: (items, options = {}) => ({ type: "array", items, ...options }),
+};
+`);
+    await installRuntime(options(home, "pi"));
+    const module = await import(`${pathToFileURL(extensionPath).href}?fixture=${Date.now()}`);
+
+    const handlers = new Map<string, (...args: any[]) => any>();
+    const rows: Array<{ phase: "start" | "end"; command: string }> = [];
+    let failOperation: string | undefined;
+    const api = {
+      on: (name: string, handler: (...args: any[]) => any) => handlers.set(name, handler),
+      registerTool: () => {},
+      sendMessage: () => {},
+      exec: async (_command: string, args: string[]) => {
+        const operation = args[1] ?? "";
+        if (operation === failOperation) {
+          failOperation = undefined;
+          throw new Error("spawn failed");
+        }
+        rows.push({ phase: "start", command: operation });
+        await Bun.sleep(120);
+        rows.push({ phase: "end", command: operation });
+        return operation === "inject"
+          ? { code: 0, stdout: "injected board context", stderr: "", killed: false }
+          : { code: 0, stdout: "", stderr: "", killed: false };
+      },
+    };
+    module.default(api);
+
+    let tick: (() => void) | undefined;
+    const originalSetInterval = globalThis.setInterval;
+    const originalClearInterval = globalThis.clearInterval;
+    (globalThis as any).setInterval = (callback: () => void) => { tick = callback; return { unref() {} }; };
+    (globalThis as any).clearInterval = () => {};
+    const ctx = { isIdle: () => true, sessionManager: { getSessionId: () => "pi-session-123" } };
+    try {
+      await handlers.get("session_start")?.({}, ctx);
+      await handlers.get("agent_end")?.({}, ctx);
+      // Pi clears its run-active flag before awaiting the agent_settled emit, so a
+      // prompt submitted in that window reaches before_agent_start while the
+      // settled heartbeat child is still in flight; the 5s poll timer is
+      // independent regardless. All three must share one queue.
+      const settled = handlers.get("agent_settled")?.({}, ctx);
+      const injected = handlers.get("before_agent_start")?.({}, ctx);
+      tick?.();
+      const injectedResult = await injected;
+      await settled;
+
+      const deadline = Date.now() + 8_000;
+      while (rows.length < 10 && Date.now() < deadline) await Bun.sleep(5);
+
+      let concurrent = 0;
+      let maxConcurrent = 0;
+      let injectOverlappedHeartbeat = 0;
+      const active = new Map<string, number>();
+      const totals: Record<string, number> = { heartbeat: 0, inject: 0, poll: 0 };
+      for (const row of rows) {
+        if (row.phase === "start") {
+          const other = row.command === "inject" ? "heartbeat" : "inject";
+          if ((active.get(other) ?? 0) > 0) injectOverlappedHeartbeat++;
+          active.set(row.command, (active.get(row.command) ?? 0) + 1);
+          concurrent++;
+          maxConcurrent = Math.max(maxConcurrent, concurrent);
+          totals[row.command] = (totals[row.command] ?? 0) + 1;
+        } else {
+          active.set(row.command, (active.get(row.command) ?? 0) - 1);
+          concurrent--;
+        }
+      }
+      // Real serialization: no generated-hook child ever runs with another.
+      expect(maxConcurrent).toBe(1);
+      expect(injectOverlappedHeartbeat).toBe(0);
+      expect(totals).toEqual({ heartbeat: 3, inject: 1, poll: 1 });
+      expect(injectedResult).toEqual({
+        message: { customType: "board", content: "injected board context", display: true },
+      });
+
+      // Error recovery: a failed child must not wedge the serialized queue.
+      failOperation = "heartbeat";
+      await expect(handlers.get("agent_settled")?.({}, ctx)).rejects.toThrow("spawn failed");
+      const recovered = await handlers.get("before_agent_start")?.({}, ctx);
+      expect(recovered).toEqual({
+        message: { customType: "board", content: "injected board context", display: true },
+      });
+      handlers.get("session_shutdown")?.({}, ctx);
+    } finally {
+      globalThis.setInterval = originalSetInterval;
+      globalThis.clearInterval = originalClearInterval;
+    }
+  });
+
   test("merges legacy Letta hooks without replacing foreign config and prefers the mod path", async () => {
     const home = await fixture();
     const path = join(home, ".letta", "settings.json");
@@ -1139,6 +1265,753 @@ export const Type = {
     expect(decision.decision).toBe("block");
     expect(decision.reason).toContain("generated Codex Stop integration");
   });
+
+  test("installs the prime-agent MCP server and skill package idempotently, updates both, then uninstalls", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const modulePath = join(skillDir, "src", "board", "__init__.py");
+    const prime = fakePrimeAgent(settingsPath);
+    const installOptions = () => ({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    const packageRender = renderPrimeSkillPackage({ server: "board-prime-agent", board: "general", author: "prime-agent" });
+
+    const first = await installRuntime(installOptions());
+    expect(first.changes.map((change) => change.path)).toEqual(
+      packageRender.files.map((file) => join(skillDir, ...file.path.split("/"))),
+    );
+    expect(first.notices.join(" ")).toContain("Registered prime-agent MCP server");
+    expect(JSON.parse(await text(settingsPath)).mcpServers).toEqual({
+      "board-prime-agent": {
+        type: "stdio",
+        command: process.execPath,
+        args: [
+          join(projectRoot, "packages/mcp/src/index.ts"),
+          "--store", "fs:/shared/board",
+          "--as", "prime-agent",
+          "--board", "general",
+          "--index", join(home, ".board", "prime-agent.sqlite"),
+        ],
+        cwd: projectRoot,
+      },
+    });
+    // The wrapper is a discoverable Python skill package, not a bare file:
+    // SKILL.md name/dir agreement, pyproject package name, module source.
+    expect(await text(join(skillDir, "SKILL.md"))).toContain("name: board");
+    expect(await text(join(skillDir, "SKILL.md"))).toContain("description: ");
+    expect(await text(join(skillDir, "pyproject.toml"))).toContain('name = "board"');
+    expect(await text(modulePath))
+      .toBe(renderPrimeMcpSkill({ server: "board-prime-agent", board: "general", author: "prime-agent" }));
+
+    const second = await installRuntime(installOptions());
+    expect(second.changes).toEqual([]);
+    // Verified update semantics: the probe finds board-prime-agent and the
+    // definition is force-replaced (identical content, still one entry).
+    expect(second.notices.join(" ")).toContain("definition replaced via prime-agent mcp add --force");
+    expect(Object.keys(JSON.parse(await text(settingsPath)).mcpServers)).toEqual(["board-prime-agent"]);
+
+    // Update re-renders the owned package AND propagates to the registered
+    // MCP definition via the verified --force replace.
+    const updated = await installRuntime({ ...installOptions(), board: "general-2" });
+    expect(updated.changes.map((change) => change.path)).toEqual(
+      renderPrimeSkillPackage({ server: "board-prime-agent", board: "general-2", author: "prime-agent" })
+        .files.map((file) => join(skillDir, ...file.path.split("/"))),
+    );
+    expect(await text(modulePath)).toContain('BOARD = "general-2"');
+    const afterUpdate = JSON.parse(await text(settingsPath));
+    expect(Object.keys(afterUpdate.mcpServers)).toEqual(["board-prime-agent"]);
+    expect(afterUpdate.mcpServers["board-prime-agent"].args).toContain("general-2");
+    expect(afterUpdate.mcpServers["board-prime-agent"].args).not.toContain("general");
+
+    const uninstalled = await installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: prime.runner });
+    expect(uninstalled.changes.map((change) => change.path)).toEqual(
+      packageRender.files.map((file) => join(skillDir, ...file.path.split("/"))),
+    );
+    expect(uninstalled.notices.join(" ")).toContain("Removed prime-agent MCP server");
+    expect(await Bun.file(modulePath).exists()).toBe(false);
+    // The verified remove deleted the entry (real CLI leaves an empty object).
+    expect(JSON.parse(await text(settingsPath)).mcpServers).toEqual({});
+    const secondUninstall = await installRuntime(
+      { ...uninstallOptions(home, "prime-agent"), primeRunner: prime.runner },
+    );
+    expect(secondUninstall.changes).toEqual([]);
+    expect(secondUninstall.notices).toEqual([]);
+    // Not-idempotent remove is only ever called after a present probe.
+    expect(prime.calls.filter((args) => args[0] === "mcp" && args[1] === "remove")).toEqual([
+      ["mcp", "remove", "board-prime-agent"],
+    ]);
+  });
+
+  test("refuses foreign prime-agent skill files and a foreign server occupying board-<author>", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const foreignSkill = "import unrelated_skill  # not board-rendered\n";
+    await put(join(skillDir, "SKILL.md"), foreignSkill);
+    const prime = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent skill");
+    expect(await text(join(skillDir, "SKILL.md"))).toBe(foreignSkill);
+    expect(await Bun.file(settingsPath).exists()).toBe(false);
+    expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+
+    // Mixed ownership is refused too: our SKILL.md but a foreign module file.
+    const mixedHome = await fixture();
+    const mixedSettings = join(mixedHome, ".prime", "agent", "settings.json");
+    const mixedDir = join(mixedHome, ".prime", "agent", "skills", "board");
+    await put(join(mixedDir, "SKILL.md"),
+      renderPrimeSkillPackage({ server: "board-prime-agent", board: "general", author: "prime-agent" }).files[0]!.content);
+    await put(join(mixedDir, "src", "board", "__init__.py"), "# someone else's module\n");
+    const mixed = fakePrimeAgent(mixedSettings);
+    await expect(installRuntime({ ...options(mixedHome, "prime-agent"), primeRunner: mixed.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent skill");
+    expect(mixed.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+
+    // A FOREIGN definition already occupying board-<author> is refused before
+    // any mutation: presence alone is not ownership. The foreign entry and the
+    // rest of the settings survive byte-identically and no add is attempted.
+    const occupiedHome = await fixture();
+    const occupiedSettings = join(occupiedHome, ".prime", "agent", "settings.json");
+    const foreignSettings = JSON.stringify({
+      other: true,
+      mcpServers: {
+        "unrelated": { type: "stdio", command: "keep-me" },
+        "board-prime-agent": { type: "stdio", command: "someone-else" },
+      },
+    }, null, 2) + "\n";
+    await put(occupiedSettings, foreignSettings);
+    const occupied = fakePrimeAgent(occupiedSettings);
+    await expect(installRuntime({ ...options(occupiedHome, "prime-agent"), primeRunner: occupied.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(await text(occupiedSettings)).toBe(foreignSettings);
+    expect(occupied.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+    expect(await Bun.file(join(occupiedHome, ".prime", "agent", "skills", "board", "SKILL.md")).exists()).toBe(false);
+  });
+
+  test("refuses to remove a foreign prime-agent MCP server and keeps --dry-run uninstall read-only", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const foreign = JSON.stringify({
+      other: true,
+      mcpServers: { "board-prime-agent": { type: "stdio", command: "someone-else" } },
+    }, null, 2) + "\n";
+    await put(settingsPath, foreign);
+    const prime = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: prime.runner }))
+      .rejects.toThrow("refusing to remove non-board prime-agent MCP server");
+    expect(await text(settingsPath)).toBe(foreign);
+    expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "remove")).toBe(false);
+
+    // A dry-run uninstall of a board-owned entry probes read-only: one `mcp
+    // get`, no `mcp remove`, no settings change, and the planned package
+    // removal is reported without deleting the files.
+    const ownedHome = await fixture();
+    const ownedSettings = join(ownedHome, ".prime", "agent", "settings.json");
+    const skillPath = join(ownedHome, ".prime", "agent", "skills", "board", "SKILL.md");
+    const owned = fakePrimeAgent(ownedSettings);
+    await installRuntime({ ...options(ownedHome, "prime-agent"), primeRunner: owned.runner });
+    const before = await text(ownedSettings);
+    const callsBefore = owned.calls.length;
+    const dry = await installRuntime({
+      ...uninstallOptions(ownedHome, "prime-agent"), primeRunner: owned.runner, dryRun: true,
+    });
+    expect(owned.calls.slice(callsBefore)).toEqual([["mcp", "get", "board-prime-agent"]]);
+    expect(await text(ownedSettings)).toBe(before);
+    expect(dry.notices.join(" ")).toContain("Would remove prime-agent MCP server");
+    expect(dry.changes.map((change) => change.path)).toContain(skillPath);
+    expect(await Bun.file(skillPath).exists()).toBe(true);
+  });
+
+  test("dry-run plans prime-agent changes without adding the server or writing the skill package", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    const result = await installRuntime({
+      ...options(home, "prime-agent"), primeRunner: prime.runner, dryRun: true,
+    });
+    const packageRender = renderPrimeSkillPackage({ server: "board-prime-agent", board: "general", author: "prime-agent" });
+    const plannedPaths = packageRender.files.map((file) => join(skillDir, ...file.path.split("/")));
+    expect(result.changes.map((change) => change.path)).toEqual(plannedPaths);
+    expect(renderInstallDiff(result.changes)).toContain("+++ " + plannedPaths[2]);
+    expect(result.notices.join(" ")).toContain("Would register");
+    for (const path of plannedPaths) expect(await Bun.file(path).exists()).toBe(false);
+    expect(await Bun.file(settingsPath).exists()).toBe(false);
+    expect(prime.calls).toEqual([["mcp", "get", "board-prime-agent"]]);
+
+    // With the server already present, dry-run plans the verified replace.
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    const planned = await installRuntime({
+      ...options(home, "prime-agent"), primeRunner: prime.runner, dryRun: true,
+    });
+    expect(planned.changes).toEqual([]);
+    expect(planned.notices.join(" ")).toContain("would replace its definition via prime-agent mcp add --force");
+    expect(prime.calls.at(-1)).toEqual(["mcp", "get", "board-prime-agent"]);
+  });
+
+  test("the installed prime-agent wrapper compiles under the host python3 when available", async () => {
+    const python = Bun.which("python3");
+    if (!python) return; // best-effort: python-less environments rely on prime-agent.test.ts probes
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const modulePath = join(home, ".prime", "agent", "skills", "board", "src", "board", "__init__.py");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    const proc = Bun.spawnSync([
+      python, "-c",
+      `compile(open(${JSON.stringify(modulePath)}, encoding="utf-8").read(), ${JSON.stringify(modulePath)}, "exec")`,
+    ]);
+    expect(proc.exitCode, new TextDecoder().decode(proc.stderr ?? new Uint8Array())).toBe(0);
+  });
+
+  test("fails closed on malformed, non-object and missing prime-agent settings", async () => {
+    const cases: Array<{ label: string; content?: string }> = [
+      { label: "unparseable JSON", content: "{ this is not json" },
+      { label: "JSON root is an array", content: "[]" },
+      { label: "JSON root is null", content: "null" },
+      { label: "mcpServers is an array", content: JSON.stringify({ mcpServers: [] }) },
+      { label: "mcpServers is null", content: JSON.stringify({ mcpServers: null }) },
+      { label: "mcpServers is a string", content: JSON.stringify({ mcpServers: "board" }) },
+      { label: "mcpServers is absent", content: JSON.stringify({ other: true }) },
+      { label: "settings file missing while the probe claims present" },
+    ];
+    for (const scenario of cases) {
+      const home = await fixture();
+      const settingsPath = join(home, ".prime", "agent", "settings.json");
+      if (scenario.content !== undefined) await put(settingsPath, scenario.content);
+      const prime = presentProbeRunner();
+      // The CLI probe claims the name exists, so only the read-only ownership
+      // gate can refuse; an unknown or unreadable file must never be trusted.
+      await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner }))
+        .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+      if (scenario.content !== undefined) expect(await text(settingsPath)).toBe(scenario.content);
+      expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+      expect(await Bun.file(join(home, ".prime", "agent", "skills", "board", "SKILL.md")).exists()).toBe(false);
+    }
+  });
+
+  test("fails closed on an unreadable prime-agent settings file", async () => {
+    if ((process.getuid?.() ?? 0) === 0) return; // root bypasses mode bits
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const foreign = JSON.stringify({
+      mcpServers: { "board-prime-agent": { type: "stdio", command: "someone-else" } },
+    }, null, 2) + "\n";
+    await put(settingsPath, foreign);
+    await chmod(settingsPath, 0o000);
+    const prime = presentProbeRunner();
+    try {
+      // The read error propagates (fail closed) rather than being read as
+      // "no entry"; no mutating call is made and the file is untouched.
+      await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner }))
+        .rejects.toThrow(/EACCES|EPERM|permission denied/i);
+      expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+    } finally {
+      await chmod(settingsPath, 0o600);
+    }
+    expect(await text(settingsPath)).toBe(foreign);
+  });
+
+  test("fails closed on symlinked and dangling prime-agent settings", async () => {
+    // settings.json symlinked to a foreign target: the gate follows the link,
+    // refuses the foreign definition and leaves the target byte-identical.
+    const home = await fixture();
+    const target = join(await fixture(), "elsewhere", "settings.json");
+    const foreign = JSON.stringify({
+      mcpServers: { "board-prime-agent": { type: "stdio", command: "someone-else" } },
+    }, null, 2) + "\n";
+    await put(target, foreign);
+    const agentDir = join(home, ".prime", "agent");
+    await mkdir(agentDir, { recursive: true });
+    await symlink(target, join(agentDir, "settings.json"));
+    const linked = fakePrimeAgent(target);
+    await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: linked.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(await text(target)).toBe(foreign);
+    expect(linked.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+
+    // Dangling symlink: an unknown entry is refused, not treated as owned.
+    const danglingHome = await fixture();
+    const danglingDir = join(danglingHome, ".prime", "agent");
+    await mkdir(danglingDir, { recursive: true });
+    const link = join(danglingDir, "settings.json");
+    await symlink(join(danglingHome, "missing-target.json"), link);
+    const dangling = presentProbeRunner();
+    await expect(installRuntime({ ...options(danglingHome, "prime-agent"), primeRunner: dangling.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(dangling.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+    expect((await lstat(link)).isSymbolicLink()).toBe(true);
+  });
+
+  test("treats an entry carrying the MCP entrypoint only in args as foreign", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const mcpPath = join(projectRoot, "packages/mcp/src/index.ts");
+    // Old predicate: any command/args token equal to mcpPath counted as
+    // ownership, so this foreign server was misclassified and replaced.
+    const impostor = JSON.stringify({
+      other: true,
+      mcpServers: {
+        "board-prime-agent": { type: "stdio", command: "/usr/bin/evil-server", args: ["--config", mcpPath] },
+      },
+    }, null, 2) + "\n";
+    await put(settingsPath, impostor);
+    const prime = fakePrimeAgent(settingsPath);
+    await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(await text(settingsPath)).toBe(impostor);
+    expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+  });
+
+  test("gates the PRIME_AGENT_CODING_AGENT_DIR override settings file, not the default", async () => {
+    const home = await fixture();
+    const overrideDir = join(await fixture(), "override-agent");
+    const defaultSettings = join(home, ".prime", "agent", "settings.json");
+    const overrideSettings = join(overrideDir, "settings.json");
+    const mcpPath = join(projectRoot, "packages/mcp/src/index.ts");
+    // A stale board-owned entry in the DEFAULT directory must not authorize a
+    // foreign entry in the override directory (the round-2 fail-open case).
+    await put(defaultSettings, JSON.stringify({
+      mcpServers: {
+        "board-prime-agent": { type: "stdio", command: process.execPath, args: [mcpPath, "--store", "fs:/stale"] },
+      },
+    }, null, 2) + "\n");
+    const foreign = JSON.stringify({
+      other: true,
+      mcpServers: { "board-prime-agent": { type: "stdio", command: "someone-else" } },
+    }, null, 2) + "\n";
+    await put(overrideSettings, foreign);
+    const prime = fakePrimeAgent(overrideSettings);
+    restoreEnv(PRIME_AGENT_DIR_ENV, overrideDir);
+    await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(await text(overrideSettings)).toBe(foreign);
+    expect(prime.calls.some((args) => args[0] === "mcp" && args[1] === "add")).toBe(false);
+    // Refusal precedes every mutation: the stale default entry and both skill
+    // directories are untouched.
+    expect(await text(defaultSettings)).toContain("fs:/stale");
+    expect(await Bun.file(join(overrideDir, "skills", "board", "SKILL.md")).exists()).toBe(false);
+    expect(await Bun.file(join(home, ".prime", "agent", "skills", "board", "SKILL.md")).exists()).toBe(false);
+  });
+
+  test("installs the gate and skills under the active PRIME_AGENT_CODING_AGENT_DIR override", async () => {
+    const home = await fixture();
+    const overrideDir = join(await fixture(), "override-agent");
+    const overrideSettings = join(overrideDir, "settings.json");
+    const prime = fakePrimeAgent(overrideSettings);
+    restoreEnv(PRIME_AGENT_DIR_ENV, overrideDir);
+    const result = await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    expect(result.notices.join(" ")).toContain("Registered prime-agent MCP server");
+    // Wrapper and MCP entry land in the override directory; the default home
+    // is never touched.
+    expect(await Bun.file(join(overrideDir, "skills", "board", "SKILL.md")).exists()).toBe(true);
+    expect(await Bun.file(join(home, ".prime", "agent", "settings.json")).exists()).toBe(false);
+    expect(await Bun.file(join(home, ".prime", "agent", "skills", "board", "SKILL.md")).exists()).toBe(false);
+    const stored = JSON.parse(await text(overrideSettings));
+    expect(stored.mcpServers["board-prime-agent"].args[0]).toBe(join(projectRoot, "packages/mcp/src/index.ts"));
+    // Uninstall resolves the same override directory and removes the entry.
+    await installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: prime.runner });
+    expect(JSON.parse(await text(overrideSettings)).mcpServers).toEqual({});
+    expect(await Bun.file(join(overrideDir, "skills", "board", "SKILL.md")).exists()).toBe(false);
+  });
+});
+
+/**
+ * Real executable-selection regression for the prime-agent install path.
+ *
+ * Every other prime-agent test injects a runner (`fakePrimeAgent`,
+ * `realPrimeRunner`, `scriptedRunner`), and those doubles ignore the command
+ * they are handed, so none of them can observe which executable the default
+ * `runPrimeAgent` spawn path selects. Round 4 fixed `PrimeMcpOptions.command`
+ * shadowing `PrimeCommandOptions.command`, which had made the installer run
+ * `<childCommand> mcp get|add …` (bun) instead of the `prime-agent` CLI. This
+ * test drives the real spawn path with a disposable PATH stub and a project
+ * `package.json` "mcp" decoy that the shadowing shape would have executed.
+ */
+describe("prime-agent installer executable selection (real spawn path)", () => {
+  test("runs prime-agent from PATH, passes the child after --, and never runs the project mcp decoy", async () => {
+    const home = await fixture();
+    const bin = join(await fixture(), "bin");
+    const project = join(await fixture(), "project");
+    const stubLog = join(home, "prime-stub.log");
+    const decoyLog = join(home, "decoy.log");
+    await mkdir(bin, { recursive: true });
+    await put(join(project, "packages/mcp/src/index.ts"), "// fixture board MCP entrypoint\n");
+    // A project script named "mcp": under the round-4 shadowing bug the spawn
+    // was `<bun> mcp get|add …` with cwd=projectRoot, so bun would run THIS
+    // script with the installer's argv instead of the prime-agent CLI.
+    await put(join(project, "package.json"), JSON.stringify({
+      name: "decoy-project",
+      private: true,
+      scripts: { mcp: `sh -c 'echo DECOY-RAN:$@ >> "${decoyLog}"' --` },
+    }) + "\n");
+    const stub = join(bin, "prime-agent");
+    await writeFile(stub, [
+      "#!/bin/sh",
+      `echo "INVOKED=$0" >> "$BOARD_PRIME_STUB_LOG"`,
+      `echo "ARGV=$@" >> "$BOARD_PRIME_STUB_LOG"`,
+      `echo "AGENT_DIR=\${PRIME_AGENT_CODING_AGENT_DIR-unset}" >> "$BOARD_PRIME_STUB_LOG"`,
+      `if [ "$1" = "mcp" ] && [ "$2" = "get" ]; then exit 1; fi`,
+      "exit 0",
+      "",
+    ].join("\n"));
+    await chmod(stub, 0o755);
+
+    const savedPath = process.env.PATH;
+    const savedStubLog = process.env.BOARD_PRIME_STUB_LOG;
+    process.env.PATH = `${bin}:${savedPath ?? ""}`;
+    process.env.BOARD_PRIME_STUB_LOG = stubLog;
+    try {
+      const result = await installRuntime({ ...options(home, "prime-agent"), projectRoot: project });
+      expect(result.notices.join(" ")).toContain("Registered prime-agent MCP server");
+      const lines = (await text(stubLog)).split("\n").filter(Boolean);
+      // The executable actually selected is the PATH stub, never the child command.
+      expect(lines.some((line) => line.startsWith("INVOKED=") && line.endsWith("/prime-agent"))).toBe(true);
+      expect(lines).toContain("ARGV=mcp get board-prime-agent");
+      const add = lines.find((line) => line.startsWith("ARGV=mcp add board-prime-agent "));
+      expect(add).toBeDefined();
+      // The child command is passed after `--`, not used as the CLI executable.
+      expect(add).toContain(`-- ${process.execPath} ${join(project, "packages/mcp/src/index.ts")}`);
+      // The pinned agent directory reaches the real child process.
+      expect(lines).toContain(`AGENT_DIR=${join(home, ".prime", "agent")}`);
+      // The decoy the shadowing shape would have executed was never invoked.
+      expect(await Bun.file(decoyLog).exists()).toBe(false);
+    } finally {
+      restoreEnv("PATH", savedPath);
+      restoreEnv("BOARD_PRIME_STUB_LOG", savedStubLog);
+    }
+  }, 30_000);
+});
+
+/**
+ * `prime-agent` double that mirrors the fixture-verified 0.9.4 semantics of
+ * `mcp get` / `mcp add [--force]` / `mcp remove` against a fixture
+ * settings.json — including the real CLI's failure modes (re-add without
+ * --force fails without mutation; remove is not idempotent) and messages.
+ */
+function fakePrimeAgent(settingsPath: string): { runner: PrimeRunner; calls: string[][] } {
+  const calls: string[][] = [];
+  const readRoot = async (): Promise<Record<string, unknown>> => {
+    try {
+      const parsed = JSON.parse(await readFile(settingsPath, "utf8"));
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  };
+  const readServers = async (): Promise<Record<string, unknown>> => {
+    const servers = (await readRoot()).mcpServers;
+    return servers && typeof servers === "object" && !Array.isArray(servers)
+      ? servers as Record<string, unknown>
+      : {};
+  };
+  const runner: PrimeRunner = async (_command, args) => {
+    calls.push(args);
+    if (args[0] === "mcp" && args[1] === "get") {
+      if (args.length !== 3) return { exitCode: 1, stdout: "", stderr: "Error: Usage: mcp get <name>" };
+      const name = args[2]!;
+      return name in (await readServers())
+        ? { exitCode: 0, stdout: `${name}: stdio`, stderr: "" }
+        : { exitCode: 1, stdout: "", stderr: `Error: MCP server "${name}" was not found.` };
+    }
+    if (args[0] === "mcp" && args[1] === "add") {
+      const separator = args.indexOf("--");
+      const name = args[2] ?? "";
+      const optionArgs = args.slice(3, separator === -1 ? undefined : separator);
+      const force = optionArgs.includes("--force");
+      const cwdFlag = args.indexOf("--cwd");
+      const cwd = cwdFlag >= 0 ? args[cwdFlag + 1] : undefined;
+      const [command, ...childArgs] = separator === -1 ? [] : args.slice(separator + 1);
+      const servers = await readServers();
+      const replaced = name in servers;
+      if (replaced && !force) {
+        // Verified 0.9.4 behavior: no mutation on a plain re-add.
+        return {
+          exitCode: 1, stdout: "",
+          stderr: `Error: MCP server "${name}" already exists. Use --force to replace it.`,
+        };
+      }
+      if (!command) return { exitCode: 1, stdout: "", stderr: "Error: A command is required after --." };
+      const root = await readRoot();
+      servers[name] = {
+        type: "stdio", command, args: childArgs,
+        ...(cwd === undefined ? {} : { cwd }),
+      };
+      root.mcpServers = servers;
+      await put(settingsPath, JSON.stringify(root, null, 2) + "\n");
+      return { exitCode: 0, stdout: `${replaced ? "Replaced" : "Added"} MCP server "${name}".`, stderr: "" };
+    }
+    if (args[0] === "mcp" && args[1] === "remove") {
+      if (args.length !== 3) return { exitCode: 1, stdout: "", stderr: "Error: Usage: mcp remove <name>" };
+      const name = args[2]!;
+      const root = await readRoot();
+      const servers = (root.mcpServers ?? {}) as Record<string, unknown>;
+      if (!(name in servers)) {
+        return { exitCode: 1, stdout: "", stderr: `Error: MCP server "${name}" was not found.` };
+      }
+      delete servers[name];
+      // The real CLI keeps an empty mcpServers object after the last removal.
+      root.mcpServers = servers;
+      await put(settingsPath, JSON.stringify(root, null, 2) + "\n");
+      return { exitCode: 0, stdout: `Removed MCP server "${name}".`, stderr: "" };
+    }
+    return { exitCode: 127, stdout: "", stderr: `unexpected prime-agent invocation: ${args.join(" ")}` };
+  };
+  return { runner, calls };
+}
+
+/**
+ * Runner whose `mcp get` always reports the server present, independent of the
+ * settings file. This isolates the read-only ownership gate: the gate must
+ * fail closed on an unreadable, unparseable, missing or non-object settings
+ * file even when the CLI probe claims the name exists.
+ */
+function presentProbeRunner(): { runner: PrimeRunner; calls: string[][] } {
+  const calls: string[][] = [];
+  const runner: PrimeRunner = async (_command, args) => {
+    calls.push(args);
+    if (args[0] === "mcp" && args[1] === "get") {
+      return { exitCode: 0, stdout: "board-prime-agent: stdio", stderr: "" };
+    }
+    return { exitCode: 127, stdout: "", stderr: `unexpected prime-agent invocation: ${args.join(" ")}` };
+  };
+  return { runner, calls };
+}
+
+/**
+ * Real `prime-agent` binary for disposable-HOME fixture tests, or null when
+ * the host has no installation (tests skip, mirroring the python3 gate).
+ * Prefers the PATH binary; falls back to the canonical fnm global layout run
+ * under bun.
+ */
+async function realPrimeAgentCommand(): Promise<string[] | null> {
+  const onPath = Bun.which("prime-agent");
+  if (onPath) return [onPath];
+  const versions = expandHome(join("~", ".local", "share", "fnm", "node-versions"));
+  let bundle: string | null = null;
+  try {
+    for await (const entry of new Bun.Glob("*/installation/lib/node_modules/prime-agent/dist/bundle/cli.js").scan({
+      cwd: versions, onlyFiles: true,
+    })) bundle = entry;
+  } catch {
+    return null;
+  }
+  return bundle ? [process.execPath, join(versions, bundle)] : null;
+}
+
+function expandHome(value: string): string {
+  return value.startsWith("~/") ? join(process.env.HOME ?? "~", value.slice(2)) : value;
+}
+
+/**
+ * Fully explicit fixture environment. The host harness exports PRIME_AGENT_*
+ * and PI_* variables; none of them may leak into a fixture run, so nothing is
+ * inherited from process.env beyond PATH.
+ */
+function primeFixtureEnv(home: string): Record<string, string> {
+  return {
+    PATH: process.env.PATH ?? "/usr/bin:/bin",
+    HOME: home,
+    TMPDIR: home,
+  };
+}
+
+/** PrimeRunner that spawns the real binary inside a disposable HOME. */
+function realPrimeRunner(
+  command: string[],
+  home: string,
+  extraEnv: Record<string, string> = {},
+): PrimeRunner {
+  return async (_executable, args) => {
+    const child = Bun.spawn([...command, ...args], {
+      cwd: home,
+      env: { ...primeFixtureEnv(home), ...extraEnv },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ]);
+    return { exitCode, stdout, stderr };
+  };
+}
+
+describe("prime-agent runtime against the real prime-agent CLI (disposable HOME)", () => {
+  let command: string[] | null = null;
+  beforeAll(async () => {
+    command = await realPrimeAgentCommand();
+  });
+  const primeSettings = (home: string) => join(home, ".prime", "agent", "settings.json");
+
+  test("registers, updates and removes the board MCP server end-to-end", async () => {
+    if (!command) return; // no local prime-agent installation; scripteds tests cover the contract
+    const home = await fixture();
+    const settingsPath = primeSettings(home);
+    const runner = realPrimeRunner(command, home);
+    // Seed a foreign server and key: install/uninstall must preserve both.
+    await put(settingsPath, JSON.stringify({
+      other: true,
+      mcpServers: { keepme: { type: "stdio", command: "/bin/echo", args: ["keep"] } },
+    }, null, 2) + "\n");
+
+    const installOptions = () => ({ ...options(home, "prime-agent"), primeRunner: runner });
+    const first = await installRuntime(installOptions());
+    expect(first.notices.join(" ")).toContain("Registered prime-agent MCP server");
+    const stored = JSON.parse(await text(settingsPath));
+    expect(stored.other).toBe(true);
+    expect(stored.mcpServers.keepme).toBeDefined();
+    expect(stored.mcpServers["board-prime-agent"].command).toBe(process.execPath);
+    expect(stored.mcpServers["board-prime-agent"].cwd).toBe(projectRoot);
+    expect(stored.mcpServers["board-prime-agent"].args).toContain("fs:/shared/board");
+    // Exact-name discovery against the real CLI (mcp get exit-code probe).
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-prime-agent"))).toMatchObject({
+      exitCode: 0,
+    });
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-missing"))).toMatchObject({
+      exitCode: 1,
+    });
+
+    // Update path: changed board arguments must reach the stored definition
+    // via the verified --force replace.
+    const updated = await installRuntime({ ...installOptions(), board: "general-2" });
+    expect(updated.notices.join(" ")).toContain("--force");
+    const updatedServers = JSON.parse(await text(settingsPath)).mcpServers;
+    expect(updatedServers["board-prime-agent"].args).toContain("general-2");
+    // "general" must be gone even though "general-2" shares its prefix.
+    expect(updatedServers["board-prime-agent"].args).not.toContain("general");
+    expect(Object.keys(updatedServers).sort()).toEqual(["board-prime-agent", "keepme"]);
+
+    // Uninstall removes the entry through the verified mcp remove; a second
+    // uninstall is a no-op; the foreign state survives everything.
+    await installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: runner });
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-prime-agent"))).toMatchObject({
+      exitCode: 1,
+    });
+    const afterUninstall = JSON.parse(await text(settingsPath));
+    expect(afterUninstall.mcpServers).toEqual({ keepme: { type: "stdio", command: "/bin/echo", args: ["keep"] } });
+    expect(afterUninstall.other).toBe(true);
+    const again = await installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: runner });
+    expect(again.changes).toEqual([]);
+    expect(again.notices).toEqual([]);
+  }, 30_000);
+
+  test("exercises the verified get/add/remove semantics against seeded fixture settings", async () => {
+    if (!command) return;
+    const home = await fixture();
+    const settingsPath = primeSettings(home);
+    const runner = realPrimeRunner(command, home);
+    await put(settingsPath, JSON.stringify({
+      unrelated: "keep",
+      mcpServers: { keepme: { type: "stdio", command: "/bin/echo" } },
+    }, null, 2) + "\n");
+
+    // get-missing exits 1 with the binary's own message.
+    const missing = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-probe"));
+    expect(missing.exitCode).toBe(1);
+    expect(missing.stderr).toContain('MCP server "board-probe" was not found.');
+
+    // add (absent) → Added; get-present exits 0.
+    const add = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpAddArgs({
+      name: "board-probe", childCommand: "/bin/echo", args: ["hi"], cwd: home,
+    }));
+    expect(add).toMatchObject({ exitCode: 0 });
+    expect(add.stdout).toContain('Added MCP server "board-probe"');
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-probe"))).toMatchObject({ exitCode: 0 });
+
+    // Re-add WITHOUT --force exits 1 and leaves the stored definition as-is.
+    const beforeReAdd = await text(settingsPath);
+    const reAdd = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpAddArgs({
+      name: "board-probe", childCommand: "/bin/echo", args: ["changed"],
+    }));
+    expect(reAdd.exitCode).toBe(1);
+    expect(reAdd.stderr).toContain("already exists. Use --force to replace it.");
+    expect(JSON.parse(await text(settingsPath)).mcpServers["board-probe"].args).toEqual(["hi"]);
+    expect(await text(settingsPath)).toBe(beforeReAdd);
+
+    // add --force replaces the whole definition (fields not passed are gone).
+    const replace = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpAddArgs({
+      name: "board-probe", childCommand: "/bin/echo", args: ["replaced"], force: true,
+    }));
+    expect(replace.exitCode).toBe(0);
+    expect(replace.stdout).toContain('Replaced MCP server "board-probe"');
+    const replaced = JSON.parse(await text(settingsPath)).mcpServers["board-probe"];
+    expect(replaced.args).toEqual(["replaced"]);
+    expect(replaced.cwd).toBeUndefined();
+
+    // remove: exit 0 once, then exit 1 (not idempotent); foreign state intact.
+    const remove = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpRemoveArgs("board-probe"));
+    expect(remove.exitCode).toBe(0);
+    expect(remove.stdout).toContain('Removed MCP server "board-probe"');
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-probe"))).toMatchObject({ exitCode: 1 });
+    const removeAgain = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpRemoveArgs("board-probe"));
+    expect(removeAgain.exitCode).toBe(1);
+    expect(removeAgain.stderr).toContain('was not found');
+
+    // Re-add after remove works as a plain add again.
+    const reAddAfterRemove = await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpAddArgs({
+      name: "board-probe", childCommand: "/bin/echo", args: ["back"],
+    }));
+    expect(reAddAfterRemove.exitCode).toBe(0);
+    const root = JSON.parse(await text(settingsPath));
+    expect(root.mcpServers["board-probe"].args).toEqual(["back"]);
+    expect(root.mcpServers.keepme).toEqual({ type: "stdio", command: "/bin/echo" });
+    expect(root.unrelated).toBe("keep");
+  }, 30_000);
+
+  test("installs the wrapper as a discoverable Python skill package (verified discovery layout)", async () => {
+    if (!command) return;
+    const home = await fixture();
+    const settingsPath = primeSettings(home);
+    const runner = realPrimeRunner(command, home);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: runner });
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const skillMd = await text(join(skillDir, "SKILL.md"));
+    // dist/core/skills.js discovery requirements: frontmatter description is
+    // required, name must equal the parent directory name.
+    expect(skillMd).toMatch(/^---\nname: board\ndescription: .+\n---/s);
+    expect(skillMd).toContain("Rendered by the sidekick board CLI for author");
+    const pyproject = await text(join(skillDir, "pyproject.toml"));
+    expect(pyproject).toContain('name = "board"');
+    expect(pyproject).toContain("hatchling");
+    const moduleSource = await text(join(skillDir, "src", "board", "__init__.py"));
+    expect(moduleSource).toBe(renderPrimeMcpSkill({ server: "board-prime-agent", board: "general", author: "prime-agent" }));
+    // And the real CLI round-trip: uninstall removes package + server again.
+    await installRuntime({ ...uninstallOptions(home, "prime-agent"), primeRunner: runner });
+    expect(await Bun.file(skillDir).exists()).toBe(false);
+    expect(JSON.parse(await text(settingsPath)).mcpServers).toEqual({});
+  }, 30_000);
+
+  test("honors PRIME_AGENT_CODING_AGENT_DIR end-to-end against the real CLI", async () => {
+    if (!command) return;
+    const home = await fixture();
+    const overrideDir = join(await fixture(), "agent-override");
+    const overrideSettings = join(overrideDir, "settings.json");
+    const runner = realPrimeRunner(command, home, { [PRIME_AGENT_DIR_ENV]: overrideDir });
+    // A foreign entry in the override directory is refused: with the override
+    // set, the ownership gate reads the file the real CLI actually mutates.
+    const foreign = JSON.stringify({
+      mcpServers: { "board-prime-agent": { type: "stdio", command: "someone-else" } },
+    }, null, 2) + "\n";
+    await put(overrideSettings, foreign);
+    restoreEnv(PRIME_AGENT_DIR_ENV, overrideDir);
+    await expect(installRuntime({ ...options(home, "prime-agent"), primeRunner: runner }))
+      .rejects.toThrow("refusing to replace non-board prime-agent MCP server");
+    expect(await text(overrideSettings)).toBe(foreign);
+    // The real CLI confirms the override is the directory it reads: `mcp get`
+    // finds the foreign entry there.
+    expect(await runner(DEFAULT_PRIME_AGENT_COMMAND, primeMcpGetArgs("board-prime-agent")))
+      .toMatchObject({ exitCode: 0 });
+
+    // An owned install now lands in the override directory (settings + skill
+    // package); the default home is never touched.
+    await put(overrideSettings, JSON.stringify({ mcpServers: {} }, null, 2) + "\n");
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: runner });
+    expect(JSON.parse(await text(overrideSettings)).mcpServers["board-prime-agent"].args)
+      .toContain("fs:/shared/board");
+    expect(await Bun.file(join(overrideDir, "skills", "board", "SKILL.md")).exists()).toBe(true);
+    expect(await Bun.file(join(home, ".prime", "agent", "settings.json")).exists()).toBe(false);
+  }, 30_000);
 });
 
 function restoreEnv(name: string, value: string | undefined): void {

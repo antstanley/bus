@@ -2,9 +2,18 @@ import { chmod, lstat, mkdir, readFile, realpath, rename, stat, unlink, writeFil
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { assertName } from "@board/core";
 import { createHash } from "node:crypto";
-import { hostname as systemHostname } from "node:os";
+import { homedir, hostname as systemHostname } from "node:os";
+import {
+  addPrimeMcpServer,
+  primeMcpServerInstalled,
+  removePrimeMcpServer,
+  renderPrimeSkillPackage,
+  type PrimeCommandOptions,
+  type PrimeMcpMutationAuthorizer,
+  type PrimeRunner,
+} from "./prime-agent.ts";
 
-export type InstallRuntime = "claude" | "codex" | "letta" | "gemini" | "cursor" | "opencode" | "pi";
+export type InstallRuntime = "claude" | "codex" | "letta" | "gemini" | "cursor" | "opencode" | "pi" | "prime-agent";
 
 export interface InstallOptions {
   runtime: InstallRuntime;
@@ -20,6 +29,12 @@ export interface InstallOptions {
   projectLocal?: boolean;
   hostName?: string;
   registeredAgents?: Iterable<string>;
+  /**
+   * Injectable prime-agent CLI runner (tests). When unset the installer spawns
+   * the real `prime-agent` binary for the MCP presence probe and add; other
+   * runtimes ignore it.
+   */
+  primeRunner?: PrimeRunner;
 }
 
 export interface InstallChange {
@@ -116,6 +131,129 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
         join(options.home, ".board", "sessions", "opencode"),
       );
     if (after !== before) changes.push({ path: pluginPath, before, after });
+  } else if (runtime === "prime-agent") {
+    // The Prime MCP entry is managed exclusively through the fixture-verified
+    // prime-agent CLI (`mcp get` probe; `mcp add` with verified `--force`
+    // replace; `mcp remove`), never by editing settings.json directly. The
+    // wrapper is installed as the user Python skill "board" under
+    // <agentDir>/skills/ — the only layout Prime actually discovers (SKILL.md
+    // + pyproject.toml + src/board/__init__.py; a bare .py file is never
+    // discovered), so `import board` works in a session started afterwards.
+    // The gate, the settings probe, the skill package and the CLI mutation must
+    // all resolve the same directory: `<agentDir>` follows the CLI's
+    // getAgentDir() exactly (see primeAgentDir), so an active
+    // $PRIME_AGENT_CODING_AGENT_DIR override can never make the gate guard a
+    // different file than the CLI acts on. The resolved directory is also
+    // pinned into the CLI child environment so the CLI cannot re-resolve it
+    // differently (different HOME or cwd).
+    const agentDir = primeAgentDir(options.home);
+    const primeOptions: PrimeCommandOptions = {
+      env: { [PRIME_AGENT_DIR_ENV]: agentDir },
+      ...(options.primeRunner === undefined ? {} : { runner: options.primeRunner }),
+    };
+    const server = installName(`board-${author}`, "prime-agent MCP server name");
+    const skill = renderPrimeSkillPackage({ server, board, author });
+    const skillDir = join(agentDir, "skills", skill.name);
+    const skillPaths = skill.files.map((file) => ({ ...file, absolute: join(skillDir, ...file.path.split("/")) }));
+    // Ownership gate for the destructive MCP mutations. `mcp get` only reports
+    // the transport type, so ownership is proven by a read-only parse of the
+    // agent settings file (never written here; every mutation still goes
+    // through the verified CLI): the stored definition must pass this
+    // repository's board MCP entrypoint as the first argument of the stdio
+    // command. An unreadable, unparseable or non-matching entry fails closed,
+    // so a foreign server that happens to occupy `board-<author>` — or merely
+    // mentions the entrypoint path in a later argument — is refused rather
+    // than force-replaced/removed.
+    const authorizePrimeMutation: PrimeMcpMutationAuthorizer = async (present) => {
+      if (!present) return;
+      const servers = await readPrimeMcpServers(agentDir);
+      if (!isOwnedPrimeMcpServer(servers?.[server], mcpPath)) {
+        throw new CliError(
+          `refusing to ${options.uninstall ? "remove" : "replace"} non-board prime-agent MCP server:`
+          + ` ${JSON.stringify(server)}`,
+        );
+      }
+    };
+    if (options.uninstall) {
+      for (const file of skillPaths) {
+        const before = await readText(file.absolute);
+        if (before && isOwnedPrimeSkillFile(file.path, before)) {
+          changes.push({ path: file.absolute, before, after: "" });
+          removals.add(file.absolute);
+        }
+      }
+      // Verified removal: probe with `mcp get`, then `mcp remove` when
+      // present (exit 0 removes only this entry; absent is a natural no-op).
+      // A present entry is removed only after the ownership gate approves it,
+      // and --dry-run never invokes the mutating remove.
+      if (options.dryRun) {
+        if (await primeMcpServerInstalled(server, primeOptions)) {
+          await authorizePrimeMutation(true);
+          notices.push(`Would remove prime-agent MCP server ${JSON.stringify(server)} via prime-agent mcp remove.`);
+        }
+      } else {
+        const removed = await removePrimeMcpServer(server, { ...primeOptions, authorize: authorizePrimeMutation });
+        if (removed.status === "failed") {
+          throw new CliError(
+            `failed to remove prime-agent MCP server ${JSON.stringify(server)}: prime-agent mcp remove exited nonzero`,
+          );
+        }
+        if (removed.status === "removed") {
+          notices.push(`Removed prime-agent MCP server ${JSON.stringify(server)} via prime-agent mcp remove.`);
+        }
+      }
+    } else {
+      // Read once, then refuse foreign files before any mutating MCP
+      // invocation so a refusal leaves the agent configuration untouched.
+      const existing = await Promise.all(
+        skillPaths.map(async (file) => ({ file, before: await readText(file.absolute) })),
+      );
+      for (const { file, before } of existing) {
+        if (before && before !== file.content && !isOwnedPrimeSkillFile(file.path, before)) {
+          throw new CliError(`refusing to replace non-board prime-agent skill: ${file.absolute}`);
+        }
+      }
+      for (const { file, before } of existing) {
+        if (before !== file.content) changes.push({ path: file.absolute, before, after: file.content });
+      }
+      if (options.dryRun) {
+        if (!await primeMcpServerInstalled(server, primeOptions)) {
+          notices.push(`Would register prime-agent MCP server ${JSON.stringify(server)} via prime-agent mcp add.`);
+        } else {
+          // Same ownership gate the real run applies, before the read-only
+          // dry-run notice claims a replace would happen.
+          await authorizePrimeMutation(true);
+          notices.push(
+            `prime-agent MCP server ${JSON.stringify(server)} already configured;`
+            + ` would replace its definition via prime-agent mcp add --force.`,
+          );
+        }
+      } else {
+        // Probe-driven update: the exact configured name is discovered via
+        // `mcp get board-<author>`; when present, re-add WITH --force —
+        // fixture-verified replace on 0.9.4 ("Replaced MCP server ...") — so
+        // changed store/board/index arguments propagate to the stored
+        // definition. The ownership gate above runs after that same probe, so
+        // a foreign server under this name is refused before any mutation.
+        const installed = await addPrimeMcpServer({
+          name: server,
+          childCommand: executable,
+          args: mcp.args as string[],
+          cwd: options.projectRoot,
+          update: true,
+          ...primeOptions,
+          authorize: authorizePrimeMutation,
+        });
+        if (installed.status === "failed") {
+          throw new CliError(
+            `failed to register prime-agent MCP server ${JSON.stringify(server)}: prime-agent mcp add exited nonzero`,
+          );
+        }
+        notices.push(installed.present
+          ? `prime-agent MCP server ${JSON.stringify(server)} definition replaced via prime-agent mcp add --force.`
+          : `Registered prime-agent MCP server ${JSON.stringify(server)} via prime-agent mcp add.`);
+      }
+    }
   } else {
     if (runtime === "claude") {
       await planJson(changes, join(options.home, ".claude", "settings.json"), (root) => {
@@ -224,6 +362,90 @@ function isOwnedPiExtension(value: string, hookPath: string): boolean {
   return value.includes("// >>> board install pi extension") && value.includes(JSON.stringify(hookPath));
 }
 
+/**
+ * Ownership of one rendered prime-agent skill-package file. Every package
+ * file carries the renderer's fixed provenance line, and each file type adds
+ * its binding shape, so a foreign file that merely quotes the marker is still
+ * refused (the renderer is a pure verified-contract function with no edit
+ * marker).
+ */
+function isOwnedPrimeSkillFile(relativePath: string, value: string): boolean {
+  if (!value.includes("Rendered by the sidekick board CLI for author")) return false;
+  if (relativePath === "SKILL.md") return /^name: board$/m.test(value);
+  if (relativePath === "pyproject.toml") return /^name = "board"$/m.test(value);
+  return value.includes('\nSERVER = "');
+}
+
+/**
+ * The env override the installed prime-agent CLI reads in `getAgentDir()`
+ * (verified 0.9.4 `dist/config.js`).
+ */
+const PRIME_AGENT_DIR_ENV = "PRIME_AGENT_CODING_AGENT_DIR";
+
+/**
+ * Resolve the prime-agent agent directory exactly as the installed CLI's
+ * `getAgentDir()` does (verified 0.9.4 `dist/config.js`):
+ * `$PRIME_AGENT_CODING_AGENT_DIR` when set (tilde-expanded against the OS
+ * home), else `<home>/.prime/agent`. `home` is the installer's home, which is
+ * the CLI's `os.homedir()` on the production path (`deps.installHome ??
+ * homedir()`), and the fixture home in tests. The destructive-mutation gate,
+ * the read-only settings probe and the skill package all resolve through this
+ * one rule, and the result is pinned into the CLI child environment, so the
+ * gate always guards the file the CLI mutates: resolving the gate to the
+ * default while the CLI honoured the override let a foreign server in the
+ * override directory be force-replaced. A relative override is normalised to
+ * an absolute path so the pinned CLI and the gate cannot resolve it against
+ * different working directories.
+ */
+function primeAgentDir(home: string): string {
+  const override = process.env[PRIME_AGENT_DIR_ENV];
+  if (override) return resolve(expandTildePath(override));
+  return join(home, ".prime", "agent");
+}
+
+/** Mirror of the CLI's `expandTildePath()` (0.9.4 `dist/config.js`). */
+function expandTildePath(value: string): string {
+  if (value === "~") return homedir();
+  if (value.startsWith("~/") || (process.platform === "win32" && value.startsWith("~\\"))) {
+    return join(homedir(), value.slice(2));
+  }
+  return value;
+}
+
+/**
+ * Read-only parse of the prime-agent agent settings `mcpServers` map. The file
+ * is read, never written (every mutation still goes through the verified
+ * `prime-agent mcp` CLI). Returns null when the file is unparseable, its root
+ * is not an object, or `mcpServers` is not an object, so the ownership gate
+ * fails closed instead of treating an unknown entry as board-owned.
+ */
+async function readPrimeMcpServers(agentDir: string): Promise<JsonObject | null> {
+  const before = await readText(join(agentDir, "settings.json"));
+  if (!before.trim()) return {};
+  let parsed: unknown;
+  try { parsed = JSON.parse(before); } catch { return null; }
+  const root = objectValue(parsed);
+  if (!root) return null;
+  const servers = root.mcpServers;
+  if (servers === undefined) return {};
+  return objectValue(servers);
+}
+
+/**
+ * Ownership of one stored prime-agent MCP definition: the definition must pass
+ * this repository's board MCP entrypoint as the FIRST argument of the stdio
+ * command — the executable position, the same signal `isOwnedMcp` uses. The
+ * runtime executable itself (`command`) may be anything, so a bun/node upgrade
+ * cannot turn a board-managed entry into a "foreign" one, but a token that
+ * merely appears later in `args` (e.g. a foreign server handed the entrypoint
+ * path via `--config`) is NOT ownership and fails closed.
+ */
+function isOwnedPrimeMcpServer(value: unknown, mcpPath: string): boolean {
+  const record = objectValue(value);
+  if (!record) return false;
+  return Array.isArray(record.args) && record.args[0] === mcpPath;
+}
+
 function piExtension(
   executable: string,
   hookPath: string,
@@ -257,8 +479,18 @@ export default function boardExtension(pi: ExtensionAPI) {
   let timer: ReturnType<typeof setInterval> | undefined;
   let polling = false;
 
+  // One queue per extension instance: inject, heartbeat and poll children must
+  // not overlap on this replica's shared store/index (see install.ts).
+  let pending: Promise<unknown> = Promise.resolve();
+
+  function enqueue<T>(work: () => Promise<T>): Promise<T> {
+    const result = pending.then(work);
+    pending = result.catch(() => {});
+    return result;
+  }
+
   const invokeHook = (command: "inject" | "heartbeat" | "poll", sessionID: string) =>
-    pi.exec(executable, [hookPath, command, ...hookConfig, "--session", sessionID], { timeout: 10_000 });
+    enqueue(() => pi.exec(executable, [hookPath, command, ...hookConfig, "--session", sessionID], { timeout: 10_000 }));
 
   const invokeCli = async (command: string, args: string[], signal?: AbortSignal) => {
     const result = await pi.exec(executable, [cliPath, command, ...cliConfig, ...args], {
@@ -322,11 +554,11 @@ export default function boardExtension(pi: ExtensionAPI) {
     status: "idle" | "working" = "idle",
   ) => {
     const sessionID = ctx.sessionManager.getSessionId();
-    if (sessionID) await pi.exec(
+    if (sessionID) await enqueue(() => pi.exec(
       executable,
       [hookPath, "heartbeat", ...hookConfig, "--session", sessionID, "--status", status],
       { timeout: 10_000 },
-    );
+    ));
   };
 
   const poll = async (ctx: { isIdle(): boolean; sessionManager: { getSessionId(): string } }) => {

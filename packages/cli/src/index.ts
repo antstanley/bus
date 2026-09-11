@@ -18,6 +18,8 @@ import { BoardIndex } from "@board/index";
 import { FsStore } from "@board/store-fs";
 import { GitStore } from "@board/store-git";
 import { heartbeat, MAX_WHO_LIMIT, who as listPresence, whoPage } from "@board/presence";
+import { inboxCommand, searchCommand, threadsCommand, whoCommand } from "@board/tui";
+import { loadSnapshotModel, renderHtml, runWebviewerCli } from "@board/webviewer";
 import {
   CliError,
   installRuntime,
@@ -28,6 +30,8 @@ import {
   renderInstallDiff,
   type InstallRuntime,
 } from "./install.ts";
+import { captureCliInvocation, handleRequest, handleRespond, UsageError, emitProfileSetupError, requestOperation, hasProfileHelp } from "./request-response.ts";
+import type { WaitHooks } from "@board/core";
 import { homedir, hostname as systemHostname } from "node:os";
 import { join, resolve } from "node:path";
 import { Buffer } from "node:buffer";
@@ -50,6 +54,8 @@ export interface CliDependencies {
   signal?: AbortSignal;
   stdin?: () => Promise<string>;
   heartbeatIntervalMs?: number;
+  /** Deterministic request-wait clocks and timers. */
+  hooks?: WaitHooks;
   installHome?: string;
   projectRoot?: string;
   fetch?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -70,6 +76,42 @@ export class DegradedReplicationError extends Error {
 /** Run one board CLI command. Throws CliError for usage errors. */
 export async function runCli(argv: string[], deps: CliDependencies = {}): Promise<void> {
   const output = deps.stdout ?? console.log;
+  // These closed profiles own parsing and errors before the global grammar.
+  if ((argv[0] === "request" || argv[0] === "respond") && !hasProfileHelp(argv.slice(1))) {
+    const command = argv[0];
+    const waiting = command === "request" && requestOperation(argv.slice(1)) === "request-wait";
+    const ctx = captureCliInvocation({
+      ...(!waiting || deps.signal === undefined ? {} : { signal: deps.signal }),
+      ...(deps.now === undefined ? {} : { now: deps.now }),
+      ...(deps.hooks === undefined ? {} : { hooks: deps.hooks }),
+      installSignals: waiting && import.meta.main,
+    });
+    const rest: string[] = [];
+    let storeText: string | undefined;
+    for (let i = 1; i < argv.length; i++) {
+      const arg = argv[i]!;
+      if (arg === "--") { rest.push(...argv.slice(i)); break; }
+      if (arg === "--store") { storeText = argv[++i]; continue; }
+      if (arg.startsWith("--store=")) { storeText = arg.slice(8); continue; }
+      rest.push(arg);
+      if (/^--(to|body|title|tags|mentions|reply-by|interval|board|as)$/.test(arg) && i + 1 < argv.length) rest.push(argv[++i]!);
+    }
+    try {
+      let spec: StoreSpec;
+      try {
+        if (!storeText) throw new UsageError("missing store");
+        spec = parseStoreSpec(storeText);
+      } catch {
+        process.exitCode = emitProfileSetupError(rest, deps, command === "respond" ? "respond" : requestOperation(rest));
+        return;
+      }
+      const handlerDeps = { ...deps, prepareStore: () => (deps.createStore ?? createStore)(spec) };
+      process.exitCode = command === "request"
+        ? await handleRequest(rest, handlerDeps, ctx)
+        : await handleRespond(rest, handlerDeps);
+    } finally { ctx.dispose(); }
+    return;
+  }
   const parsed = parseArgs(argv);
   if (parsed.command === "help") {
     output(USAGE);
@@ -139,6 +181,7 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
   const storeText = parsed.flags.get("store");
   if (!storeText) throw new CliError("missing required --store");
   const spec = parseStoreSpec(storeText);
+
   const store = await (deps.createStore ?? createStore)(spec);
 
   if (parsed.command === "who") {
@@ -179,6 +222,54 @@ export async function runCli(argv: string[], deps: CliDependencies = {}): Promis
       // match Store terminology while returning the next cursor explicitly.
       const result = await board.since(options.after, { limit: options.limit });
       output(JSON.stringify({ ...result, cursor: result.cursor ?? null }));
+      break;
+    }
+    case "ui": {
+      // Read-only viewers (task 504). Text views reuse the tasks/inbox index
+      // path (sync, render, close); --web renders a static HTML snapshot
+      // instead — fs stores delegate to the webviewer CLI, other store kinds
+      // render in memory and honor --out. See docs/guides/tui-and-web-viewer.md.
+      const view = parsed.positionals.shift();
+      if (parsed.flags.has("web")) {
+        if (view !== undefined) throw new CliError("ui --web takes no view positional");
+        const boardName = parsed.flags.get("board") ?? "general";
+        const out = parsed.flags.get("out");
+        if (spec.kind === "fs") {
+          const argv = ["--store", spec.dir, "--board", boardName];
+          if (out !== undefined) argv.push("--out", out);
+          const result = await runWebviewerCli(argv);
+          output(`wrote ${result.outPath} (${result.threads} threads, ${result.posts} posts)`);
+        } else {
+          const model = await loadSnapshotModel(store, { board: boardName });
+          const html = renderHtml(model, { title: `${boardName} board` });
+          if (out === undefined) output(html);
+          else {
+            await writeFile(out, html);
+            output(`wrote ${out}`);
+          }
+        }
+        break;
+      }
+      if (view === "who") {
+        output(await whoCommand(store, { maxAgeMs: numberFlag(parsed.flags, "max-age", 120_000, 0) }));
+        break;
+      }
+      if (view === undefined) throw new CliError("ui requires a view: threads, inbox, who, search (or --web)");
+      const uiIndex = await (deps.createIndex ?? (async (path: string) => new BoardIndex(path)))(
+        parsed.flags.get("index") ?? join(homedir(), ".board", "index.sqlite"),
+      );
+      try {
+        await uiIndex.sync(board);
+        if (view === "threads") output(threadsCommand(uiIndex));
+        else if (view === "inbox") output(inboxCommand(uiIndex, inboxAgent(parsed, board)));
+        else if (view === "search") {
+          const query = parsed.positionals.join(" ").trim();
+          if (!query) throw new CliError("ui search requires a query");
+          output(searchCommand(uiIndex, query));
+        } else throw new CliError(`unknown ui view: ${view} (use threads, inbox, who, search)`);
+      } finally {
+        uiIndex.close();
+      }
       break;
     }
     case "tasks": {
@@ -397,12 +488,12 @@ interface ParsedArgs {
 // one set, so a flag added here updates the grammar and the gate in lockstep
 // and no drifted copy can make a consumed -h read as help.
 export const VALUE_FLAGS: ReadonlySet<string> = Object.freeze(new Set([
-  "store", "board", "as", "title", "body", "tags", "mentions",
+  "store", "board", "as", "title", "body", "tags", "mentions", "to",
   "after", "limit", "interval", "max-age", "index", "runtime", "session", "state",
-  "agent", "id",
+  "agent", "id", "reply-by", "out",
 ]));
-const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project"]);
-const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "inbox", "inbox-read", "watch", "who", "install"]);
+const BOOLEAN_FLAGS = new Set(["help", "json", "dry-run", "uninstall", "deliver", "project", "wait", "failure", "web"]);
+const COMMANDS = new Set(["init", "post", "reply", "read", "tasks", "inbox", "inbox-read", "watch", "who", "ui", "install", "request", "respond"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) return { command: "help", flags: new Map(), positionals: [] };
@@ -558,7 +649,12 @@ Commands:
   inbox   [--agent AGENT] [--limit N]            list unread to[]/mentions posts from the local index (--index <path>)
   inbox-read (--id POST_ID | POST_ID...)         mark posts read for --agent (explicit, non-destructive)
   watch   [--after CURSOR] [--interval MS]       stream posts as JSON lines
+  request --to a,b --body TEXT|- [--wait --reply-by TS --interval MS]
+                                                  post an addressed request; --wait bounds local observation
+  respond <REQUEST_ID> [--body TEXT|-] [--failure] [--mentions a,b]
+                                                  answer a request on its board
   who     [--max-age MS]                         list agent presence
+  ui      [threads|inbox|who|search] [--web]     read-only viewers; --web renders a static HTML snapshot (--out FILE)
   install <runtime> --store <spec>               merge runtime hooks/MCP config (Pi defaults to pi-<host>)
 
 Common options:

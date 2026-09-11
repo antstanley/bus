@@ -98,6 +98,26 @@
         "@board/core": "workspace:*",
       },
     },
+    "packages/tui": {
+      "name": "@board/tui",
+      "version": "0.0.1",
+      "dependencies": {
+        "@board/core": "workspace:*",
+        "@board/index": "workspace:*",
+        "@board/presence": "workspace:*",
+      },
+    },
+    "packages/webviewer": {
+      "name": "@board/webviewer",
+      "version": "0.0.1",
+      "bin": {
+        "board-webviewer": "./src/cli.ts",
+      },
+      "dependencies": {
+        "@board/core": "workspace:*",
+        "@board/store-fs": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@board/cli": ["@board/cli@workspace:packages/cli"],
@@ -117,6 +137,10 @@
     "@board/store-git": ["@board/store-git@workspace:packages/store-git"],
 
     "@board/store-s3": ["@board/store-s3@workspace:packages/store-s3"],
+
+    "@board/tui": ["@board/tui@workspace:packages/tui"],
+
+    "@board/webviewer": ["@board/webviewer@workspace:packages/webviewer"],
 
     "@hono/node-server": ["@hono/node-server@2.1.1", "", { "peerDependencies": { "hono": "^4" } }, "sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg=="],
 

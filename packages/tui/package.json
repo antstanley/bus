@@ -1,0 +1,16 @@
+{
+  "name": "@board/tui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@board/core": "workspace:*",
+    "@board/index": "workspace:*",
+    "@board/presence": "workspace:*"
+  },
+  "license": "MIT"
+}

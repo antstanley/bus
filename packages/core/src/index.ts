@@ -20,3 +20,14 @@ export {
   Board, type BoardOptions, type SinceOptions, type SinceResult, type WatchOptions,
   type BoardEvent, type BoardEventType, type BoardInfo,
 } from "./board.ts";
+export {
+  requestAndWait, respond, captureRequestInvocation, prepareRequestInvocation, runRequestWait, runRespond,
+  type RequestInvocation,
+  type RequestInput, type ResponseInput, type RequestWaitOptions, type RespondOptions,
+  type RequestReply, type PublicationState, type RequestPhase,
+  type PublicationSnapshot, type LocalErrorContext, type WaitHooks,
+  isEligibleReply, parseReplyBy, MAX_WAIT_MS, DEFAULT_INTERVAL_MS, MAX_INTERVAL_MS, PAGE_LIMIT,
+  InvalidRequestOptionsError, RequestTimeoutError, RequestCancelledError,
+  RequestWriteError, RequestReadError, ResponseTargetError, ResponseReadError,
+  ResponseWriteError, RequestInternalError,
+} from "./request-response.ts";

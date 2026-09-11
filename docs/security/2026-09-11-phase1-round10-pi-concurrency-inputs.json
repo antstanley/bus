@@ -1,0 +1,14 @@
+{
+  "task": 150,
+  "cycle": "phase1",
+  "round": 10,
+  "baseline": "f91723627ccf0a96af897a2512ab555dabfb1d02",
+  "worktree": "/private/tmp/sidekick-task150-security-nassun",
+  "files": {
+    "packages/cli/src/install.ts": "76487b3475bd4eb3d482ece5ceaf832c06f0a2615b81ca026f817d2190a223ab",
+    "packages/cli/test/install.test.ts": "981766fa7b58cda907efaf0090d2aacd4c4f583864d034e49aa66e76ac716ce3"
+  },
+  "prior_security_rounds": 9,
+  "ordinary_rounds": 1,
+  "report": "docs/security/2026-09-11-phase1-round10-pi-concurrency-report.md"
+}

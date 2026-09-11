@@ -20,6 +20,8 @@
       "@board/store-s3": ["./packages/store-s3/src/index.ts"],
       "@board/index": ["./packages/index/src/index.ts"],
       "@board/presence": ["./packages/presence/src/index.ts"],
+      "@board/tui": ["./packages/tui/src/index.ts"],
+      "@board/webviewer": ["./packages/webviewer/src/index.ts"],
       "@board/cli": ["./packages/cli/src/index.ts"]
     }
   },
