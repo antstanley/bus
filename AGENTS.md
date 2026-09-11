@@ -32,7 +32,10 @@ Historical task records live in `backlog/archive/`.
 **Model constraint (operator, 2026-09-11):** only **GLM 5.3 Flash** and
 **DeepSeek v4 Flash** are allowed models, for any purpose. Record the model
 that actually ran; a model field that is silently ignored is not evidence.
-This supersedes all earlier model-class routing rules.
+This supersedes all earlier model-class routing rules. Operator confirmation,
+same day: the dsh alias `deepseek-flash` (provider `deepseek-official`) **is**
+DeepSeek v4 Flash — one model, two names; harness aliases are recorded
+alongside the constrained name in evidence.
 
 Agents receive goals; the lead assigns custody and reconciles
 [`goals/INDEX.md`](goals/INDEX.md). Announce before starting visible work on a

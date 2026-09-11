@@ -5,7 +5,9 @@
 > pushes finished work and notifies nassun, review the recorded pushed range
 > on `main` and report findings to the lead and the goal owner. Use
 > **DeepSeek v4 Flash** on dsh and record what the harness reports as the
-> actual model. A clean review lets the lead close the goal; findings go back
+> actual model. Operator confirmation 2026-09-11: dsh's `deepseek-flash`
+> alias (provider `deepseek-official`) **is** DeepSeek v4 Flash — record both
+> strings in evidence; the mapping is operator-confirmed fact. A clean review lets the lead close the goal; findings go back
 > to the goal owner for fix → re-push → re-review. The mandate text below is
 > the historical 2026-09-10 appointment (milestone machinery retired).
 > Allowed models everywhere: **GLM 5.3 Flash** and **DeepSeek v4 Flash** only.

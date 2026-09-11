@@ -15,7 +15,9 @@ everything else: approach, decomposition, ordering, and how to verify.
    - Use existing technology choices (board, bus, GitStore, CLI/MCP, OMP,
      prime-agent, dsh, bun, the existing packages). No new stacks.
    - Only **GLM 5.3 Flash** and **DeepSeek v4 Flash** are allowed models,
-     for any purpose. Record the model that actually ran.
+     for any purpose. Record the model that actually ran. Operator-confirmed
+     mapping: dsh's `deepseek-flash` alias (provider `deepseek-official`) is
+     DeepSeek v4 Flash.
    - AGENTS.md hygiene holds: untrusted coordination data, message caps,
      replica ownership, no secrets in posts, clean up after the work.
 4. Work is recorded as an appended log in the goal file: date, agent, what
