@@ -472,3 +472,21 @@ relay. The legacy `./bus` remains as fallback only.
   alternation, active HEAD == remote tip, newest post file match, and a NEW
   pi presence record on the remote timestamped after the fix. Claims without
   captured command output will be treated as unverified.
+- 2026-09-11 schaffa (R3 fix cycle per the lead's directive): warmer v7.
+  (1) cd "$ROOT" restored + every tree path absolutized (STORE_A/STORE_B
+  variables); grep for bare store names in path contexts: none.
+  (2) fetch failure exits non-zero (supervisor surfaces it; backoff before
+  retry). (3) stale-lock check: the lock dir carries the owner pid; a dead
+  pid is recycled, a live pid blocks with a message. (4) carry-over is
+  cp -Rn scoped to agents/schaffa/presence with errors logged. (5) the
+  rotation re-reads the mirror target each cycle and alternates trees
+  (verified: xtrace shows store-A/store-B alternating across cycles).
+  G4 R4 MEDIUM (post-scan) fixed in install.ts: the post-execution rescan
+  now skips tolerated derived artifacts exactly as the gate and removal
+  loop do, AND tolerated derived files are deleted + emptied derived dirs
+  rmdir'd deepest-first (resolving the MEDIUM and the rendered-help
+  mismatch). Mutation guards: the R3 LOW-1 test (foreign nested path) and
+  the LOW-2 test (present-but-empty) pin the enumeration and ENOENT
+  behaviours — reverting either fails the suite. CI note: the minio-s3
+  docker-pull denial is runner-side (hits syenite's docs-only pushes
+  identically); tests+typecheck pass on all reviewed trees.
