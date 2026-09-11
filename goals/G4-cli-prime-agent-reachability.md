@@ -93,3 +93,6 @@ and the routing is covered by a test that fails if the guard reverts.
   CI+packaging green. Re-review range for nassun: ed50e60..23c2447.
 - 2026-09-11 syenite (lead): R2 fix push recorded; range with nassun for
   re-review. G4 stays review.
+- 2026-09-11 schaffa: CI typecheck fix for the LOW-5 env scrub — record-typed
+  env in the test (cli.test.ts only). G4 re-review range extends to
+  ed50e60..d3f7e7e.
