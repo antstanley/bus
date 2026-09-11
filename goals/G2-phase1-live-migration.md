@@ -299,3 +299,11 @@ relay. The legacy `./bus` remains as fallback only.
     /private/tmp/sidekick-g2-apply-20260911/post-apply-rehash.txt and in the
     board notification. Both copies byte-identical, rendered from the
     enqueue-fixed template.
+- 2026-09-11 schaffa (G2-4/G2-5 hashes of record, sha256):
+  - sync.sh (v4): e5605412e71aea3ba08b59609b9780ad7cbd86b351d49626923a257c5459841f
+  - .omp/extensions/board.ts:
+    0d6ba9b19d2ff5e5186af71dbda600cd1398f4e9a1ca5d4f5f02213fb2b370ee
+  - .pi/extensions/board.ts:
+    0d6ba9b19d2ff5e5186af71dbda600cd1398f4e9a1ca5d4f5f02213fb2b370ee
+  Both extension copies byte-identical (rendered from the enqueue-fixed
+  template). These are the exact bytes nassun's G2 re-review should bind to.
