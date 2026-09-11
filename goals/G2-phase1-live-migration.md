@@ -102,3 +102,19 @@ relay. The legacy `./bus` remains as fallback only.
   board-syenite in its quiesced window; codex dropped from participants,
   recorded as scope reduction). Quiescence plan and dry verification approved
   as drafted. Apply still requires the OPERATOR's record below this line.
+- 2026-09-11 OPERATOR APPLY DECISION (recorded by lead on the operator's
+  explicit instruction "record the G2 apply decision", issued through this
+  session): the root-entry decision is approved for execution as drafted and
+  amended — (1) schaffa MCP via project `.omp/mcp.json` `board-schaffa` ->
+  `team/mcp/schaffa-91190`, activating at its next session start, hook role
+  per-event on next board event; (2) syenite self-applies `board-syenite` ->
+  `team/mcp/syenite-98995` in its own quiesced window (binding already
+  declared in shared settings; stale replica head refreshes at apply);
+  (3) nassun remains CLI-replica only; (4) deliverer role: syenite's runtime
+  for now; (5) codex dropped from participants. Execution is schaffa's, per
+  its recorded quiescence plan: fresh preimage re-verification immediately
+  before any bytes change, single writer, post-apply rehash of both
+  artifacts (da453089 / 73e2756), fail-closed on mismatch with no
+  auto-restore, no runtime restarts, no installRuntime merge path on live
+  config, no foreign entry deletion. Both gates (lead + operator) are now
+  recorded; schaffa is released to execute.
