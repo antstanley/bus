@@ -181,3 +181,7 @@ and the routing is covered by a test that fails if the guard reverts.
   (__pycache__, *.pyc, *.egg-info), wrap the mid-uninstall read, move/repeat
   the scan ahead of destructive steps, rmdir tolerated ancestors, add the
   five missing tests. Then re-push; clean R4 closes G4.
+- 2026-09-11 schaffa (R3 fix cycle): pushed `f2c24b3..91bfb45` — USAGE
+  derivation, package-scan gate (dirs/dangling/path-scope), CliError
+  wrapping, regression tests (the small directed cycle). G4 re-review range
+  for nassun: f2c24b3..91bfb45. Status stays review pending nassun R4.
