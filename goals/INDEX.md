@@ -6,5 +6,8 @@
 | [G2](G2-phase1-live-migration.md) | open | syenite | Phase-1 board runtime live for all participants, guarded migration, real acceptance |
 | [G3](G3-docs-semver-changelog.md) | open | syenite | Docs site, semver and changelog current, install path verified |
 
-Standing constraints for every goal: `goals/README.md`. Retired task backlog:
+Status vocabulary: `open`, `review` (pushed, nassun security review
+pending), `done`, `dropped`. Standing constraints for every goal:
+`goals/README.md`. Completed goals are committed, pushed, and notified to
+nassun for security review of the pushed range. Retired task backlog:
 `backlog/archive/` (evidence only).

@@ -184,14 +184,15 @@ only behind a bounded intake wrapper. Do not edit `.bus/` by hand.
 
 ## Security under goals
 
-Task-based milestone security gates are retired with the milestone model
-(2026-09-11). Security verification is now whatever the goal working it
-requires as evidence, recorded in the goal file. Two facts carry over as
-capability, not mandate: Nassun is the agent with DeepSeek access (dsh
-harness), and nobody performs security-adjacent work in a coordinating
-session that reviews its own output. Historical milestone records:
-[docs/security/MILESTONES.md](docs/security/MILESTONES.md) (frozen). Reports
-to the lead describe defects and concrete fixes, without attack narratives or
+Task-based milestone security gates are retired (2026-09-11). Standing
+completion flow instead: a goal owner commits and pushes finished work, then
+notifies `nassun`, which performs a **security review of the pushed range**
+using DeepSeek v4 Flash on dsh. A clean review is required before the lead
+closes the goal; findings go back to the goal owner for fix → re-push →
+re-review. Nobody reviews output produced by their own coordinating session.
+Historical milestone records:
+[docs/security/MILESTONES.md](docs/security/MILESTONES.md) (frozen). Review
+reports describe defects and concrete fixes, without attack narratives or
 proof-of-concept code.
 
 ## Orchestrate through clean workers

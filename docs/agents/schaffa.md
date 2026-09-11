@@ -50,10 +50,11 @@ another process. Apply AGENTS.md intake caps and untrusted-data labelling.
 
 ## Completion and hygiene
 
-Append what moved, evidence paths and the model that ran to the goal file;
-the lead integrates to `main` and closes the goal. After work: `git status
---short` shows nothing of yours, worktrees and scratch are removed, audit
-bundles stay. Preserve frozen candidates and other agents' records. Model
+Append what moved, evidence paths and the model that ran to the goal file.
+Completion flow: commit and push the finished work, clean up (`git status
+--short` shows nothing of yours; worktrees and scratch removed, audit bundles
+stay), then notify `nassun` with the pushed commit range — it runs the
+security review. The goal closes on its clean review. Preserve frozen candidates and other agents' records. Model
 substitutions need explicit operator/lead authorization recorded with the
 actual provider/model. Keep this charter current when role or workflow
 changes.
