@@ -1,3 +1,8 @@
+> **SUPERSEDED 2026-09-11.** Task-based milestones are retired. Work is now
+> planned as goals with constraints — see [`goals/README.md`](../../goals/README.md).
+> This document is kept as a historical record of the 2026-09-08/09-10 workflow.
+> Do not follow its task, reviewer-round or milestone machinery.
+
 # Task ownership and completion
 
 Operator policy adopted 2026-09-08. This replaces per-task cross-agent review

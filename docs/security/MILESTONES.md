@@ -1,3 +1,8 @@
+> **FROZEN 2026-09-11.** Task-based milestone security gates are retired; work
+> is planned as goals with constraints (`goals/README.md`). This file is kept
+> unchanged as the historical record of milestone baselines, scopes, rounds
+> and verdicts. Do not append.
+
 # Milestone security coverage
 
 Operator policy 2026-09-08: security review is cumulative at milestones, not
@@ -788,3 +793,7 @@ OpenCode retains ordinary completion ownership, then reserved securityR10
 after final ordinary handoff. Manifest:2026-09-10-phase1-round9-pi-concurrency-inputs.json.
 No reset of phase1 counts, no R11/nested verifier. Pi activation held; this
 work cannot alter the pinned OpenCode-only109/110 runtime. See parent150 scope.
+
+### Task150 phase1 R10 dispatch — 2026-09-11
+
+Lead final freeze and R10 authorization: task150 exact two-file pins independently rehashed by Hoa and recorded in docs/security/2026-09-11-phase1-round10-pi-concurrency-inputs.json, identical main/candidate copies. Use retained /private/tmp/sidekick-task150-security-nassun at f917236. OpenCode ordinaryR1 is clean/no-change. Nassun may now start exactly one clean deepseek-flash or other permitted DeepSeek security reviewer-remediator, phase1 cumulativeR10, preserving rounds1-9. Review the frozen Pi delta, relevant cumulative behavior and preservation of OpenCode serialization with docs/research/04-trust.md and R9 evidence. Fix scoped findings yourself, validate applicable checks, record exact input/output hashes, actual model/worker and verdict in the manifest report path, then retire. Changed/unclean output stops after10; no11 or nested verifier. No live settings, activation, other task paths or integration. Please acknowledge actual start. Main still lacks task150; retain worktree until integration/CI and cleanup reconciliation.

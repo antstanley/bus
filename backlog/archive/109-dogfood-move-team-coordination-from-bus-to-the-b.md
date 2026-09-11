@@ -3,11 +3,27 @@ id: 109
 title: dogfood: move team coordination from ./bus to the board
 phase: 1
 priority: critical
-owner: opencode
+owner: syenite
 status: in-progress
 depends: [101, 102, 103, 108, 144]
 estimate: M
 ---
+
+## Retirement handover (2026-09-11)
+
+Operator confirmed Syenite as lead and authorized OpenCode retirement in the
+owner session. Ownership/retention transfers to syenite; status, cumulative
+rounds, failed-cycle evidence and all existing gates remain unchanged. No
+final config applied, no restart, no live acceptance claimed. Final dry-run
+artifacts remain at /private/tmp/sidekick-phase1-runtime-f917236/.task109-final-config:
+MCP fragment SHA256 da45308996cc0053b2e424cff18347b614e543c39bbc00bec9f1e55edf22af16;
+plugin SHA256 73e275673b698e307fb4356ed0564539f782e923996def7ce48943d30ac751b9.
+Keep preimages, fixtures, metadata and historical3c02 evidence. Provisioned
+roles remain /private/tmp/sidekick-109-opencode-runtime-20260910/{mcp,hook}/board
+with each role's sibling index.sqlite; do not activate or reuse them silently.
+Participant isolation/quiescence and explicit lead live-cycle disposition are
+still required. CHANGELOG Unreleased remains reserved for the genuine109/110
+cycle. No new worker or round started for handover; no retained artifacts deleted.
 
 ## Current workflow and disposition (2026-09-08)
 
@@ -969,3 +985,98 @@ activation. The selected605 Unreleased-only slice remains unstarted. Old
 denied operations and original unsuccessful trial remain recorded.
 
 Lead runtime release: task147 serialization fix f91723627ccf0a96af897a2512ab555dabfb1d02 passed CI34514745038/packaging34514744946. New detached operational prep pin /private/tmp/sidekick-phase1-runtime-f917236 provisioned; final outputs must use this source rather than prior3c02 pin. Same assigned separateMCP/hook stores/indexes and production registryHome /Users/stan. Preserve priorplans; no liveapply/restart yet. Pi followup task150 is isolated and cannot alter this runtime.
+
+### Approved f917236 final-generation start
+
+Board decision `01M269GS1CKCQ4ABSH4R8GHEC5` records accepted R8 no-change
+evidence, the exact integration/CI above, and the new detached approved runtime.
+Old3c02bda plan/fixture evidence is now read-only; no source mutation or final
+generation there.
+
+New clean operational worker `ses_f73593727ffecM4X4VDyZwVrZr` actually started,
+requested `zai-coding-plan/glm-5.3-flash`, pure/MCP-disabled, runner11916/worker11954.
+New source HEAD was verified clean before checkout-local coordinator scratch.
+All new outputs/fixtures live under `.task109-final-config` in that runtime.
+The local inputs record exact supplied MCP/hook stores/indexes, production home
+and historical managed preimage guards; no external assignment read needed.
+
+Scope: frozen dependencies/import confinement as needed; two target-specific
+dry-run outputs from approved source; production-home hook output separate from
+fixture-home tests; normal all-hook serialization checks; updated managed-entry
+mapping and bounded disposable/public verification of existing process-isolation
+mechanisms. No handwritten source edits, old denied cleanup, live apply/restart,
+new monitor or605/Pi/202/507 work. Final runtime activation still requires Hoa's
+concrete preflight/application decision; no acceptance claim at worker start.
+
+### f917236 final selected outputs and normal-fixture handoff
+
+Clean GLM worker `ses_f73593727ffecM4X4VDyZwVrZr` completed generation and
+returned a final text handoff. Exported actual runtime:
+`zai-coding-plan/glm-5.3-flash`, finish=stop. Same context continued text-only
+after the optional launcher inspection denial below; no replacement worker.
+No live apply/restart, product/Pi/202/507 edits, security review, new monitor
+or605 authoring. Old3c02bda evidence remained untouched.
+
+Source HEAD stayed `f91723627ccf0a96af897a2512ab555dabfb1d02`. Frozen install
+added100 packages with scripts disabled; bun.lock remained
+`4aaf9e41f38b8a890220470949722cfecf155872f6a5f978bae9a3d56dde7d0b`.
+Checked CLI @board workspace links resolve inside the new checkout, not main.
+Only `.task109-final-config` is untracked; no tracked source changes.
+
+Selected artifacts under that checkout's `.task109-final-config/outputs`:
+| File | SHA-256 | Use |
+|---|---|---|
+| planA-mcp-board-entry.json | da45308996cc0053b2e424cff18347b614e543c39bbc00bec9f1e55edf22af16 | ONLY value for managed mcp.board, not full-plan apply |
+| planB-board-plugin.ts | 73e275673b698e307fb4356ed0564539f782e923996def7ce48943d30ac751b9 | ONLY generated hook file, production registry home |
+| managed-migration-proposal.json | 27c5411127ffa972d3266a8d1ce6dee1cf0b352b0a15e84fcc22c9c1ceff8897 | Guarded proposal, not executed |
+| fixture-metas.json | 650f1ba643ab703655dd6c4e484032037f120ed11dad4b1105d28645ab9d8700 | Normal fixture evidence, not live observation |
+
+Owner rehashed those artifacts. A points to f917236's MCP entrypoint, exact
+assigned MCP board-data store/index, opencode/team. B points to f917236's hook,
+exact assigned hook store/index, and production registry directory
+`/Users/stan/.board/sessions/opencode`. No fixture registry path in selected B.
+The seeded full-after config (aa02616a...) contains a synthetic weather entry
+and is fixture evidence ONLY, never a live replacement file. Select A's managed
+entry plus B's file, not either whole installer plan.
+
+Normal checks: installer suite27 pass/0fail,279 assertions; separately rendered
+fixture maxConcurrent1 and zero inject/heartbeat overlap; retained outputs,
+flaky-error recovery, disposal/registry removal/timer cleanup passed. Fixture
+plugin333641c6... is NOT byte-identical to production B: differences are only
+the four baked hookPath/registryDir/store/index constant lines. Metadata records
+both full hashes and these differences. The production-home plugin was not
+instantiated in tests. Intermediate over-strict diff assertion and an idempotent
+rerun into an existing fixture cwd were corrected and rerun within the same
+worker; final checks passed. No product fixes were made.
+
+Optional Codex launcher/schema validation did not complete. Exact denied action
+was Bash `cat` of the cmux codex shim under system temp, not a Codex help run.
+Runtime said `The user rejected permission to use this specific tool call.`
+No alternate shim read, underlying-binary route or permission change followed;
+the same unfinished session completed a STRICT text-only handoff. Earlier
+disposable-env help attempts failed on PATH. Specific per-client override
+schema and Codex role slots therefore remain unverified/unassigned, not passed.
+
+The migration proposal retains exact historical managed-preimage tests and
+post-apply hash requirements. Actual live files were NOT re-read; fresh owner
+preflight and Hoa's entry/application decision are still required. Quiescence
+is limited to affected participant clients/MCP/hooks at approved safe handoffs,
+not permission to kill sessions or disrupt202/507. Source generation success
+does not authorize live configuration, restart, acceptance or bus deprecation.
+
+Worker-created output/evidence and referenced fixture inputs remain preserved
+inside the new checkout for lead inspection. Empty/aborted fixture directories
+may be cleaned only as owned scratch; no denied old cleanup is retried. Worker
+session is retired after evidence capture; coordinator-only runner/export logs
+are separate from retained config candidates. Aggregate cost/usage unavailable.
+
+Final packet posted as `01M26BNGWHVYGCHAW9K2EV5KX8` on109/110 thread,
+mentioning codex; publication exited0. Actual worker session was deleted after
+exported model/finish evidence, and both original and text-recovery processes
+were confirmed absent. Owned aborted fixture-cwd/fixture-project and empty
+Codex-disposable directories were removed from the new checkout only. Outputs,
+referenced fixture inputs and associated evidence remain retained for lead
+inspection. No old3c or denied oc-sessions cleanup, no live config mutation.
+There is no active model worker left from this preparation; the next action
+requires the concrete live-preflight/application and Codex-isolation disposition,
+not another copy of this generation task.

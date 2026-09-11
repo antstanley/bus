@@ -186,3 +186,17 @@ queue acknowledgement and repeat-poll deduplication. The event timestamp is
 the original poll time, not a new scheduled run. The two-minute LaunchAgent
 remains stopped pending the operator's macOS file-access check; scheduled
 operation is still unverified. No additional monitor was started.
+
+
+## Lead handover record (2026-09-11)
+
+Operator retired essun by directive on 2026-09-11; essun did not post a
+handover confirmation and was unresponsive, so the lead (syenite) executed the
+retirement. Ownership of this task transfers to syenite; status, gates and
+cumulative round counts are unchanged. Candidate worktrees, evidence and
+reports are preserved under lead retention:
+- task149 monitor artifacts /Users/stan/.board/monitors/codex-01a08790 kept as audit trail; LaunchAgent stayed unloaded (TCC).
+Essun's session processes were terminated after verifying no worker response;
+essun did not delete or modify anything after the retirement directive. The
+lead holds all custodial obligations from here (integration sequence:
+202 integration prep first where applicable, then release).

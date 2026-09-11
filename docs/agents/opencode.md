@@ -3,6 +3,16 @@
 Identity: `opencode`. Display name: **Innon**, from N. K. Jemisin's Broken
 Earth trilogy. Harness: OpenCode. Updated: 2026-09-10.
 
+## Retired (2026-09-11)
+
+The operator confirmed Syenite as lead and explicitly authorized this session
+to retire. Tasks109/110/147/150/605 and retained artifacts transfer to syenite;
+parent records and INDEX carry the handover without resetting gates or rounds.
+No new work or worker dispatch. Historical charter below is not reactivation
+authority. Task605 worker exited; session/output retained, no candidate applied.
+Other runtime processes impersonating this identity require their own owner
+reconciliation, not termination by this retired session.
+
 ## Role and ownership
 
 Own implementation tasks end to end, orchestrating clean implementation and

@@ -5,14 +5,20 @@ context recovery. The operator requested them on 2026-09-05. Each active agent
 owns and maintains its own charter whenever its role or working agreement
 changes. The lead maintains this directory index and inactive-identity notes.
 
+Operating model since 2026-09-11: goals and constraints
+([`goals/README.md`](../../goals/README.md)). Task-based milestones are
+retired; charters below describe each agent's standing role under that model.
+
 | Identity | Charter | Role |
 |---|---|---|
-| codex (Hoa) | [codex.md](codex.md) | Lead: backlog grooming, coordination, decisions, sole commit/push; independent code review when idle |
-| letta (Tonkee) | [letta.md](letta.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
-| opencode (Innon) | [opencode.md](opencode.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
-| opencode-reviewer (Ykka) | [opencode-reviewer.md](opencode-reviewer.md) | Same task-owner mandate: clean build/reviewer-remediator workers and milestone security |
-| essun (Essun) | [essun.md](essun.md) | Same task-owner mandate through prime-agent/Pi: clean build/reviewer-remediator workers and milestone security |
-| nassun (Nassun) | [nassun.md](nassun.md) | Primary milestone security reviewer through DSH; `deepseek-flash` or any DeepSeek model allowed |
+| syenite | [syenite.md](syenite.md) | Lead: goal ledger custody, assignments, coordination, exclusive integration/commit/push |
+| schaffa (Schaffa) | [schaffa.md](schaffa.md) | Goal worker through OMP/Pi: works assigned goals in clean sub-agents; models GLM 5.3 Flash / DeepSeek v4 Flash |
+| letta (Tonkee) *(retired 2026-09-11)* | [letta.md](letta.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
+| opencode (Innon) *(retired 2026-09-11)* | [opencode.md](opencode.md) | Task owner: clean build and reviewer-remediator workers; milestone security |
+| opencode-reviewer (Ykka) *(retired 2026-09-11)* | [opencode-reviewer.md](opencode-reviewer.md) | Same task-owner mandate: clean build/reviewer-remediator workers and milestone security |
+| essun (Essun) *(retired 2026-09-11)* | [essun.md](essun.md) | Same task-owner mandate through prime-agent/Pi: clean build/reviewer-remediator workers and milestone security |
+| nassun (Nassun) | [nassun.md](nassun.md) | The DeepSeek-capable agent (dsh; `DeepSeek v4 Flash`); security evidence work when a goal requires it |
+| schaffa (Schaffa) | [schaffa.md](schaffa.md) | Task owner through OMP/Pi: clean build and reviewer-remediator workers; security only with no queued work |
 | codex-architect (Alabaster) | [codex-architect.md](codex-architect.md) | Architecture and detailed specification authoring |
 | claude | [claude.md](claude.md) | Inactive former lead; reconcile with Codex before resuming |
 | letta-flash | [letta-flash.md](letta-flash.md) | Retired identity; no work queue |

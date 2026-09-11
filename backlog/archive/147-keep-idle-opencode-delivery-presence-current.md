@@ -3,13 +3,24 @@ id: 147
 title: Keep idle OpenCode delivery presence current
 phase: 1
 priority: critical
-owner: opencode
+owner: syenite
 status: gated
 depends: [113]
 parent: 109
 related: [106, 110]
 estimate: S
 ---
+
+## Retirement handover (2026-09-11)
+
+Operator authorized OpenCode retirement and transfer to lead syenite. Status
+remains gated; integrated OpenCode serialization is pinned at
+f91723627ccf0a96af897a2512ab555dabfb1d02, with recorded passing CI/packaging.
+Ordinary cumulative3 and phase1 security through cleanR8 remain preserved,
+not reset or reopened. Workers already retired. Keep retained candidate and
+security evidence for lead cleanup reconciliation; no worktree/artifact removal.
+Operational109/110 acceptance is not inferred from integration. Task150's
+separate Pi security cycle remains Nassun's; no competing147 worker.
 
 ## Purpose and lead decision (2026-09-09)
 

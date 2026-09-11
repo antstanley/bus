@@ -1,3 +1,12 @@
+> **OPERATING-MODEL CHANGE 2026-09-11.** Task-based milestones are retired;
+> work is planned as goals with constraints —
+> [`goals/README.md`](../../goals/README.md). The mandate text below is the
+> historical 2026-09-10 appointment. What carries forward: Nassun is the
+> agent with DeepSeek access (dsh harness). Allowed models everywhere are now
+> **GLM 5.3 Flash** and **DeepSeek v4 Flash** only (operator, 2026-09-11).
+> Security verification is whatever the worked goal requires as evidence,
+> recorded in the goal file.
+
 # Nassun charter
 
 Identity: `nassun`. Runtime: DeepSeek Harness Web (`dsh web`). Operator-approved

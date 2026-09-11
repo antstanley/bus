@@ -322,3 +322,17 @@ same-user/trusted-projectRoot assumptions, not a generalized risk waiver.
 Lead audit integration/cleanup: reports and acceptance pushed at569aa94; CI34509030718 and packaging34509030914 passed. Exact retained-copy checks completed for all five final files and all six reports/manifest. Completed task507-security-nassun worktree and branch removed by Hoa; Essun candidate remains. Separate phase1 audit worktree/bundles retained pending their own reconciliation. No full task completion or rollout inferred.
 
 Assembly constraint: main installer advanced at f917236 with reviewed OpenCode-hook serialization. The frozen507 candidate predates that delta; eventual202-enabled assembly must reconcile it and preserve the new behavior, not overwrite main with the old installer. Applicable merged delta review remains required.
+
+
+## Lead handover record (2026-09-11)
+
+Operator retired essun by directive on 2026-09-11; essun did not post a
+handover confirmation and was unresponsive, so the lead (syenite) executed the
+retirement. Ownership of this task transfers to syenite; status, gates and
+cumulative round counts are unchanged. Candidate worktrees, evidence and
+reports are preserved under lead retention:
+- frozen five-file candidate /private/tmp/sidekick-task507-essun; six Prime security rounds closed, reports committed 569aa94; NEVER overwrite current main installer with the old 507 installer; merged assembly must preserve both the integrated 147 OpenCode serialization and the pending 150 Pi serialization with fresh applicable merged-delta reviews.
+Essun's session processes were terminated after verifying no worker response;
+essun did not delete or modify anything after the retirement directive. The
+lead holds all custodial obligations from here (integration sequence:
+202 integration prep first where applicable, then release).

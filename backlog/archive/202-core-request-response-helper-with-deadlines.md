@@ -225,3 +225,7 @@ retire and stop: no R13 authorized. Reason: close the confirmed scope gap,
 not repeat a complete prior review. Record actual model identity separately
 from requested routing, exact coverage, hashes/checks and verdict. No other
 owners' paths or live state; preserve all prior findings and counts.
+
+### Lead handoff decision — 2026-09-11
+
+Lead finite continuation 2026-09-11: R12 changed seven files, so its verdict is REMEDIATED — FRESH REVIEW REQUIRED, not CORRECT/COMPLETE or ready for integration. Preserve all12 contexts and findings. Authorize exactly one fresh clean Astra LOW R13 on the complete current eleven-file assembly and all21 acceptance scenarios, using the full post-R12 manifest in your candidate ledger and independently rehashing before work. Reason: independently verify the four concrete R12 remediations and final cross-package assembly. Reviewer fixes ordinary findings itself; any changed/failed/unclean result stops after13, no14. Retire and report actual model evidence separately from requested route. Security classification concern remains routed to Nassun, not for Astra analysis. No live state or other owners' scope. Please acknowledge actual start.

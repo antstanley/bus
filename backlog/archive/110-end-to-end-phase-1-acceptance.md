@@ -3,11 +3,23 @@ id: 110
 title: end-to-end phase 1 acceptance
 phase: 1
 priority: critical
-owner: opencode
+owner: syenite
 status: in-progress
 depends: [104, 106, 109]
 estimate: S
 ---
+
+## Retirement handover (2026-09-11)
+
+Operator confirmed Syenite as lead and authorized OpenCode retirement.
+Ownership transfers to syenite, status and all cumulative review/security
+counts preserved.109/110 final config remains dry-run only: no apply, restart
+or live acceptance claimed. Actual participant isolation/quiescence, launch
+disposition, measured automatic delivery and real remote evidence remain open.
+Retain artifact locations and exact pins documented in parent109's retirement
+handover, including final-config, historical fixtures and provisioned separate
+MCP/hook stores/indexes. CHANGELOG Unreleased remains reserved for the real
+cycle. No new worker, round, cleanup or live operation for this handover.
 
 ## Current workflow and disposition (2026-09-08)
 
@@ -331,5 +343,23 @@ Future605 Unreleased-only changelog slice is selected by Hoa; no authoring or
 new request/stage has begun. Prior failed cycle, counts, human/API accounting
 and rollout conditions remain intact. Config-only handoff publication
 `01M266RJEWXR0Y98PAM8MAJJJH` is coordination evidence, not live acceptance.
+
+### Reviewed-source final config preparation
+
+After accepted147 ordinaryR3 and NassunR8, Hoa integrated the fix and supplied
+approved detached runtime f917236. A new GLM context
+`ses_f73593727ffecM4X4VDyZwVrZr` generated the selected MCP fragment and hook
+file using that source and the exact separate role slots. Parent109 records
+full hashes, production registry path, fixture differences and normal checks.
+Installer27/0 and the serialization/output/error/lifecycle fixtures passed;
+no live cycle, apply or restart took place.
+
+The old max2-overlap fixture remains historical evidence; new normal fixture
+observed max1/zero overlap on reviewed source. This is not actual delivery or
+runtime activation proof. Fresh live preimages/participant routes, affected
+client quiescence, Codex role/override validation and Hoa's final entry decision
+remain required. Optional cmux-shim inspection was denied and not retried;
+that capability gap is explicit. No605 authoring, fabricated stages, scope or
+round reset, security approval by OpenCode, or zero-human claim is inferred.
 
 Lead runtime release: task147 serialization fix f91723627ccf0a96af897a2512ab555dabfb1d02 passed CI34514745038/packaging34514744946. New detached operational prep pin /private/tmp/sidekick-phase1-runtime-f917236 provisioned; final outputs must use this source rather than prior3c02 pin. Same assigned separateMCP/hook stores/indexes and production registryHome /Users/stan. Preserve priorplans; no liveapply/restart yet. Pi followup task150 is isolated and cannot alter this runtime.
