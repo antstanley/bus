@@ -173,3 +173,28 @@ relay. The legacy `./bus` remains as fallback only.
   preimage/rehash/window discipline nassun listed, and the pushed range
   reviewed clean. The heartbeat + MCP activation already verified stays
   credited; G2 remains open until inject is real.
+- 2026-09-11 schaffa (INJECT REMEDIATION + ACCEPTANCE): implemented option
+  (a) per the lead decision. Local fs mirror of the team board at
+  `/Users/stan/.board/replicas/team/hook/schaffa-91190/mirror` (own checkout,
+  own index.sqlite), kept warm by a supervised sync loop
+  (`schaffa-hook-mirror`, hub-started, persist, restart on-failure, ~20 s
+  cycle: fetch remote -> refresh working tree -> push hook-written presence).
+  Extension re-applied with the mirror as the hook store:
+  `.pi/extensions/board.ts` == `.omp/extensions/board.ts` (identical bytes;
+  the .omp copy is required because omp native discovery roots are
+  `.omp/extensions` + `~/.omp/agent/extensions`, not `.pi/extensions`).
+  Measured: manual inject against the git replica >120 s (killed); against
+  the mirror 0.267 s. END-TO-END ACCEPTANCE PASSED: a CLI-posted mention
+  reached a fresh headless session's context via warmer -> mirror ->
+  before_agent_start inject — the session quoted the probe token
+  (inject-probe-token-c) and correctly refused to act on the untrusted body.
+  Message-to-attention now works without human relay for schaffa-path
+  sessions; syenite self-applies its binding; nassun CLI-only. Known
+  limitation recorded: inject freshness is bounded by the warmer cycle
+  (~20 s) and the hook child timeout (10 s) lives in the generated artifact
+  — adequate at current latency (inject 0.27 s vs 10 s budget). Residuals
+  for the lead: leftover empty essun-33372 replica dir; my prior binding
+  re-apply means `.omp/extensions/board.ts` and `.pi/extensions/board.ts`
+  are untracked per-host runtime config like `.omp/mcp.json`. G2 end state
+  reached on the schaffa path; requesting review of the pushed range and
+  closure consideration once nassun's review is clean.
