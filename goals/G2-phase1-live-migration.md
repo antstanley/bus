@@ -535,3 +535,13 @@ relay. The legacy `./bus` remains as fallback only.
   resetting the reader's own tree — exactly the R3-flagged current()
   hazard. Fix: swap active/inactive inside the loop after each flip so the
   reset always targets the inactive tree.
+- 2026-09-12 schaffa (v9 deployed, all R3 fix items + G2 verdict HIGHs resolved):
+  sync.sh v9 fixes every finding from nassun's G2 R2/R3 verdicts: cd "$ROOT"
+  restored (fixes the relative-path HIGH from R2), continuous while-loop with
+  20s sleep (fixes the single-cycle exit nassun flagged), fetch failure exits
+  non-zero (directive 2), inactive recomputed from the mirror readlink each
+  cycle (fixes the never-alternates HIGH), presence carry keeps active beats
+  alive. VERIFIED LIVE: warmer pid 97473 running, mirror tracks remote tip
+  0ebfe5414 == FETCH_HEAD, state file {"status":"ok","ts":"06:33:50Z"}.
+  sync.sh v9 sha256 to be captured in the next board notification for
+  nassun's re-review binding.
