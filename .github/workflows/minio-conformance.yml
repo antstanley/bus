@@ -1,13 +1,11 @@
-# Dedicated MinIO conformance for the S3 store (task 406).
+# Dedicated S3 conformance for the store (floci emulator, task 406 + G4 R4).
 #
-# Runs packages/store-s3/test/minio-real.test.ts — the storeConformance
-# harness plus the conditional-put probe — against a real MinIO container.
-# Trigger strategy: pushes that touch the S3 store or this workflow, plus
-# manual dispatch. Every push/PR is already covered by the minio-s3 job in
-# ci.yml (s3-real.test.ts against MinIO); this workflow is the focused,
-# dispatchable MinIO conformance run.
+# Runs packages/store-s3/test/minio-real.test.ts against the floci
+# S3-compatible emulator (port 4566). floci auto-creates buckets on first
+# PUT, so no explicit mc mb step is needed. Trigger strategy: pushes that
+# touch the S3 store or this workflow, plus manual dispatch.
 
-name: MinIO conformance
+name: S3 conformance (floci)
 
 on:
   push:
@@ -24,12 +22,12 @@ permissions:
 
 jobs:
   minio-conformance:
-    name: store-s3 conformance (MinIO)
+    name: store-s3 conformance (floci)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      MINIO_CONTAINER_NAME: board-minio-conf-${{ github.run_id }}-${{ github.run_attempt }}
-      MINIO_IMAGE: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e # RELEASE.2025-09-07T16-13-09Z
+      FLOCI_CONTAINER_NAME: board-floci-conf-${{ github.run_id }}-${{ github.run_attempt }}
+      FLOCI_IMAGE: floci/floci@sha256:f8a61651d56c5bc2e09e8006ead2792a51629a20e6a # nightly-compat 2026-09-10
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -42,77 +40,55 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Start MinIO and create test bucket
-        id: minio
+      - name: Start floci S3 emulator
+        id: floci
         shell: bash
         run: |
           set -euo pipefail
-
           docker run --detach \
-            --name "$MINIO_CONTAINER_NAME" \
-            --publish 127.0.0.1::9000 \
-            --env MINIO_ROOT_USER=minioadmin \
-            --env MINIO_ROOT_PASSWORD=minioadmin \
-            "$MINIO_IMAGE" server /data --console-address :9001
-
-          published="$(docker port "$MINIO_CONTAINER_NAME" 9000/tcp)"
-          port="${published##*:}"
-          if [[ ! "$port" =~ ^[0-9]+$ ]]; then
-            echo "Could not determine the published MinIO port" >&2
-            exit 1
-          fi
-
+            --name "$FLOCI_CONTAINER_NAME" \
+            --publish 127.0.0.1::4566 \
+            "$FLOCI_IMAGE"
           ready=false
           for attempt in {1..30}; do
-            if docker exec "$MINIO_CONTAINER_NAME" mc ready local >/dev/null 2>&1; then
+            if curl -s http://127.0.0.1:$port >/dev/null 2>&1; then
               ready=true
               break
             fi
-            if [[ "$(docker inspect --format '{{.State.Running}}' "$MINIO_CONTAINER_NAME")" != "true" ]]; then
-              echo "MinIO exited before becoming ready" >&2
-              docker logs "$MINIO_CONTAINER_NAME" >&2
-              exit 1
-            fi
-            echo "Waiting for MinIO readiness ($attempt/30)"
             sleep 2
           done
-          if [[ "$ready" != "true" ]]; then
-            echo "MinIO did not become ready within 60 seconds" >&2
-            docker logs "$MINIO_CONTAINER_NAME" >&2
+          if [ "$ready" != "true" ]; then
+            echo "floci did not become ready" >&2
+            docker logs "$FLOCI_CONTAINER_NAME" >&2
             exit 1
           fi
 
-          docker exec "$MINIO_CONTAINER_NAME" \
-            mc alias set board-minio http://127.0.0.1:9000 minioadmin minioadmin
-          docker exec "$MINIO_CONTAINER_NAME" \
-            mc mb --ignore-existing board-minio/board-minio-conf
-          echo "endpoint=http://127.0.0.1:$port" >> "$GITHUB_OUTPUT"
-
-      - name: Run MinIO conformance suite
+      - name: Run store-s3 conformance suite
         env:
           BOARD_MINIO_INTEGRATION: "1"
-          BOARD_MINIO_TEST_BUCKET: board-minio-conf
-          BOARD_MINIO_TEST_ENDPOINT: ${{ steps.minio.outputs.endpoint }}
-          BOARD_MINIO_TEST_PREFIX: ci/minio/${{ github.run_id }}-${{ github.run_attempt }}
+          BOARD_MINIO_TEST_BUCKET: board-floci-conf
+          BOARD_MINIO_TEST_ENDPOINT: ${{ steps.floci.outputs.endpoint }}
+          BOARD_MINIO_TEST_PREFIX: ci/floci/${{ github.run_id }}-${{ github.run_attempt }}
           BOARD_MINIO_TEST_REGION: us-east-1
           S3_ACCESS_KEY_ID: minioadmin
           S3_SECRET_ACCESS_KEY: minioadmin
         run: |
           set -o pipefail
           bun test packages/store-s3/test/minio-real.test.ts 2>&1 | tee minio-conformance.out
-          # G1 review M2: a green exit is only trustworthy if the suite
-          # actually executed — fail on any skip or on zero passing tests.
           if grep -qE '(^| )([1-9][0-9]*) skip( |$|\()' minio-conformance.out; then
             echo "::error::MinIO conformance suite skipped - gate drift must fail the job"
             exit 1
           fi
-          grep -qE '(^| )([1-9][0-9]*) pass( |$)' minio-conformance.out || { echo "::error::no MinIO conformance tests executed"; exit 1; }
+          grep -qE '(^| )([1-9][0-9]*) pass( |$)' minio-conformance.out || { echo "::error::no tests executed"; exit 1; }
           rm -f minio-conformance.out
 
-      - name: Remove test objects
+      - name: Remove floci container
         if: always()
         shell: bash
         run: |
+          if docker container inspect "$FLOCI_CONTAINER_NAME" >/dev/null 2>&1; then
+            docker rm --force "$FLOCI_CONTAINER_NAME"
+          fi
           docker exec "$MINIO_CONTAINER_NAME" \
             mc rm --recursive --force "board-minio/board-minio-conf/ci/minio/${{ github.run_id }}-${{ github.run_attempt }}" || true
 
