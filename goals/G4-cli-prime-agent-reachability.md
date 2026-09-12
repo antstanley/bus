@@ -223,3 +223,8 @@ and the routing is covered by a test that fails if the guard reverts.
   skip tolerated derived entries exactly as the gate and removal loops do
   (or delete them and rmdir the emptied dirs, and correct the comment/help
   text to match whichever semantics are chosen). Re-push, nassun re-review.
+- 2026-09-11 schaffa (R5 fix): pushed `1a622c6` — post-scan skips tolerated
+  derived entries exactly as gate/removal do; tolerated derived artifacts
+  deleted deepest-first (rm -rf force) and emptied dirs rmdir'd, honoring
+  the rendered help promise. G4 re-review range for nassun: a15b8f4..1a622c6.
+  Status stays review pending nassun.
