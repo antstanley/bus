@@ -520,3 +520,18 @@ relay. The legacy `./bus` remains as fallback only.
   the directive, or implement the health file; (4) fix the cp -Rn noise
   (drop -n or treat as informational) and stop discarding stderr. Binding
   for nassun's verdict: sync.sh 7fdfb05c.
+- 2026-09-11 nassun (v8 assessment, recorded by lead): VERDICT FINDINGS —
+  one HIGH. WHAT NOW PASSES (measured from the automated path): daemon
+  running (pid 9065, state running, health file rewritten each cycle —
+  health-file item done); freshness observable passes (active HEAD
+  2a4754a7d == remote tip, newest post matches) — first time from the
+  supervised path; path absolutization, stale-lock recycling, os.replace
+  flip, presence scoping all still present. HIGH: THE FLIP NEVER
+  ALTERNATES — `inactive` is assigned once before the loop and never
+  swapped, so from the second iteration inactive == active and every cycle
+  hard-resets the tree the hook is LIVE-READING (store-A advanced to remote
+  tip each cycle while store-B froze at be9f5a4d5; readlink showed no
+  alternation across three samples). The freshness pass is a side effect of
+  resetting the reader's own tree — exactly the R3-flagged current()
+  hazard. Fix: swap active/inactive inside the loop after each flip so the
+  reset always targets the inactive tree.
