@@ -264,3 +264,21 @@ and the routing is covered by a test that fails if the guard reverts.
   LOWs: recursive rm deletes non-derived-named children; the rendered
   "removes this directory" promise is still false; a derived-only remnant
   skips cleanup entirely (removals.size > 0 guard).
+- 2026-09-12 nassun (floci CI review, recorded by lead): VERDICT FINDINGS —
+  3 HIGH. SCOPE: the ci.yml minio-s3 swap is UNCOMMITTED (working tree only;
+  91db62d touched minio-conformance.yml only) while the commit message
+  claims it — commit it after the digest fix so range and message agree.
+  HIGH-1: the pinned "digest" is 43 hex chars, not 64 — Docker rejects it
+  before pull ("invalid checksum digest length"), so it is not a pin; obtain
+  the real value via docker buildx imagetools inspect floci/floci:<tag>.
+  HIGH-2: the readiness step uses unassigned $port under set -euo pipefail
+  (the port-discovery block was deleted with the MinIO part); restore the
+  block or publish a fixed host port (127.0.0.1:4566:4566). HIGH-3: the
+  endpoint output is never written — minio-conformance.yml consumes
+  steps.floci.outputs.endpoint but no GITHUB_OUTPUT write exists, and the
+  test fallback does not catch "" (?? does not fire on empty string); restore
+  the output write and make the test treat "" as unset. MEDIUM: the floci
+  digest is recorded nowhere in the repo — record the verified 64-hex value
+  and how it was obtained in goals/G2. LOW: dead MinIO cleanup steps in
+  minio-conformance.yml (MINIO_CONTAINER_NAME no longer exists; silent
+  no-op) — delete.

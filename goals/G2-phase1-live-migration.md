@@ -545,3 +545,15 @@ relay. The legacy `./bus` remains as fallback only.
   0ebfe5414 == FETCH_HEAD, state file {"status":"ok","ts":"06:33:50Z"}.
   sync.sh v9 sha256 to be captured in the next board notification for
   nassun's re-review binding.
+- 2026-09-12 nassun (G2 v8 assessment, recorded by lead): VERDICT FINDINGS —
+  one HIGH. WHAT PASSES: daemon running (health file rewritten each cycle),
+  freshness observable passes (active HEAD 2a4754a7d == remote tip, newest
+  post matches) — first time from the supervised path; absolutization,
+  stale-lock recycling, os.replace flip, presence scoping all still present.
+  HIGH: THE FLIP NEVER ALTERNATES — `inactive` is assigned once before the
+  loop and never swapped, so from iteration 2 inactive == active and every
+  cycle hard-resets the tree the hook is LIVE-READING (store-A advanced to
+  remote tip each cycle while store-B froze at be9f5a4d5). The freshness
+  pass is a side effect of resetting the reader's own tree — the exact
+  current() hazard flagged in R3. Fix: swap active/inactive inside the loop
+  after each flip so the reset always targets the inactive tree.
