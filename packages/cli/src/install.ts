@@ -372,7 +372,7 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
   }
   // G4 R3 F3: a file created after the pre-remove scan must fail the
   // uninstall instead of being deleted-around or silently left behind.
-  if (!options.dryRun && primeSkillContext && removals.size > 0) {
+  if (!options.dryRun && primeSkillContext && options.uninstall) {
     const remaining = await scanPrimePackage(primeSkillContext.dir);
     // Derived build artifacts (__pycache__, *.egg-info) are tolerated by
     // the gate but cleaned up here, so the rendered help promise (uninstall
@@ -1540,7 +1540,8 @@ async function readText(path: string): Promise<string | null> {
  * tolerated remnants: they never block a prime-agent uninstall and are
  * cleaned up with it (G4 R4). */
 function isDerivedArtifact(rel: string): boolean {
-  return rel.includes("__pycache__") || rel.includes(".egg-info");
+  const segs = rel.split("/");
+  return segs.includes("__pycache__") || segs.some((s) => s.endsWith(".egg-info"));
 }
 
 /**
