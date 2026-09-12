@@ -31,12 +31,12 @@ jobs:
         run: bunx tsc --noEmit
 
   minio-s3:
-    name: S3 conformance (MinIO)
+    name: S3 conformance (floci)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      MINIO_CONTAINER_NAME: board-ci-minio-${{ github.run_id }}-${{ github.run_attempt }}
-      MINIO_IMAGE: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e # RELEASE.2025-09-07T16-13-09Z
+      FLOCI_CONTAINER_NAME: board-ci-floci-${{ github.run_id }}-${{ github.run_attempt }}
+      FLOCI_IMAGE: floci/floci@sha256:18eb2848c693b6c0bde2f43ae0266d18a40a300d8a4e29aa1eb665baaa958e77 # nightly-compat
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -49,69 +49,62 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Start MinIO and create test bucket
-        id: minio
+      - name: Start floci S3 emulator
+        id: floci
         shell: bash
         run: |
           set -euo pipefail
 
           docker run --detach \
-            --name "$MINIO_CONTAINER_NAME" \
-            --publish 127.0.0.1::9000 \
-            --env MINIO_ROOT_USER=minioadmin \
-            --env MINIO_ROOT_PASSWORD=minioadmin \
-            "$MINIO_IMAGE" server /data --console-address :9001
+            --name "$FLOCI_CONTAINER_NAME" \
+            --publish 127.0.0.1::4566 \
+            "$FLOCI_IMAGE"
 
-          published="$(docker port "$MINIO_CONTAINER_NAME" 9000/tcp)"
+          published="$(docker port "$FLOCI_CONTAINER_NAME" 4566/tcp)"
           port="${published##*:}"
           if [[ ! "$port" =~ ^[0-9]+$ ]]; then
-            echo "Could not determine the published MinIO port" >&2
+            echo "Could not determine the published floci port" >&2
             exit 1
           fi
 
           ready=false
           for attempt in {1..30}; do
-            if docker exec "$MINIO_CONTAINER_NAME" mc ready local >/dev/null 2>&1; then
+            if curl -s http://127.0.0.1:$port >/dev/null 2>&1; then
               ready=true
               break
             fi
-            if [[ "$(docker inspect --format '{{.State.Running}}' "$MINIO_CONTAINER_NAME")" != "true" ]]; then
-              echo "MinIO exited before becoming ready" >&2
-              docker logs "$MINIO_CONTAINER_NAME" >&2
+            if [[ "$(docker inspect --format '{{.State.Running}}' "$FLOCI_CONTAINER_NAME")" != "true" ]]; then
+              echo "floci exited before becoming ready" >&2
+              docker logs "$FLOCI_CONTAINER_NAME" >&2
               exit 1
             fi
-            echo "Waiting for MinIO readiness ($attempt/30)"
+            echo "Waiting for floci readiness ($attempt/30)"
             sleep 2
           done
           if [[ "$ready" != "true" ]]; then
-            echo "MinIO did not become ready within 60 seconds" >&2
-            docker logs "$MINIO_CONTAINER_NAME" >&2
+            echo "floci did not become ready within 60 seconds" >&2
+            docker logs "$FLOCI_CONTAINER_NAME" >&2
             exit 1
           fi
-
-          docker exec "$MINIO_CONTAINER_NAME" \
-            mc alias set board-ci http://127.0.0.1:9000 minioadmin minioadmin
-          docker exec "$MINIO_CONTAINER_NAME" \
-            mc mb --ignore-existing board-ci/board-ci
           echo "endpoint=http://127.0.0.1:$port" >> "$GITHUB_OUTPUT"
 
-      - name: Run real S3 conformance against MinIO
+      - name: Run real S3 conformance against floci
         env:
           BOARD_S3_INTEGRATION: "1"
           BOARD_S3_TEST_BUCKET: board-ci
-          BOARD_S3_TEST_PREFIX: ci/minio/${{ github.run_id }}-${{ github.run_attempt }}
-          S3_ENDPOINT: ${{ steps.minio.outputs.endpoint }}
+          BOARD_S3_TEST_PREFIX: ci/floci/${{ github.run_id }}-${{ github.run_attempt }}
+          S3_ENDPOINT: ${{ steps.floci.outputs.endpoint }}
           S3_ACCESS_KEY_ID: minioadmin
           S3_SECRET_ACCESS_KEY: minioadmin
           S3_REGION: us-east-1
         run: bun test packages/store-s3/test/s3-real.test.ts
 
-      - name: Remove MinIO container
+      - name: Remove floci container
         if: always()
         shell: bash
         run: |
-          if docker container inspect "$MINIO_CONTAINER_NAME" >/dev/null 2>&1; then
-            docker rm --force "$MINIO_CONTAINER_NAME"
+          if docker container inspect "$FLOCI_CONTAINER_NAME" >/dev/null 2>&1; then
+            docker rm --force "$FLOCI_CONTAINER_NAME"
           fi
 
   live-aws-s3:

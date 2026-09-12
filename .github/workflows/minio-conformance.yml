@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 15
     env:
       FLOCI_CONTAINER_NAME: board-floci-conf-${{ github.run_id }}-${{ github.run_attempt }}
-      FLOCI_IMAGE: floci/floci@sha256:f8a61651d56c5bc2e09e8006ead2792a51629a20e6a # nightly-compat 2026-09-10
+      FLOCI_IMAGE: floci/floci@sha256:18eb2848c693b6c0bde2f43ae0266d18a40a300d8a4e29aa1eb665baaa958e77 # nightly-compat
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
