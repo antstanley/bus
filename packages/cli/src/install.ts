@@ -1,5 +1,5 @@
 import type { Dirent } from "node:fs";
-import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, rmdir, stat, unlink, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, rm, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { assertName } from "@board/core";
 import { createHash } from "node:crypto";
@@ -374,14 +374,29 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
   // uninstall instead of being deleted-around or silently left behind.
   if (!options.dryRun && primeSkillContext && removals.size > 0) {
     const remaining = await scanPrimePackage(primeSkillContext.dir);
-    // Empty directories left behind by the file removals are expected
-    // remnants (we never rmdir); only surviving FILES mean the uninstall
-    // was only partially applied.
-    const remainingFiles = remaining.filter((entry) => entry.kind !== "dir");
+    // Derived build artifacts (__pycache__, *.egg-info) are tolerated by
+    // the gate but cleaned up here, so the rendered help promise (uninstall
+    // removes this directory) holds and no owned file is stranded.
+    const remainingFiles = remaining.filter((entry) => entry.kind !== "dir" && !isDerivedArtifact(entry.rel));
     if (remainingFiles.length > 0) {
       throw new CliError(
         `refusing to complete uninstall: ${remainingFiles.length} unexpected file${remainingFiles.length === 1 ? "" : "s"} remained under ${primeSkillContext.dir}`,
       );
+    }
+    // Delete the tolerated derived artifacts deepest-first, then rmdir the
+    // emptied directories (ignoring ENOTEMPTY/ENOENT per the flow).
+    const derivedPaths = remaining
+      .filter((entry) => isDerivedArtifact(entry.rel))
+      .map((entry) => join(primeSkillContext.dir, ...entry.rel.split("/")))
+      .sort((a, b) => b.length - a.length);
+    for (const derived of derivedPaths) {
+      try { await rm(derived, { recursive: true, force: true }); }
+      catch { /* non-fatal: derived artifact cleanup is best-effort */ }
+    }
+    const ancestorDirs = [...new Set(derivedPaths.map((p) => dirname(p)))]
+      .sort((a, b) => b.length - a.length);
+    for (const dir of ancestorDirs) {
+      try { await rmdir(dir); } catch { /* non-empty or already gone */ }
     }
   }
   return { changes, notices };
