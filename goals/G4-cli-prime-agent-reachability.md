@@ -246,3 +246,21 @@ and the routing is covered by a test that fails if the guard reverts.
   and how it was obtained in goals/G2. LOW: dead MinIO cleanup steps in
   minio-conformance.yml (MINIO_CONTAINER_NAME no longer exists; silent
   no-op) — delete.
+- 2026-09-11 nassun (security review R5 on 1a622c6, recorded by lead):
+  VERDICT FINDINGS — 2 MEDIUM + 3 LOW. CREDIT: the R4 HIGH is genuinely
+  fixed, verified end to end by probe (install -> __pycache__ with .pyc ->
+  uninstall: no throw, .pyc gone, dir gone); rmdir genuinely called;
+  post-scan predicate identical to gate/removal. NEW MEDIUMS:
+  F1 — isDerivedArtifact matches substrings anywhere in the path and R5 now
+  rm's matches: a foreign non-artifact file named
+  src/board/notes__pycache__data.txt was silently deleted (R4 left such
+  bytes alone). Fix: anchor to path segments (split "/" — a segment named
+  __pycache__, or a segment ending .egg-info).
+  F2 — cleanup failures are swallowed (try/catch around rm and rmdir, no
+  re-check), so bytes can survive a "successful" uninstall.
+  F6 MEDIUM (coverage): reverting the R5 post-scan derived skip leaves the
+  suite at 0 fail and recreates the R4 HIGH behaviourally; skipping the
+  derived deletion also passes unnoticed. Both halves need pinning tests.
+  LOWs: recursive rm deletes non-derived-named children; the rendered
+  "removes this directory" promise is still false; a derived-only remnant
+  skips cleanup entirely (removals.size > 0 guard).
