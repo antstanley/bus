@@ -383,20 +383,49 @@ export async function installRuntime(options: InstallOptions): Promise<InstallRe
         `refusing to complete uninstall: ${remainingFiles.length} unexpected file${remainingFiles.length === 1 ? "" : "s"} remained under ${primeSkillContext.dir}`,
       );
     }
-    // Delete the tolerated derived artifacts deepest-first, then rmdir the
-    // emptied directories (ignoring ENOTEMPTY/ENOENT per the flow).
+    // Derived build artifacts (__pycache__, *.egg-info): delete derived
+    // files (unlink, non-recursive), then rmdir the emptied derived
+    // directories deepest-first. A derived directory that is still
+    // non-empty after its derived leaves are gone fails the uninstall
+    // closed — it may contain non-derived bytes the user did not ask us
+    // to delete (G4 R5 F3).
     const derivedPaths = remaining
       .filter((entry) => isDerivedArtifact(entry.rel))
       .map((entry) => join(primeSkillContext.dir, ...entry.rel.split("/")))
       .sort((a, b) => b.length - a.length);
     for (const derived of derivedPaths) {
-      try { await rm(derived, { recursive: true, force: true }); }
-      catch { /* non-fatal: derived artifact cleanup is best-effort */ }
+      try {
+        const st = await stat(derived);
+        if (st.isDirectory()) { await rmdir(derived); }
+        else { await unlink(derived); }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOTEMPTY" ||
+            (error as NodeJS.ErrnoException).code === "EISDIR" && false) {
+          // directory was non-empty — it may contain non-derived bytes
+        }
+        // re-throw only if the failure is NOT the expected ENOENT/ENOTEMPTY
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== "ENOENT" && code !== "ENOTEMPTY") {
+          throw new CliError(`derived cleanup failed for ${derived}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
     }
-    const ancestorDirs = [...new Set(derivedPaths.map((p) => dirname(p)))]
+    // Prune every emptied directory under the skill dir deepest-first,
+    // then the skill dir itself (G4 R5 F4).
+    const allDirs = [...new Set(remaining.filter((e) => e.kind === "dir").map((e) => join(primeSkillContext.dir, ...e.rel.split("/"))))]
       .sort((a, b) => b.length - a.length);
-    for (const dir of ancestorDirs) {
+    for (const dir of allDirs) {
       try { await rmdir(dir); } catch { /* non-empty or already gone */ }
+    }
+    try { await rmdir(primeSkillContext.dir); } catch { /* non-empty */ }
+    // G4 R5 F2: verify the cleanup actually completed — re-scan and throw
+    // if any owned file is still present after the removal loop.
+    const postScan = await scanPrimePackage(primeSkillContext.dir);
+    const surviving = postScan.filter((e) => e.kind !== "dir" && !isDerivedArtifact(e.rel));
+    if (surviving.length > 0) {
+      throw new CliError(
+        `uninstall incomplete: ${surviving.length} owned file${surviving.length === 1 ? "" : "s"} still present after removal under ${primeSkillContext.dir}`,
+      );
     }
   }
   return { changes, notices };

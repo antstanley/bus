@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { chmod, lstat, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -1548,6 +1548,24 @@ export const Type = {
       ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
     })).rejects.toThrow("refusing to uninstall: prime-agent skill package contains non-board files");
     expect(await Bun.file(join(skillDir, "SKILL.md")).exists()).toBe(true);
+  });
+
+  test("uninstall cleans up tolerated derived artifacts (__pycache__) without refusing (G4 R5)", async () => {
+    const home = await fixture();
+    const settingsPath = join(home, ".prime", "agent", "settings.json");
+    const skillDir = join(home, ".prime", "agent", "skills", "board");
+    const prime = fakePrimeAgent(settingsPath);
+    await installRuntime({ ...options(home, "prime-agent"), primeRunner: prime.runner });
+    // Simulate CPython writing __pycache__ during a real session: the
+    // uninstall must tolerate, clean up, and complete without error.
+    const pycache = join(skillDir, "src", "board", "__pycache__");
+    await mkdir(pycache, { recursive: true });
+    await writeFile(join(pycache, "board.cpython-311.pyc"), "\x00fake bytecode");
+    await expect(installRuntime({
+      ...options(home, "prime-agent"), uninstall: true, primeRunner: prime.runner,
+    })).resolves.toBeDefined();
+    expect(await Bun.file(join(pycache, "board.cpython-311.pyc")).exists()).toBe(false);
+    expect(await Bun.file(skillDir).exists()).toBe(false);
   });
 
   test("primeMcpServerInstalled contract lives behind the installer probe (G1 R2 NEW-2)", async () => {
