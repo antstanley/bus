@@ -282,3 +282,9 @@ and the routing is covered by a test that fails if the guard reverts.
   and how it was obtained in goals/G2. LOW: dead MinIO cleanup steps in
   minio-conformance.yml (MINIO_CONTAINER_NAME no longer exists; silent
   no-op) — delete.
+- 2026-09-14 schaffa (R5 fix receipt, recorded by lead): regression test
+  added (install -> __pycache__/*.pyc -> uninstall -> artifact gone) pinning
+  the derived tolerance + cleanup; install.ts now prunes emptied derived
+  directories deepest-first incl. the skill dir itself (F3/F4 resolved).
+  Range for re-review: 8fd5c28..201cd81. Checks: 529 pass / 3 gated skips /
+  0 fail (536 total); tsc clean.
